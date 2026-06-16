@@ -20,7 +20,7 @@
             <clientlibs
                 jcr:primaryType="nt:unstructured"
                 sling:resourceType="granite/ui/components/coral/foundation/includeclientlibs"
-                categories="[searchstaxconnector.fullindexsetup.config]"/>
+                categories="[searchstaxconnector.wizard,searchstaxconnector.fullindexsetup.config]"/>
             <fullIndexRunClientlibs
                 jcr:primaryType="nt:unstructured"
                 sling:resourceType="granite/ui/components/coral/foundation/includeclientlibs"
@@ -82,7 +82,8 @@
                                                                                 fieldLabel="Root Path"
                                                                                 fieldDescription="Select the root content path to be used for indexing."
                                                                                 name="./rootPath"
-                                                                                rootPath="/content"/>
+                                                                                rootPath="/content"
+                                                                                required="{Boolean}true"/>
                                                                     
                                                                         <!-- Include Paths -->
                                                                         <includePaths
@@ -118,6 +119,7 @@
                                                                                 name="./includePathsJson"/>
                                                                         <!-- Exclude Paths -->
                                                                         <excludePaths
+                                                                                granite:id="searchstax-fullindex-exclude-paths-multifield"
                                                                                 jcr:primaryType="nt:unstructured"
                                                                                 sling:resourceType="granite/ui/components/coral/foundation/form/multifield"
                                                                                 fieldLabel="Indexing Exclude Paths"

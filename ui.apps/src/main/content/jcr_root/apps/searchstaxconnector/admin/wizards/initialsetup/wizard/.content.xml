@@ -20,7 +20,7 @@
             <clientlibs
                 jcr:primaryType="nt:unstructured"
                 sling:resourceType="granite/ui/components/coral/foundation/includeclientlibs"
-                categories="[searchstaxconnector.initialsetup.config]"/>
+                categories="[searchstaxconnector.wizard,searchstaxconnector.initialsetup.config]"/>
             <fullIndexRunClientlibs
                 jcr:primaryType="nt:unstructured"
                 sling:resourceType="granite/ui/components/coral/foundation/includeclientlibs"
@@ -85,6 +85,7 @@
                                                                             uncheckedValue="false"
                                                                             value="true"/>
                                                                         <rootPath
+                                                                            granite:id="searchstax-initial-root-paths-multifield"
                                                                             jcr:primaryType="nt:unstructured"
                                                                             sling:resourceType="granite/ui/components/coral/foundation/form/multifield"
                                                                             fieldDescription="Specify one or more root paths from which content should be discovered and indexed."
@@ -97,6 +98,7 @@
                                                                                 rootPath="/content"/>
                                                                         </rootPath>
                                                                         <excludePaths
+                                                                            granite:id="searchstax-initial-exclude-paths-multifield"
                                                                             jcr:primaryType="nt:unstructured"
                                                                             sling:resourceType="granite/ui/components/coral/foundation/form/multifield"
                                                                             fieldDescription="Add content paths that should be excluded from indexing."

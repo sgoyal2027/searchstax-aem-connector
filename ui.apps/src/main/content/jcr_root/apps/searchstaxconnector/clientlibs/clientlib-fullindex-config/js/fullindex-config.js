@@ -8,49 +8,47 @@
     var LOG = "[FullIndex]";
     var LOAD_PATH = "/bin/searchstaxconnector/wizard/full-index-load";
     var SAVE_PATH = "/bin/searchstaxconnector/wizard/fullindex-config-save";
+    var INCLUDE_PATHS_ID = "searchstax-include-paths-multifield";
+    var EXCLUDE_PATHS_ID = "searchstax-fullindex-exclude-paths-multifield";
+    var MAX_LOAD_ATTEMPTS = 25;
 
-    function findMultifieldContainingField(fieldName) {
-        var multifields = document.querySelectorAll("coral-multifield");
-        var i;
-
-        for (i = 0; i < multifields.length; i++) {
-            if (multifields[i].querySelector("[name='./" + fieldName + "']")) {
-                return multifields[i];
-            }
-        }
-
-        return null;
+    function util() {
+        return window.SearchStaxMultifieldUtil;
     }
 
     function getIncludePathsMultifield() {
-        return document.getElementById("searchstax-include-paths-multifield")
-            || findMultifieldContainingField("path");
+        return util().findMultifield({ id: INCLUDE_PATHS_ID, fieldName: "path", index: 0 });
     }
 
     function serializeIncludePaths() {
         var multifield = getIncludePathsMultifield();
         var hiddenField = document.querySelector("[name='./includePathsJson']");
         var includePaths = [];
+        var mf = util();
 
-        if (!multifield || !hiddenField) {
+        if (!multifield || !hiddenField || !mf) {
             return;
         }
 
         multifield.items.getAll().forEach(function (item) {
-            var pathField = item.querySelector("[name='./path']");
-            var childCheckbox = item.querySelector("[name='./includeChildPath']");
+            var pathField = mf.findNamedField(item, "path");
+            var childCheckbox = mf.findNamedField(item, "includeChildPath");
             var pathValue = "";
 
             if (pathField) {
                 pathValue = pathField.value || "";
+                if (!pathValue) {
+                    var inner = pathField.querySelector("input");
+                    pathValue = inner ? inner.value : "";
+                }
             }
 
-            if (!pathValue.trim()) {
+            if (!String(pathValue).trim()) {
                 return;
             }
 
             includePaths.push({
-                path: pathValue,
+                path: String(pathValue).trim(),
                 includeChildPath: childCheckbox ? Boolean(childCheckbox.checked) : false
             });
         });
@@ -58,102 +56,76 @@
         hiddenField.value = JSON.stringify(includePaths);
     }
 
-    function populateIncludePaths(includePaths) {
-        var multifield = getIncludePathsMultifield();
-        if (!multifield) {
-            console.warn(LOG, "Include Paths multifield not found");
+    function populateForm(data, done) {
+        var mf = util();
+        if (!mf) {
+            console.warn(LOG, "SearchStaxMultifieldUtil is not loaded");
+            if (done) {
+                done(false);
+            }
             return;
         }
 
-        includePaths.forEach(function (includePath, index) {
-            multifield.items.add();
+        var includeMultifield = getIncludePathsMultifield();
+        var excludeMultifield = mf.findMultifield({ id: EXCLUDE_PATHS_ID, fieldName: "excludePaths", index: 1 });
+        var pending = 0;
+        var success = true;
 
-            setTimeout(function () {
-                var items = multifield.items.getAll();
-                var item = items[index];
-                var pathField;
-                var checkbox;
+        mf.setFieldValue(document, "rootPath", data.rootPath || "");
 
-                if (!item) {
-                    return;
-                }
-
-                pathField = item.querySelector("[name='./path']");
-                if (pathField) {
-                    Coral.commons.ready(pathField, function (el) {
-                        if (el.value !== undefined) {
-                            el.value = includePath.path;
-                        }
-                    });
-                }
-
-                checkbox = item.querySelector("[name='./includeChildPath']");
-                if (checkbox) {
-                    Coral.commons.ready(checkbox, function (el) {
-                        if (el.checked !== undefined) {
-                            el.checked = Boolean(includePath.includeChildPath);
-                        }
-                    });
-                }
-            }, 200);
-        });
-    }
-
-    function populateExcludePaths(values) {
-        var multifield = findMultifieldContainingField("excludePaths");
-        if (!multifield) {
-            console.warn(LOG, "Exclude Paths multifield not found");
-            return;
-        }
-
-        values.forEach(function (value, index) {
-            multifield.items.add();
-
-            setTimeout(function () {
-                var items = multifield.items.getAll();
-                var item = items[index];
-                var field;
-
-                if (!item) {
-                    return;
-                }
-
-                field = item.querySelector("[name='./excludePaths']");
-                if (!field) {
-                    return;
-                }
-
-                Coral.commons.ready(field, function (el) {
-                    if (el.value !== undefined) {
-                        el.value = value;
-                    }
-                });
-            }, 200);
-        });
-    }
-
-    function populateForm(data) {
-        var rootPathField = document.querySelector("[name='./rootPath']");
-
-        if (rootPathField && data.rootPath) {
-            Coral.commons.ready(rootPathField, function (el) {
-                if (el.value !== undefined) {
-                    el.value = data.rootPath;
-                }
-            });
+        function checkDone() {
+            pending -= 1;
+            if (pending <= 0 && done) {
+                done(success);
+            }
         }
 
         if (data.includePaths && data.includePaths.length > 0) {
-            populateIncludePaths(data.includePaths);
+            if (!includeMultifield) {
+                success = false;
+            } else {
+                pending += 1;
+                mf.populateIncludePaths(includeMultifield, data.includePaths, function (ok) {
+                    if (!ok) {
+                        success = false;
+                    }
+                    checkDone();
+                });
+            }
         }
 
         if (data.excludePaths && data.excludePaths.length > 0) {
-            populateExcludePaths(data.excludePaths);
+            if (!excludeMultifield) {
+                console.warn(LOG, "Exclude paths multifield not found yet");
+                success = false;
+            } else {
+                pending += 1;
+                mf.populatePathMultifield(excludeMultifield, "excludePaths", data.excludePaths, function (ok) {
+                    if (!ok) {
+                        success = false;
+                    }
+                    checkDone();
+                });
+            }
+        }
+
+        if (pending === 0 && done) {
+            done(success);
         }
     }
 
-    function loadConfiguration() {
-        $.getJSON(LOAD_PATH, populateForm).fail(function (xhr) {
+    function loadConfiguration(attempt) {
+        attempt = attempt || 0;
+
+        $.getJSON(LOAD_PATH, function (data) {
+            populateForm(data, function (success) {
+                if (!success && attempt < MAX_LOAD_ATTEMPTS) {
+                    setTimeout(function () {
+                        loadConfiguration(attempt + 1);
+                    }, 300);
+                }
+            });
+        }).fail(function (xhr) {
             console.error(LOG, "Failed loading configuration", xhr);
         });
     }
@@ -191,7 +163,7 @@
 
     function init() {
         Coral.commons.ready(document, function () {
-            loadConfiguration();
+            loadConfiguration(0);
             bindSaveSerialization();
         });
 
@@ -227,8 +199,8 @@
     $(document).ready(init);
 
     document.addEventListener("foundation-contentloaded", function () {
-        loadConfiguration();
         bindSaveSerialization();
+        loadConfiguration(0);
     });
 
 })(document, window.Granite && Granite.$ ? Granite.$ : window.jQuery);
