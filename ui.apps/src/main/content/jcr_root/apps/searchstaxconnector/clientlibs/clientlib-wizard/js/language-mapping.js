@@ -216,7 +216,7 @@
                     });
                 }
 
-                SearchStaxConfigUtil.setEnabledSelect(item, mapping.enabledLanguageMapping);
+                SearchStaxConfigUtil.setEnabledSelect(item, mapping.enabled);
 
 
                 item.__lastAemLanguageType = resolvedType || "";
