@@ -1,0 +1,201 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jcr:root xmlns:jcr="http://www.jcp.org/jcr/1.0" xmlns:nt="http://www.jcp.org/jcr/nt/1.0" xmlns:granite="http://www.adobe.com/jcr/granite/1.0" xmlns:cq="http://www.day.com/jcr/cq/1.0" xmlns:sling="http://sling.apache.org/jcr/sling/1.0"
+    jcr:primaryType="cq:Page">
+    <jcr:content
+        jcr:primaryType="nt:unstructured"
+        jcr:title="Email Configuration"
+        sling:resourceType="granite/ui/components/coral/foundation/page">
+        <head jcr:primaryType="nt:unstructured">
+            <viewport
+                jcr:primaryType="nt:unstructured"
+                sling:resourceType="granite/ui/components/coral/foundation/admin/page/viewport"/>
+            <meta
+                jcr:primaryType="nt:unstructured"
+                sling:resourceType="granite/ui/components/coral/foundation/meta"
+                content="chrome=1"
+                name="X-UA-Compatible"/>
+            <favicon
+                jcr:primaryType="nt:unstructured"
+                sling:resourceType="granite/ui/components/coral/foundation/page/favicon"/>
+            <clientlibs
+                jcr:primaryType="nt:unstructured"
+                sling:resourceType="granite/ui/components/coral/foundation/includeclientlibs"
+                categories="[searchstaxconnector.email.config]"/>
+        </head>
+        <body
+            jcr:primaryType="nt:unstructured"
+            sling:resourceType="granite/ui/components/coral/foundation/page/body">
+            <items jcr:primaryType="nt:unstructured">
+                <form
+                    granite:id="edit-configuration-properties-form"
+                    jcr:primaryType="nt:unstructured"
+                    sling:resourceType="granite/ui/components/coral/foundation/form"
+                    action="/bin/searchstaxconnector/wizard/email-config-save"
+                    async="{Boolean}true"
+                    autocomplete="off"
+                    foundationForm="{Boolean}true"
+                    maximized="{Boolean}true"
+                    method="post"
+                    novalidate="{Boolean}true"
+                    style="vertical">
+                    <successresponse
+                        jcr:primaryType="nt:unstructured"
+                        sling:resourceType="granite/ui/components/coral/foundation/form/responses/redirect"
+                        href="${empty header.Referer ? '/aem/start.html' : header.Referer}"/>
+                    <items jcr:primaryType="nt:unstructured">
+                        <wizard
+                            jcr:primaryType="nt:unstructured"
+                            jcr:title="Email Configuration"
+                            sling:resourceType="granite/ui/components/coral/foundation/wizard"
+                            cancelHref="${empty header.Referer ? '/aem/start.html' : header.Referer}">
+                            <items jcr:primaryType="nt:unstructured">
+                                <propertiesContainer
+                                    jcr:primaryType="nt:unstructured"
+                                    sling:resourceType="granite/ui/components/coral/foundation/fixedcolumns"
+                                    maximized="{Boolean}true">
+                                    <items jcr:primaryType="nt:unstructured">
+                                        <container
+                                            jcr:primaryType="nt:unstructured"
+                                            jcr:title="General"
+                                            sling:resourceType="granite/ui/components/coral/foundation/container"
+                                            margin="{Boolean}true">
+                                            <items jcr:primaryType="nt:unstructured">
+                                                <tabs
+                                                    jcr:primaryType="nt:unstructured"
+                                                    sling:resourceType="granite/ui/components/coral/foundation/tabs"
+                                                    size="L">
+                                                    <items jcr:primaryType="nt:unstructured">
+                                                        <general
+                                                            jcr:primaryType="nt:unstructured"
+                                                            jcr:title="General"
+                                                            sling:resourceType="granite/ui/components/coral/foundation/fixedcolumns"
+                                                            margin="{Boolean}true">
+                                                            <items jcr:primaryType="nt:unstructured">
+                                                                <generalContainer
+                                                                    jcr:primaryType="nt:unstructured"
+                                                                    sling:resourceType="granite/ui/components/coral/foundation/container">
+                                                                    <items jcr:primaryType="nt:unstructured">
+                                                                        <emailConfiguration
+                                                                            jcr:primaryType="nt:unstructured"
+                                                                            sling:resourceType="granite/ui/components/coral/foundation/container">
+                                                                            <items jcr:primaryType="nt:unstructured">
+
+                                                                                <smtpSection
+                                                                                    jcr:primaryType="nt:unstructured"
+                                                                                    jcr:title="SMTP Server"
+                                                                                    sling:resourceType="granite/ui/components/coral/foundation/form/fieldset">
+                                                                                    <items jcr:primaryType="nt:unstructured">
+                                                                                        <smtpHost
+                                                                                            jcr:primaryType="nt:unstructured"
+                                                                                            sling:resourceType="granite/ui/components/coral/foundation/form/textfield"
+                                                                                            fieldLabel="SMTP Host"
+                                                                                            fieldDescription="Hostname of the SMTP server used to send notification emails."
+                                                                                            name="smtpHost"
+                                                                                            required="{Boolean}true"/>
+                                                                                        <smtpPort
+                                                                                            jcr:primaryType="nt:unstructured"
+                                                                                            sling:resourceType="granite/ui/components/coral/foundation/form/numberfield"
+                                                                                            fieldLabel="SMTP Port"
+                                                                                            fieldDescription="SMTP port. Common values: 25 (plain), 587 (StartTLS), 465 (SSL)."
+                                                                                            name="smtpPort"
+                                                                                            required="{Boolean}true"/>
+                                                                                        <smtpUser
+                                                                                            jcr:primaryType="nt:unstructured"
+                                                                                            sling:resourceType="granite/ui/components/coral/foundation/form/textfield"
+                                                                                            fieldLabel="SMTP User"
+                                                                                            fieldDescription="Optional. Username for SMTP authentication. Leave blank if your server does not require authentication."
+                                                                                            name="smtpUser"/>
+                                                                                        <smtpPassword
+                                                                                            jcr:primaryType="nt:unstructured"
+                                                                                            sling:resourceType="granite/ui/components/coral/foundation/form/password"
+                                                                                            fieldLabel="SMTP Password"
+                                                                                            fieldDescription="Optional. Password for SMTP authentication. Leave blank to keep the existing password."
+                                                                                            name="smtpPassword"/>
+                                                                                        <fromEmail
+                                                                                            jcr:primaryType="nt:unstructured"
+                                                                                            sling:resourceType="granite/ui/components/coral/foundation/form/textfield"
+                                                                                            fieldLabel="From Email"
+                                                                                            fieldDescription="Sender address shown in notification emails. Recommended for most SMTP servers."
+                                                                                            name="fromEmail"
+                                                                                            validation="foundation.validation.validator.email"/>
+                                                                                        <smtpUseSSL
+                                                                                            jcr:primaryType="nt:unstructured"
+                                                                                            sling:resourceType="granite/ui/components/coral/foundation/form/checkbox"
+                                                                                            fieldDescription="Enable for SSL connections (typically port 465)."
+                                                                                            text="Use SSL"
+                                                                                            name="smtpUseSSL"
+                                                                                            value="{Boolean}true"/>
+                                                                                        <smtpUseStartTLS
+                                                                                            jcr:primaryType="nt:unstructured"
+                                                                                            sling:resourceType="granite/ui/components/coral/foundation/form/checkbox"
+                                                                                            fieldDescription="Enable for StartTLS connections (typically port 587)."
+                                                                                            text="Use StartTLS"
+                                                                                            name="smtpUseStartTLS"
+                                                                                            value="{Boolean}true"/>
+                                                                                    </items>
+                                                                                </smtpSection>
+
+                                                                                <notificationSection
+                                                                                    jcr:primaryType="nt:unstructured"
+                                                                                    jcr:title="Notifications"
+                                                                                    sling:resourceType="granite/ui/components/coral/foundation/form/fieldset">
+                                                                                    <items jcr:primaryType="nt:unstructured">
+                                                                                        <notifyOnIndexingFailure
+                                                                                            jcr:primaryType="nt:unstructured"
+                                                                                            sling:resourceType="granite/ui/components/coral/foundation/form/checkbox"
+                                                                                            fieldDescription="Send email notifications when full-index or incremental indexing fails."
+                                                                                            text="Notify on indexing failures"
+                                                                                            name="notifyOnIndexingFailure"
+                                                                                            value="{Boolean}true"
+                                                                                            checked="{Boolean}true"/>
+                                                                                        <receiverEmails
+                                                                                            jcr:primaryType="nt:unstructured"
+                                                                                            sling:resourceType="granite/ui/components/coral/foundation/form/textfield"
+                                                                                            fieldLabel="Receiver Emails"
+                                                                                            fieldDescription="Comma-separated list of recipients for indexing failure alerts. Example: admin@example.com, ops@example.com"
+                                                                                            name="receiverEmails"
+                                                                                            required="{Boolean}true"/>
+                                                                                        <testEmailButton
+                                                                                            granite:id="searchstax-email-test-button"
+                                                                                            jcr:primaryType="nt:unstructured"
+                                                                                            sling:resourceType="granite/ui/components/coral/foundation/button"
+                                                                                            text="Send Test Email"
+                                                                                            type="button"
+                                                                                            variant="secondary"
+                                                                                            disabled="{Boolean}true"/>
+                                                                                        <testEmailResult
+                                                                                            granite:id="searchstax-email-test-result"
+                                                                                            jcr:primaryType="nt:unstructured"
+                                                                                            sling:resourceType="granite/ui/components/coral/foundation/text"/>
+                                                                                    </items>
+                                                                                </notificationSection>
+
+                                                                            </items>
+                                                                        </emailConfiguration>
+                                                                    </items>
+                                                                </generalContainer>
+                                                            </items>
+                                                        </general>
+                                                    </items>
+                                                </tabs>
+                                            </items>
+                                        </container>
+                                    </items>
+                                    <parentConfig jcr:primaryType="nt:unstructured">
+                                        <next
+                                            granite:class="foundation-wizard-control"
+                                            jcr:primaryType="nt:unstructured"
+                                            sling:resourceType="granite/ui/components/coral/foundation/button"
+                                            text="Save"
+                                            type="submit"
+                                            variant="primary"/>
+                                    </parentConfig>
+                                </propertiesContainer>
+                            </items>
+                        </wizard>
+                    </items>
+                </form>
+            </items>
+        </body>
+    </jcr:content>
+</jcr:root>

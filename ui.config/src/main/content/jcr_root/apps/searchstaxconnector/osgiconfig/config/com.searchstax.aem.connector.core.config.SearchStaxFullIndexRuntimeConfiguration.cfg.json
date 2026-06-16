@@ -1,0 +1,10 @@
+{
+  "batchSize": 100,
+  "queryPageSize": 500,
+  "traversalMode": "JCR_SQL2",
+  "commitWithinMs": 120000,
+  "hardCommitEveryNBatches": 10,
+  "hardCommitOnSuccess": true,
+  "batchThrottleMs": 300,
+  "resolverRefreshEveryNBatches": 20
+}

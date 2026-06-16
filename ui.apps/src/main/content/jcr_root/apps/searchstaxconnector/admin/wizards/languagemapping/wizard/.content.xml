@@ -1,0 +1,269 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jcr:root xmlns:jcr="http://www.jcp.org/jcr/1.0" xmlns:nt="http://www.jcp.org/jcr/nt/1.0" xmlns:granite="http://www.adobe.com/jcr/granite/1.0" xmlns:cq="http://www.day.com/jcr/cq/1.0" xmlns:sling="http://sling.apache.org/jcr/sling/1.0"
+    jcr:primaryType="cq:Page">
+    <jcr:content
+        jcr:primaryType="nt:unstructured"
+        jcr:title="Language Mapping Configuration"
+        sling:resourceType="granite/ui/components/coral/foundation/page">
+        <head jcr:primaryType="nt:unstructured">
+            <viewport
+                jcr:primaryType="nt:unstructured"
+                sling:resourceType="granite/ui/components/coral/foundation/admin/page/viewport"/>
+            <meta
+                jcr:primaryType="nt:unstructured"
+                sling:resourceType="granite/ui/components/coral/foundation/meta"
+                content="chrome=1"
+                name="X-UA-Compatible"/>
+            <favicon
+                jcr:primaryType="nt:unstructured"
+                sling:resourceType="granite/ui/components/coral/foundation/page/favicon"/>
+            <clientlibs
+                jcr:primaryType="nt:unstructured"
+                sling:resourceType="granite/ui/components/coral/foundation/includeclientlibs"
+                categories="[searchstax.cloudconfig.touch]"/>
+            <wizardClientlibs
+                jcr:primaryType="nt:unstructured"
+                sling:resourceType="granite/ui/components/coral/foundation/includeclientlibs"
+                categories="[searchstaxconnector.wizard]"/>
+        </head>
+        <body
+            jcr:primaryType="nt:unstructured"
+            sling:resourceType="granite/ui/components/coral/foundation/page/body">
+            <items jcr:primaryType="nt:unstructured">
+                <form
+                    granite:id="edit-configuration-properties-form"
+                    jcr:primaryType="nt:unstructured"
+                    sling:resourceType="granite/ui/components/coral/foundation/form"
+                    action="/bin/searchstaxconnector/wizard/language-mappings"
+                    async="{Boolean}true"
+                    autocomplete="off"
+                    dataPath="${requestPathInfo.suffix}/jcr:content"
+                    foundationForm="{Boolean}true"
+                    maximized="{Boolean}true"
+                    method="post"
+                    novalidate="{Boolean}true"
+                    style="vertical">
+                    <successresponse
+                        jcr:primaryType="nt:unstructured"
+                        sling:resourceType="granite/ui/components/coral/foundation/form/responses/redirect"
+                        href="${empty header.Referer ? '/aem/start.html' : header.Referer}"/>
+                    <items jcr:primaryType="nt:unstructured">
+                        <wizard
+                            jcr:primaryType="nt:unstructured"
+                            jcr:title="Language Mapping Configuration"
+                            sling:resourceType="granite/ui/components/coral/foundation/wizard"
+                            cancelHref="${empty header.Referer ? '/aem/start.html' : header.Referer}">
+                            <items jcr:primaryType="nt:unstructured">
+                                <propertiesContainer
+                                    jcr:primaryType="nt:unstructured"
+                                    sling:resourceType="granite/ui/components/coral/foundation/fixedcolumns"
+                                    maximized="{Boolean}true">
+                                    <items jcr:primaryType="nt:unstructured">
+                                        <container
+                                            jcr:primaryType="nt:unstructured"
+                                            jcr:title="General"
+                                            sling:resourceType="granite/ui/components/coral/foundation/container"
+                                            margin="{Boolean}true">
+                                            <items jcr:primaryType="nt:unstructured">
+                                                <tabs
+                                                    jcr:primaryType="nt:unstructured"
+                                                    sling:resourceType="granite/ui/components/coral/foundation/tabs"
+                                                    size="L">
+                                                    <items jcr:primaryType="nt:unstructured">
+                                                        <general
+                                                            jcr:primaryType="nt:unstructured"
+                                                            jcr:title="General"
+                                                            sling:resourceType="granite/ui/components/coral/foundation/fixedcolumns"
+                                                            margin="{Boolean}true">
+                                                            <items jcr:primaryType="nt:unstructured">
+                                                                <generalContainer
+                                                                    jcr:primaryType="nt:unstructured"
+                                                                    sling:resourceType="granite/ui/components/coral/foundation/container">
+                                                                    <items jcr:primaryType="nt:unstructured">
+                                                                        <languageMappings
+                                                                            jcr:primaryType="nt:unstructured"
+                                                                            sling:resourceType="granite/ui/components/coral/foundation/form/multifield"
+                                                                            composite="{Boolean}true"
+                                                                            fieldLabel="Language Mappings"
+                                                                            fieldDescription="Map AEM language codes to SearchStax language codes used during indexing.">
+                                                                            <field
+                                                                                jcr:primaryType="nt:unstructured"
+                                                                                sling:resourceType="granite/ui/components/coral/foundation/container"
+                                                                                name="./languageMappings">
+                                                                                <items jcr:primaryType="nt:unstructured">
+                                                                                    <aemLanguageType
+                                                                                        jcr:primaryType="nt:unstructured"
+                                                                                        sling:resourceType="granite/ui/components/coral/foundation/form/select"
+                                                                                        fieldLabel="AEM Language"
+                                                                                        fieldDescription="Select the AEM language or locale code."
+                                                                                        name="./aemLanguageType"
+                                                                                        emptyText="Select AEM language"
+                                                                                        required="{Boolean}true"
+                                                                                        granite:class="cq-dialog-dropdown-showhide">
+                                                                                        <granite:data
+                                                                                            jcr:primaryType="nt:unstructured"
+                                                                                            cq-dialog-dropdown-showhide-target=".custom-field-showhide-target"/>
+                                                                                        <items jcr:primaryType="nt:unstructured">
+                                                                                            <en
+                                                                                                jcr:primaryType="nt:unstructured"
+                                                                                                text="en (English)"
+                                                                                                value="en"/>
+                                                                                            <en_US
+                                                                                                jcr:primaryType="nt:unstructured"
+                                                                                                text="en_US (English US)"
+                                                                                                value="en_US"/>
+                                                                                            <en_GB
+                                                                                                jcr:primaryType="nt:unstructured"
+                                                                                                text="en_GB (English UK)"
+                                                                                                value="en_GB"/>
+                                                                                            <de
+                                                                                                jcr:primaryType="nt:unstructured"
+                                                                                                text="de (German)"
+                                                                                                value="de"/>
+                                                                                            <de_DE
+                                                                                                jcr:primaryType="nt:unstructured"
+                                                                                                text="de_DE (German Germany)"
+                                                                                                value="de_DE"/>
+                                                                                            <fr
+                                                                                                jcr:primaryType="nt:unstructured"
+                                                                                                text="fr (French)"
+                                                                                                value="fr"/>
+                                                                                            <fr_FR
+                                                                                                jcr:primaryType="nt:unstructured"
+                                                                                                text="fr_FR (French France)"
+                                                                                                value="fr_FR"/>
+                                                                                            <es
+                                                                                                jcr:primaryType="nt:unstructured"
+                                                                                                text="es (Spanish)"
+                                                                                                value="es"/>
+                                                                                            <es_ES
+                                                                                                jcr:primaryType="nt:unstructured"
+                                                                                                text="es_ES (Spanish Spain)"
+                                                                                                value="es_ES"/>
+                                                                                            <it
+                                                                                                jcr:primaryType="nt:unstructured"
+                                                                                                text="it (Italian)"
+                                                                                                value="it"/>
+                                                                                            <it_IT
+                                                                                                jcr:primaryType="nt:unstructured"
+                                                                                                text="it_IT (Italian Italy)"
+                                                                                                value="it_IT"/>
+                                                                                            <pt
+                                                                                                jcr:primaryType="nt:unstructured"
+                                                                                                text="pt (Portuguese)"
+                                                                                                value="pt"/>
+                                                                                            <pt_BR
+                                                                                                jcr:primaryType="nt:unstructured"
+                                                                                                text="pt_BR (Portuguese Brazil)"
+                                                                                                value="pt_BR"/>
+                                                                                            <nl
+                                                                                                jcr:primaryType="nt:unstructured"
+                                                                                                text="nl (Dutch)"
+                                                                                                value="nl"/>
+                                                                                            <nl_NL
+                                                                                                jcr:primaryType="nt:unstructured"
+                                                                                                text="nl_NL (Dutch Netherlands)"
+                                                                                                value="nl_NL"/>
+                                                                                            <ja
+                                                                                                jcr:primaryType="nt:unstructured"
+                                                                                                text="ja (Japanese)"
+                                                                                                value="ja"/>
+                                                                                            <ja_JP
+                                                                                                jcr:primaryType="nt:unstructured"
+                                                                                                text="ja_JP (Japanese Japan)"
+                                                                                                value="ja_JP"/>
+                                                                                            <zh
+                                                                                                jcr:primaryType="nt:unstructured"
+                                                                                                text="zh (Chinese)"
+                                                                                                value="zh"/>
+                                                                                            <zh_CN
+                                                                                                jcr:primaryType="nt:unstructured"
+                                                                                                text="zh_CN (Chinese Simplified)"
+                                                                                                value="zh_CN"/>
+                                                                                            <zh_TW
+                                                                                                jcr:primaryType="nt:unstructured"
+                                                                                                text="zh_TW (Chinese Traditional)"
+                                                                                                value="zh_TW"/>
+                                                                                            <ko
+                                                                                                jcr:primaryType="nt:unstructured"
+                                                                                                text="ko (Korean)"
+                                                                                                value="ko"/>
+                                                                                            <ko_KR
+                                                                                                jcr:primaryType="nt:unstructured"
+                                                                                                text="ko_KR (Korean Korea)"
+                                                                                                value="ko_KR"/>
+                                                                                            <ar
+                                                                                                jcr:primaryType="nt:unstructured"
+                                                                                                text="ar (Arabic)"
+                                                                                                value="ar"/>
+                                                                                            <ru
+                                                                                                jcr:primaryType="nt:unstructured"
+                                                                                                text="ru (Russian)"
+                                                                                                value="ru"/>
+                                                                                            <custom
+                                                                                                jcr:primaryType="nt:unstructured"
+                                                                                                text="Custom"
+                                                                                                value="custom"/>
+                                                                                        </items>
+                                                                                    </aemLanguageType>
+                                                                                    <customAemLanguageWrapper
+                                                                                        jcr:primaryType="nt:unstructured"
+                                                                                        sling:resourceType="granite/ui/components/coral/foundation/container"
+                                                                                        granite:class="custom-language-showhide-target">
+                                                                                        <granite:data
+                                                                                            jcr:primaryType="nt:unstructured"
+                                                                                            showhidetargetvalue="custom"/>
+                                                                                        <items jcr:primaryType="nt:unstructured">
+                                                                                            <customAemLanguage
+                                                                                                jcr:primaryType="nt:unstructured"
+                                                                                                sling:resourceType="granite/ui/components/coral/foundation/form/textfield"
+                                                                                                fieldLabel="Custom AEM Language"
+                                                                                                fieldDescription="Enter a custom AEM language code. Example: en-ca"
+                                                                                                name="./customAemLanguage"/>
+                                                                                        </items>
+                                                                                    </customAemLanguageWrapper>
+                                                                                    <searchStaxLanguage
+                                                                                        jcr:primaryType="nt:unstructured"
+                                                                                        sling:resourceType="granite/ui/components/coral/foundation/form/textfield"
+                                                                                        fieldLabel="SearchStax Language"
+                                                                                        fieldDescription="Enter the SearchStax language code used in your index."
+                                                                                        name="./searchStaxLanguage"
+                                                                                        required="{Boolean}true"/>
+                                                                                    <enabled
+                                                                                        jcr:primaryType="nt:unstructured"
+                                                                                        sling:resourceType="granite/ui/components/coral/foundation/form/checkbox"
+                                                                                        text="Enable Language Mapping"
+                                                                                        fieldDescription="Enable or disable this language mapping."
+                                                                                        name="./enabledLanguageMapping"
+                                                                                        value="true"
+                                                                                        uncheckedValue="false"/>
+                                                                                </items>
+                                                                            </field>
+                                                                        </languageMappings>
+                                                                    </items>
+                                                                </generalContainer>
+                                                            </items>
+                                                        </general>
+                                                    </items>
+                                                </tabs>
+                                            </items>
+                                        </container>
+                                    </items>
+                                    <parentConfig jcr:primaryType="nt:unstructured">
+                                        <next
+                                            granite:class="foundation-wizard-control"
+                                            jcr:primaryType="nt:unstructured"
+                                            sling:resourceType="granite/ui/components/coral/foundation/button"
+                                            text="Save"
+                                            type="submit"
+                                            variant="primary"/>
+                                    </parentConfig>
+                                </propertiesContainer>
+                            </items>
+                        </wizard>
+                    </items>
+                </form>
+            </items>
+        </body>
+    </jcr:content>
+</jcr:root>

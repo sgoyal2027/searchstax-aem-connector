@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jcr:root xmlns:jcr="http://www.jcp.org/jcr/1.0" xmlns:nt="http://www.jcp.org/jcr/nt/1.0" xmlns:granite="http://www.adobe.com/jcr/granite/1.0" xmlns:cq="http://www.day.com/jcr/cq/1.0" xmlns:sling="http://sling.apache.org/jcr/sling/1.0"
+    jcr:primaryType="cq:Page">
+    <jcr:content
+        jcr:primaryType="nt:unstructured"
+        jcr:title="Full Index Configuration Settings"
+        sling:resourceType="granite/ui/components/coral/foundation/page">
+        <head jcr:primaryType="nt:unstructured">
+            <viewport
+                jcr:primaryType="nt:unstructured"
+                sling:resourceType="granite/ui/components/coral/foundation/admin/page/viewport"/>
+            <meta
+                jcr:primaryType="nt:unstructured"
+                sling:resourceType="granite/ui/components/coral/foundation/meta"
+                content="chrome=1"
+                name="X-UA-Compatible"/>
+            <favicon
+                jcr:primaryType="nt:unstructured"
+                sling:resourceType="granite/ui/components/coral/foundation/page/favicon"/>
+            <clientlibs
+                jcr:primaryType="nt:unstructured"
+                sling:resourceType="granite/ui/components/coral/foundation/includeclientlibs"
+                categories="[searchstaxconnector.fullindexsetup.config]"/>
+            <fullIndexRunClientlibs
+                jcr:primaryType="nt:unstructured"
+                sling:resourceType="granite/ui/components/coral/foundation/includeclientlibs"
+                categories="[searchstaxconnector.fullindex.run]"/>
+        </head>
+        <body
+            jcr:primaryType="nt:unstructured"
+            sling:resourceType="granite/ui/components/coral/foundation/page/body">
+            <items jcr:primaryType="nt:unstructured">
+                <form
+                    granite:id="edit-configuration-properties-form"
+                    jcr:primaryType="nt:unstructured"
+                    sling:resourceType="granite/ui/components/coral/foundation/form"
+                    action="/bin/searchstaxconnector/wizard/fullindex-config-save"
+                    async="{Boolean}true"
+                    autocomplete="off"
+                    dataPath="${requestPathInfo.suffix}/jcr:content"
+                    foundationForm="{Boolean}true"
+                    maximized="{Boolean}true"
+                    method="post"
+                    novalidate="{Boolean}true"
+                    style="vertical">
+                    <items jcr:primaryType="nt:unstructured">
+                        <wizard
+                            jcr:primaryType="nt:unstructured"
+                            jcr:title="Full Index Configuration Settings"
+                            sling:resourceType="granite/ui/components/coral/foundation/wizard"
+                            cancelHref="${empty header.Referer ? '/aem/start.html' : header.Referer}">
+                            <items jcr:primaryType="nt:unstructured">
+                                <propertiesContainer
+                                    jcr:primaryType="nt:unstructured"
+                                    sling:resourceType="granite/ui/components/coral/foundation/fixedcolumns"
+                                    maximized="{Boolean}true">
+                                    <items jcr:primaryType="nt:unstructured">
+                                        <container
+                                            jcr:primaryType="nt:unstructured"
+                                            jcr:title="General"
+                                            sling:resourceType="granite/ui/components/coral/foundation/container"
+                                            margin="{Boolean}true">
+                                            <items jcr:primaryType="nt:unstructured">
+                                                <tabs
+                                                    jcr:primaryType="nt:unstructured"
+                                                    sling:resourceType="granite/ui/components/coral/foundation/tabs"
+                                                    size="L">
+                                                    <items jcr:primaryType="nt:unstructured">
+                                                        <general
+                                                            jcr:primaryType="nt:unstructured"
+                                                            jcr:title="General"
+                                                            sling:resourceType="granite/ui/components/coral/foundation/fixedcolumns"
+                                                            margin="{Boolean}true">
+                                                            <items jcr:primaryType="nt:unstructured">
+                                                                <generalContainer
+                                                                    jcr:primaryType="nt:unstructured"
+                                                                    sling:resourceType="granite/ui/components/coral/foundation/container">
+                                                                    <items jcr:primaryType="nt:unstructured">
+                                                                        <rootPath
+                                                                                jcr:primaryType="nt:unstructured"
+                                                                                sling:resourceType="granite/ui/components/coral/foundation/form/pathfield"
+                                                                                fieldLabel="Root Path"
+                                                                                fieldDescription="Select the root content path to be used for indexing."
+                                                                                name="./rootPath"
+                                                                                rootPath="/content"/>
+                                                                    
+                                                                        <!-- Include Paths -->
+                                                                        <includePaths
+                                                                                granite:id="searchstax-include-paths-multifield"
+                                                                                jcr:primaryType="nt:unstructured"
+                                                                                sling:resourceType="granite/ui/components/coral/foundation/form/multifield"
+                                                                                composite="{Boolean}true"
+                                                                                fieldLabel="Indexing Include Paths"
+                                                                                fieldDescription="Add content paths that should be included for indexing.">
+                                                                            <field
+                                                                                    jcr:primaryType="nt:unstructured"
+                                                                                    sling:resourceType="granite/ui/components/coral/foundation/container">
+                                                                                <items jcr:primaryType="nt:unstructured">
+                                                                                    <path
+                                                                                            jcr:primaryType="nt:unstructured"
+                                                                                            sling:resourceType="granite/ui/components/coral/foundation/form/pathfield"
+                                                                                            fieldLabel="Path"
+                                                                                            name="./path"
+                                                                                            rootPath="/content"/>
+                                                                                    <includeChildPath
+                                                                                            jcr:primaryType="nt:unstructured"
+                                                                                            sling:resourceType="granite/ui/components/coral/foundation/form/checkbox"
+                                                                                            name="./includeChildPath"
+                                                                                            text="Include Child Path"
+                                                                                            value="true"
+                                                                                            uncheckedValue="false"/>
+                                                                                </items>
+                                                                            </field>
+                                                                        </includePaths>
+                                                                        <includePathsJson
+                                                                                jcr:primaryType="nt:unstructured"
+                                                                                sling:resourceType="granite/ui/components/coral/foundation/form/hidden"
+                                                                                name="./includePathsJson"/>
+                                                                        <!-- Exclude Paths -->
+                                                                        <excludePaths
+                                                                                jcr:primaryType="nt:unstructured"
+                                                                                sling:resourceType="granite/ui/components/coral/foundation/form/multifield"
+                                                                                fieldLabel="Indexing Exclude Paths"
+                                                                                fieldDescription="Add content paths that should be excluded from indexing.">
+                                                                            <field
+                                                                                    jcr:primaryType="nt:unstructured"
+                                                                                    sling:resourceType="granite/ui/components/coral/foundation/form/pathfield"
+                                                                                    name="./excludePaths"
+                                                                                    rootPath="/content"/>
+                                                                        </excludePaths>
+                                                                         <runFullIndexButton
+                                                                                granite:id="searchstax-run-full-index-button"
+                                                                                jcr:primaryType="nt:unstructured"
+                                                                                sling:resourceType="granite/ui/components/coral/foundation/button"
+                                                                                text="Run full indexing"
+                                                                                type="button"
+                                                                                variant="primary"/>
+                                                                    </items>
+                                                                </generalContainer>
+                                                            </items>
+                                                        </general>
+                                                    </items>
+                                                </tabs>
+                                            </items>
+                                        </container>
+                                    </items>
+                                    <parentConfig jcr:primaryType="nt:unstructured">
+                                        <next
+                                            granite:class="foundation-wizard-control"
+                                            jcr:primaryType="nt:unstructured"
+                                            sling:resourceType="granite/ui/components/coral/foundation/button"
+                                            text="Save"
+                                            type="submit"
+                                            variant="primary"/>
+                                    </parentConfig>
+                                </propertiesContainer>
+                            </items>
+                        </wizard>
+                    </items>
+                </form>
+            </items>
+        </body>
+    </jcr:content>
+</jcr:root>

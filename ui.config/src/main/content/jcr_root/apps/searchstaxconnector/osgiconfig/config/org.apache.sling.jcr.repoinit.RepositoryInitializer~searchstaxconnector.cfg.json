@@ -1,0 +1,66 @@
+{
+  "scripts": [
+    "create service user searchstax-service-user",
+
+    "create path (sling:Folder) /conf/searchstaxconnector",
+    "create path (sling:Folder) /conf/searchstaxconnector/settings",
+    "create path (sling:Folder) /conf/searchstaxconnector/settings/initialsetupconfig",
+    "create path (sling:Folder) /conf/searchstaxconnector/settings/apiconfig",
+    "create path (sling:Folder) /conf/searchstaxconnector/settings/emailconfig",
+    "create path (sling:Folder) /conf/searchstaxconnector/settings/fullindexsetupconfig",
+    "create path (sling:Folder) /conf/searchstaxconnector/settings/metadatafieldmapping",
+    "create path (sling:Folder) /conf/searchstaxconnector/settings/languagemapping",
+    "create path (sling:Folder) /conf/searchstaxconnector/settings/siteapplicationmapping",
+    "create path (sling:Folder) /var/searchstaxconnector",
+    "create path (sling:Folder) /var/searchstaxconnector/fullindex",
+    "create path (sling:Folder) /var/searchstaxconnector/fullindex/failure",
+    "create path (sling:Folder) /var/searchstaxconnector/incremental-index",
+    "create path (sling:Folder) /var/searchstaxconnector/incremental-index/failed",
+    "create path (sling:Folder) /var/searchstaxconnector/incremental-index/pending",
+    "create path (sling:Folder) /var/searchstaxconnector/incremental-index/audit",
+
+    "set ACL on /conf (ACLOptions=merge)\n    allow jcr:read for searchstax-service-user\nend",
+
+    "set ACL on /conf/searchstaxconnector (ACLOptions=merge)\n allow jcr:read,rep:write for searchstax-service-user\nend",
+
+    "set ACL on /conf/searchstaxconnector/settings (ACLOptions=merge)\n allow jcr:read,rep:write for searchstax-service-user\nend",
+
+    "set ACL on /conf/searchstaxconnector/settings/initialsetupconfig (ACLOptions=merge)\n allow jcr:read,rep:write for searchstax-service-user\nend",
+
+    "set ACL on /conf/searchstaxconnector/settings/apiconfig (ACLOptions=merge)\n allow jcr:read,rep:write for searchstax-service-user\nend",
+
+    "set ACL on /conf/searchstaxconnector/settings/emailconfig (ACLOptions=merge)\n allow jcr:read,rep:write for searchstax-service-user\nend",
+
+    "set ACL on /conf/searchstaxconnector/settings/fullindexsetupconfig (ACLOptions=merge)\n allow jcr:read,rep:write for searchstax-service-user\nend",
+
+    "set ACL on /conf/searchstaxconnector/settings/metadatafieldmapping (ACLOptions=merge)\n allow jcr:read,rep:write for searchstax-service-user\nend",
+
+    "set ACL on /conf/searchstaxconnector/settings/languagemapping (ACLOptions=merge)\n allow jcr:read,rep:write for searchstax-service-user\nend",
+
+    "set ACL on /conf/searchstaxconnector/settings/siteapplicationmapping (ACLOptions=merge)\n allow jcr:read,rep:write for searchstax-service-user\nend",
+
+    "set ACL on /var (ACLOptions=merge)\n    allow jcr:read,jcr:addChildNodes,jcr:modifyProperties for searchstax-service-user\nend",
+
+    "set ACL on /var/searchstaxconnector (ACLOptions=merge)\n    allow jcr:read,jcr:addChildNodes,jcr:modifyProperties,jcr:removeNode,jcr:removeChildNodes,jcr:nodeTypeManagement for searchstax-service-user\nend",
+
+    "set ACL on /var/searchstaxconnector/fullindex (ACLOptions=merge)\n    allow jcr:read,jcr:addChildNodes,jcr:modifyProperties,jcr:removeNode,jcr:removeChildNodes,jcr:nodeTypeManagement for searchstax-service-user\nend",
+
+    "set ACL on /var/searchstaxconnector/fullindex/failure (ACLOptions=merge)\n    allow jcr:read,jcr:addChildNodes,jcr:modifyProperties,jcr:removeNode,jcr:removeChildNodes,jcr:nodeTypeManagement for searchstax-service-user\nend",
+
+    "set ACL on /var/searchstaxconnector/incremental-index (ACLOptions=merge)\n    allow jcr:read,jcr:addChildNodes,jcr:modifyProperties,jcr:removeNode,jcr:removeChildNodes,jcr:nodeTypeManagement for searchstax-service-user\nend",
+
+    "set ACL on /var/searchstaxconnector/incremental-index/failed (ACLOptions=merge)\n    allow jcr:read,jcr:addChildNodes,jcr:modifyProperties,jcr:removeNode,jcr:removeChildNodes,jcr:nodeTypeManagement for searchstax-service-user\nend",
+
+    "set ACL on /var/searchstaxconnector/incremental-index/pending (ACLOptions=merge)\n    allow jcr:read,jcr:addChildNodes,jcr:modifyProperties,jcr:removeNode,jcr:removeChildNodes,jcr:nodeTypeManagement for searchstax-service-user\nend",
+
+    "set ACL on /var/searchstaxconnector/incremental-index/audit (ACLOptions=merge)\n    allow jcr:read,jcr:addChildNodes,jcr:modifyProperties,jcr:removeNode,jcr:removeChildNodes,jcr:nodeTypeManagement for searchstax-service-user\nend",
+
+    "create path (sling:OrderedFolder) /content",
+    "create path (sling:Folder) /content/dam",
+
+    "set ACL on /content (ACLOptions=merge)\n    allow jcr:read for searchstax-service-user\nend",
+
+    "set ACL on /content/dam (ACLOptions=merge)\n    allow jcr:read for searchstax-service-user\nend"
+
+  ]
+}

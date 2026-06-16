@@ -1,0 +1,32 @@
+<!--/*
+    SearchStax UX Toolkit search component (SRS 5.10).
+    Requires select endpoint/token configured in Tools → SearchStax → API Configuration.
+*/-->
+<sly data-sly-use.model="com.searchstax.aem.connector.core.models.SearchStaxSearchModel"
+     data-sly-use.clientlib="/libs/granite/sightly/templates/clientlib.html"/>
+
+<sly data-sly-call="${clientlib.css @ categories='searchstaxconnector.search'}"/>
+<sly data-sly-call="${clientlib.js @ categories='searchstaxconnector.search'}"/>
+
+<div class="searchstax-search"
+     data-select-endpoint="${model.selectEndpoint @ context='attribute'}"
+     data-select-token="${model.selectToken @ context='attribute'}"
+     data-search-profile="${model.searchProfile @ context='attribute'}"
+     data-results-per-page="${model.resultsPerPage @ context='attribute'}">
+
+    <div data-sly-test="${model.maintenanceActive}" class="searchstax-search__maintenance">
+        ${model.maintenanceMessage @ context='text'}
+    </div>
+
+    <div data-sly-test="${!model.maintenanceActive}" class="searchstax-search__active">
+        <form class="searchstax-search__form" role="search">
+            <input type="search"
+                   class="searchstax-search__input"
+                   name="q"
+                   placeholder="${model.placeholderText @ context='attribute'}"
+                   aria-label="${model.placeholderText @ context='attribute'}"/>
+            <button type="submit" class="searchstax-search__submit">Search</button>
+        </form>
+        <div class="searchstax-search__results" aria-live="polite"></div>
+    </div>
+</div>

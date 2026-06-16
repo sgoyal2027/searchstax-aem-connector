@@ -1,0 +1,8 @@
+# Optional alternative to .mvn/maven.config (used by cross-platform-verify.ps1 if maven.config is absent).
+# Copy to build.properties (gitignored) and set versions for your AEM environment.
+#
+# Cloud: aem.sdk.api must match your Cloud Manager SDK / local SDK author.
+# Classic (6.5 / AMS): uber.jar.version must match your AEM 6.5 service pack.
+
+aem.sdk.api=
+uber.jar.version=

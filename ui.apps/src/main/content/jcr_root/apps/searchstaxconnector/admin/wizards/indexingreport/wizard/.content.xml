@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jcr:root xmlns:jcr="http://www.jcp.org/jcr/1.0" xmlns:nt="http://www.jcp.org/jcr/nt/1.0" xmlns:granite="http://www.adobe.com/jcr/granite/1.0" xmlns:cq="http://www.day.com/jcr/cq/1.0" xmlns:sling="http://sling.apache.org/jcr/sling/1.0"
+    jcr:primaryType="cq:Page">
+    <jcr:content
+        jcr:primaryType="nt:unstructured"
+        jcr:title="Indexing Report"
+        sling:resourceType="granite/ui/components/coral/foundation/page">
+        <head jcr:primaryType="nt:unstructured">
+            <viewport
+                jcr:primaryType="nt:unstructured"
+                sling:resourceType="granite/ui/components/coral/foundation/admin/page/viewport"/>
+            <meta
+                jcr:primaryType="nt:unstructured"
+                sling:resourceType="granite/ui/components/coral/foundation/meta"
+                content="chrome=1"
+                name="X-UA-Compatible"/>
+            <favicon
+                jcr:primaryType="nt:unstructured"
+                sling:resourceType="granite/ui/components/coral/foundation/page/favicon"/>
+            <clientlibs
+                jcr:primaryType="nt:unstructured"
+                sling:resourceType="granite/ui/components/coral/foundation/includeclientlibs"
+                categories="[searchstaxconnector.indexingreport,searchstax.cloudconfig.touch]"/>
+        </head>
+        <body
+            jcr:primaryType="nt:unstructured"
+            sling:resourceType="granite/ui/components/coral/foundation/page/body">
+            <items jcr:primaryType="nt:unstructured">
+                <container
+                    jcr:primaryType="nt:unstructured"
+                    sling:resourceType="granite/ui/components/coral/foundation/container"
+                    margin="{Boolean}true">
+                    <items jcr:primaryType="nt:unstructured">
+                        <heading
+                            jcr:primaryType="nt:unstructured"
+                            sling:resourceType="granite/ui/components/coral/foundation/heading"
+                            level="{Long}2"
+                            text="Incremental Indexing Report"/>
+                        <description
+                            jcr:primaryType="nt:unstructured"
+                            sling:resourceType="granite/ui/components/coral/foundation/text"
+                            text="Shows QUEUED, SUCCESS, FAILURE, and SKIPPED indexing events from the last 24 hours. Use the status filters above the table to focus on a single outcome. Data is automatically purged after 24 hours."/>
+                        <reportTable
+                            jcr:primaryType="nt:unstructured"
+                            sling:resourceType="granite/ui/components/coral/foundation/table"
+                            granite:id="searchstax-indexing-report-table"
+                            selectionMode="none"
+                            sortMode="local">
+                            <columns jcr:primaryType="nt:unstructured">
+                                <timestamp
+                                    jcr:primaryType="nt:unstructured"
+                                    jcr:title="Time"
+                                    name="timestamp"/>
+                                <path
+                                    jcr:primaryType="nt:unstructured"
+                                    jcr:title="Path"
+                                    name="path"/>
+                                <action
+                                    jcr:primaryType="nt:unstructured"
+                                    jcr:title="Action"
+                                    name="action"/>
+                                <status
+                                    jcr:primaryType="nt:unstructured"
+                                    jcr:title="Status"
+                                    name="status"/>
+                                <duration
+                                    jcr:primaryType="nt:unstructured"
+                                    jcr:title="Duration (ms)"
+                                    name="duration"/>
+                                <correlationId
+                                    jcr:primaryType="nt:unstructured"
+                                    jcr:title="Correlation ID"
+                                    name="correlationId"/>
+                                <message
+                                    jcr:primaryType="nt:unstructured"
+                                    jcr:title="Message"
+                                    name="message"/>
+                            </columns>
+                        </reportTable>
+                    </items>
+                </container>
+            </items>
+        </body>
+    </jcr:content>
+</jcr:root>

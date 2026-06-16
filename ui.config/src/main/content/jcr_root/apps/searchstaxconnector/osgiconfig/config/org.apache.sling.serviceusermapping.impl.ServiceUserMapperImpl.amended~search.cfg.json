@@ -1,0 +1,5 @@
+{
+  "user.mapping": [
+    "searchstax-aem-connector.core:searchstaxService=searchstax-service-user"
+  ]
+}

@@ -1,0 +1,8 @@
+# Copy to .mvn/maven.config (gitignored) and set your client AEM versions.
+# Maven reads this file before the POM is parsed, so -D properties apply to dependencyManagement.
+#
+# Cloud: aem.sdk.api must match your Cloud Manager SDK / local SDK author.
+# Classic (6.5 / AMS): uber.jar.version must match your AEM 6.5 service pack.
+
+-Daem.sdk.api=
+-Duber.jar.version=

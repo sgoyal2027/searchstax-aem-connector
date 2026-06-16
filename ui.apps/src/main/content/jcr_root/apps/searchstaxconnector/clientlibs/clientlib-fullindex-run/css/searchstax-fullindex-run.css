@@ -1,0 +1,80 @@
+#searchstax-full-index-progress .searchstax-fullindex-progress-panel {
+    margin-top: 20px;
+    padding: 22px 24px;
+    border: 1px solid #b9d2ee;
+    border-radius: 8px;
+    background: transparent;
+    box-shadow: 0 2px 6px rgba(15, 84, 167, 0.08);
+    max-width: 100%;
+    box-sizing: border-box;
+}
+
+#searchstax-full-index-progress .searchstax-fullindex-progress-panel--running {
+    border-left: 4px solid #1473e6;
+}
+
+#searchstax-full-index-progress .searchstax-fullindex-progress-bar {
+    display: block;
+    width: 100%;
+    min-height: 12px;
+    margin-bottom: 0;
+    color: #1473e6;
+}
+
+#searchstax-full-index-progress .searchstax-fullindex-progress-title {
+    font-size: 17px;
+    font-weight: 700;
+    margin-bottom: 10px;
+    color: #1d1d1d;
+    line-height: 1.4;
+}
+
+#searchstax-full-index-progress .searchstax-fullindex-progress-stats {
+    font-size: 13px;
+    color: #3f3f3f;
+    line-height: 1.6;
+}
+
+#searchstax-full-index-progress .searchstax-fullindex-progress-path {
+    font-size: 12px;
+    color: #595959;
+    margin-top: 8px;
+    line-height: 1.5;
+    word-break: break-all;
+}
+
+#searchstax-full-index-progress .searchstax-fullindex-progress-path-label {
+    font-weight: 600;
+    color: #3f3f3f;
+}
+
+#searchstax-full-index-run-result .searchstax-fullindex-result {
+    margin-top: 8px;
+}
+
+#searchstax-full-index-run-result .searchstax-fullindex-result-alert {
+    border-radius: 8px;
+    width: 100%;
+}
+
+#searchstax-full-index-run-result .searchstax-fullindex-result-title {
+    font-size: 14px;
+    line-height: 1.45;
+    color: #1d1d1d;
+}
+
+#searchstax-full-index-run-result .searchstax-fullindex-result-title strong {
+    font-weight: 700;
+}
+
+#searchstax-full-index-run-result .searchstax-fullindex-result-details {
+    margin-top: 8px;
+    font-size: 12px;
+    line-height: 1.5;
+    color: #4a4a4a;
+    word-break: break-word;
+}
+
+#searchstax-full-index-run-result .searchstax-fullindex-result--success .searchstax-fullindex-result-details {
+    color: #245a3f;
+}

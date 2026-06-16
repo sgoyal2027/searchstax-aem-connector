@@ -1,0 +1,288 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jcr:root xmlns:jcr="http://www.jcp.org/jcr/1.0" xmlns:nt="http://www.jcp.org/jcr/nt/1.0" xmlns:granite="http://www.adobe.com/jcr/granite/1.0" xmlns:cq="http://www.day.com/jcr/cq/1.0" xmlns:sling="http://sling.apache.org/jcr/sling/1.0"
+    jcr:primaryType="cq:Page">
+    <jcr:content
+        jcr:primaryType="nt:unstructured"
+        jcr:title="Searchstax Configuration Settings"
+        sling:resourceType="granite/ui/components/coral/foundation/page">
+        <head jcr:primaryType="nt:unstructured">
+            <wizardClientLibs
+                jcr:primaryType="nt:unstructured"
+                sling:resourceType="granite/ui/components/coral/foundation/includeclientlibs"
+                categories="[searchstaxconnector.wizard]"/>
+            <viewport
+                jcr:primaryType="nt:unstructured"
+                sling:resourceType="granite/ui/components/coral/foundation/admin/page/viewport"/>
+            <meta
+                jcr:primaryType="nt:unstructured"
+                sling:resourceType="granite/ui/components/coral/foundation/meta"
+                content="chrome=1"
+                name="X-UA-Compatible"/>
+            <favicon
+                jcr:primaryType="nt:unstructured"
+                sling:resourceType="granite/ui/components/coral/foundation/page/favicon"/>
+            <clientlibs
+                    jcr:primaryType="nt:unstructured"
+                    sling:resourceType="granite/ui/components/coral/foundation/includeclientlibs"
+                    categories="[searchstaxconnector.apiconfig.config,searchstax.cloudconfig.touch]"/>
+        </head>
+        <body
+            jcr:primaryType="nt:unstructured"
+            sling:resourceType="granite/ui/components/coral/foundation/page/body">
+            <items jcr:primaryType="nt:unstructured">
+                <form
+                    granite:id="edit-configuration-properties-form"
+                    jcr:primaryType="nt:unstructured"
+                    sling:resourceType="granite/ui/components/coral/foundation/form"
+                    action="/bin/searchstaxconnector/wizard/api-config-save"
+                    async="{Boolean}true"
+                    autocomplete="off"
+                    foundationForm="{Boolean}true"
+                    maximized="{Boolean}true"
+                    method="post"
+                    novalidate="{Boolean}true"
+                    style="vertical">
+                    <successresponse
+                        jcr:primaryType="nt:unstructured"
+                        sling:resourceType="granite/ui/components/coral/foundation/form/responses/redirect"
+                        href="${empty header.Referer ? '/aem/start.html' : header.Referer}"/>
+                    <items jcr:primaryType="nt:unstructured">
+                        <wizard
+                            jcr:primaryType="nt:unstructured"
+                            jcr:title="Search Configuration Settings"
+                            sling:resourceType="granite/ui/components/coral/foundation/wizard"
+                            cancelHref="${empty header.Referer ? '/aem/start.html' : header.Referer}">
+                            <items jcr:primaryType="nt:unstructured">
+                                <propertiesContainer
+                                    jcr:primaryType="nt:unstructured"
+                                    sling:resourceType="granite/ui/components/coral/foundation/fixedcolumns"
+                                    maximized="{Boolean}true">
+                                    <items jcr:primaryType="nt:unstructured">
+                                        <container
+                                            jcr:primaryType="nt:unstructured"
+                                            jcr:title="General"
+                                            sling:resourceType="granite/ui/components/coral/foundation/container"
+                                            margin="{Boolean}true">
+                                            <items jcr:primaryType="nt:unstructured">
+                                                <tabs
+                                                    jcr:primaryType="nt:unstructured"
+                                                    sling:resourceType="granite/ui/components/coral/foundation/tabs"
+                                                    size="L">
+                                                    <items jcr:primaryType="nt:unstructured">
+                                                        <general
+                                                            jcr:primaryType="nt:unstructured"
+                                                            jcr:title="General"
+                                                            sling:resourceType="granite/ui/components/coral/foundation/fixedcolumns"
+                                                            margin="{Boolean}true">
+                                                            <items jcr:primaryType="nt:unstructured">
+                                                                <generalContainer
+                                                                    jcr:primaryType="nt:unstructured"
+                                                                    sling:resourceType="granite/ui/components/coral/foundation/container">
+                                                                    <items jcr:primaryType="nt:unstructured">
+                                                                        <endpointUrl
+                                                                                jcr:primaryType="nt:unstructured"
+                                                                                sling:resourceType="granite/ui/components/coral/foundation/form/textfield"
+                                                                                fieldDescription="Main endpoint URL used for connector test."
+                                                                                fieldLabel="Endpoint URL"
+                                                                                name="endpointUrl"
+                                                                                required="{Boolean}true"/>
+                                                                        <apiToken
+                                                                                jcr:primaryType="nt:unstructured"
+                                                                                sling:resourceType="granite/ui/components/coral/foundation/form/password"
+                                                                                autoComplete="off"
+                                                                                fieldDescription="When a token is already saved, the field is locked. Click Update token to enter a new value."
+                                                                                fieldLabel="API Token"
+                                                                                name="apiToken"
+                                                                                required="{Boolean}true"/>
+                                                                        <generalTestButton
+                                                                                granite:id="searchstax-general-test-button"
+                                                                                jcr:primaryType="nt:unstructured"
+                                                                                sling:resourceType="granite/ui/components/coral/foundation/button"
+                                                                                text="Test Configuration"
+                                                                                type="button"
+                                                                                variant="primary"/>
+                                                                    </items>
+                                                                </generalContainer>
+                                                            </items>
+                                                        </general>
+                                                        <searchAndIndexing
+                                                            jcr:primaryType="nt:unstructured"
+                                                            jcr:title="Search &amp; Indexing"
+                                                            sling:resourceType="granite/ui/components/coral/foundation/fixedcolumns"
+                                                            margin="{Boolean}true">
+                                                            <items jcr:primaryType="nt:unstructured">
+                                                                <searchAndIndexingContainer
+                                                                    jcr:primaryType="nt:unstructured"
+                                                                    sling:resourceType="granite/ui/components/coral/foundation/container">
+                                                                    <items jcr:primaryType="nt:unstructured">
+                                                                        <selectEndpoint
+                                                                                jcr:primaryType="nt:unstructured"
+                                                                                emptyText="https://"
+                                                                                sling:resourceType="granite/ui/components/coral/foundation/form/textfield"
+                                                                                fieldDescription="Full Select API endpoint URL."
+                                                                                fieldLabel="Select Endpoint"
+                                                                                name="selectEndpoint"
+                                                                                required="{Boolean}true"/>
+                                                                        <selectToken
+                                                                                jcr:primaryType="nt:unstructured"
+                                                                                sling:resourceType="granite/ui/components/coral/foundation/form/password"
+                                                                                autoComplete="off"
+                                                                                fieldDescription="When a token is already saved, the field is locked. Click Update token to enter a new value."
+                                                                                fieldLabel="Select Endpoint Token"
+                                                                                name="selectToken"
+                                                                                required="{Boolean}true"/>
+                                                                        <updateEndpoint
+                                                                                jcr:primaryType="nt:unstructured"
+                                                                                emptyText="https://"
+                                                                                sling:resourceType="granite/ui/components/coral/foundation/form/textfield"
+                                                                                fieldDescription="Full Update API endpoint URL."
+                                                                                fieldLabel="Update Endpoint"
+                                                                                name="updateEndpoint"
+                                                                                required="{Boolean}true"/>
+                                                                        <updateToken
+                                                                                jcr:primaryType="nt:unstructured"
+                                                                                sling:resourceType="granite/ui/components/coral/foundation/form/password"
+                                                                                autoComplete="off"
+                                                                                fieldDescription="When a token is already saved, the field is locked. Click Update token to enter a new value."
+                                                                                fieldLabel="Update Endpoint Token"
+                                                                                name="updateToken"
+                                                                                required="{Boolean}true"/>
+                                                                        <autoSuggestApi
+                                                                                jcr:primaryType="nt:unstructured"
+                                                                                emptyText="https://"
+                                                                                sling:resourceType="granite/ui/components/coral/foundation/form/textfield"
+                                                                                fieldDescription="Auto-Suggest API endpoint URL."
+                                                                                fieldLabel="Auto-Suggest API"
+                                                                                name="autoSuggestApi"/>
+                                                                    </items>
+                                                                </searchAndIndexingContainer>
+                                                            </items>
+                                                        </searchAndIndexing>
+                                                        <discovery
+                                                            jcr:primaryType="nt:unstructured"
+                                                            jcr:title="Discovery"
+                                                            sling:resourceType="granite/ui/components/coral/foundation/fixedcolumns"
+                                                            margin="{Boolean}true">
+                                                            <items jcr:primaryType="nt:unstructured">
+                                                                <discoveryContainer
+                                                                    jcr:primaryType="nt:unstructured"
+                                                                    sling:resourceType="granite/ui/components/coral/foundation/container">
+                                                                    <items jcr:primaryType="nt:unstructured">
+                                                                        <relatedSearchesEndpoint
+                                                                            jcr:primaryType="nt:unstructured"
+                                                                            sling:resourceType="granite/ui/components/coral/foundation/form/textfield"
+                                                                            emptyText="https://"
+                                                                            fieldDescription="Endpoint URL for related searches API."
+                                                                            fieldLabel="Related Searches API Endpoint"
+                                                                            name="relatedSearchesEndpoint"/>
+                                                                        <popularSearchesEndpoint
+                                                                            jcr:primaryType="nt:unstructured"
+                                                                            sling:resourceType="granite/ui/components/coral/foundation/form/textfield"
+                                                                            emptyText="https://"
+                                                                            fieldDescription="Endpoint URL for popular searches API."
+                                                                            fieldLabel="Popular Searches API Endpoint"
+                                                                            name="popularSearchesEndpoint"/>
+                                                                        <discoveryApiKey
+                                                                            jcr:primaryType="nt:unstructured"
+                                                                            sling:resourceType="granite/ui/components/coral/foundation/form/password"
+                                                                            autoComplete="off"
+                                                                            fieldDescription="When a key is already saved, the field is locked. Click Update key to enter a new value."
+                                                                            fieldLabel="Discovery API Key"
+                                                                            name="discoveryApiKey"/>
+                                                                    </items>
+                                                                </discoveryContainer>
+                                                            </items>
+                                                        </discovery>
+                                                        <analytics
+                                                            jcr:primaryType="nt:unstructured"
+                                                            jcr:title="Analytics"
+                                                            sling:resourceType="granite/ui/components/coral/foundation/fixedcolumns"
+                                                            margin="{Boolean}true">
+                                                            <items jcr:primaryType="nt:unstructured">
+                                                                <analyticsContainer
+                                                                    jcr:primaryType="nt:unstructured"
+                                                                    sling:resourceType="granite/ui/components/coral/foundation/container">
+                                                                    <items jcr:primaryType="nt:unstructured">
+                                                                        <analyticsTrackingUrl
+                                                                                jcr:primaryType="nt:unstructured"
+                                                                                sling:resourceType="granite/ui/components/coral/foundation/form/textfield"
+                                                                                emptyText="https://"
+                                                                                fieldDescription="Analytics API endpoint URL."
+                                                                                fieldLabel="Analytics Tracking URL"
+                                                                                name="analyticsTrackingUrl"/>
+                                                                        <analyticsTrackingKey
+                                                                                jcr:primaryType="nt:unstructured"
+                                                                                sling:resourceType="granite/ui/components/coral/foundation/form/password"
+                                                                                autoComplete="off"
+                                                                                fieldDescription="When a key is already saved, the field is locked. Click Update key to enter a new value."
+                                                                                fieldLabel="Analytics Tracking Key"
+                                                                                name="analyticsTrackingKey"/>
+                                                                        <analyticsReportingUrl
+                                                                                jcr:primaryType="nt:unstructured"
+                                                                                sling:resourceType="granite/ui/components/coral/foundation/form/textfield"
+                                                                                emptyText="https://"
+                                                                                fieldDescription="Analytics Reporting API endpoint URL."
+                                                                                fieldLabel="Analytics Reporting Endpoint"
+                                                                                name="analyticsReportingUrl"/>
+                                                                        <analyticsReportingApiKey
+                                                                                jcr:primaryType="nt:unstructured"
+                                                                                sling:resourceType="granite/ui/components/coral/foundation/form/password"
+                                                                                autoComplete="off"
+                                                                                fieldDescription="When a token is already saved, the field is locked. Click Update token to enter a new value."
+                                                                                fieldLabel="Analytics Reporting Token"
+                                                                                name="analyticsReportingApiKey"/>
+                                                                    </items>
+                                                                </analyticsContainer>
+                                                            </items>
+                                                        </analytics>
+                                                        <geocoding
+                                                            jcr:primaryType="nt:unstructured"
+                                                            jcr:title="Geocoding"
+                                                            sling:resourceType="granite/ui/components/coral/foundation/fixedcolumns"
+                                                            margin="{Boolean}true">
+                                                            <items jcr:primaryType="nt:unstructured">
+                                                                <geocodingContainer
+                                                                    jcr:primaryType="nt:unstructured"
+                                                                    sling:resourceType="granite/ui/components/coral/foundation/container">
+                                                                    <items jcr:primaryType="nt:unstructured">
+                                                                        <forwardGeocodingEndpoint
+                                                                            jcr:primaryType="nt:unstructured"
+                                                                            sling:resourceType="granite/ui/components/coral/foundation/form/textfield"
+                                                                            emptyText="https://"
+                                                                            fieldDescription="Endpoint URL for forward geocoding API."
+                                                                            fieldLabel="Forward Geocoding API Endpoint"
+                                                                            name="forwardGeocodingEndpoint"/>
+                                                                        <reverseGeocodingEndpoint
+                                                                            jcr:primaryType="nt:unstructured"
+                                                                            sling:resourceType="granite/ui/components/coral/foundation/form/textfield"
+                                                                            emptyText="https://"
+                                                                            fieldDescription="Endpoint URL for reverse geocoding API."
+                                                                            fieldLabel="Reverse Geocoding API Endpoint"
+                                                                            name="reverseGeocodingEndpoint"/>
+                                                                    </items>
+                                                                </geocodingContainer>
+                                                            </items>
+                                                        </geocoding>
+                                                    </items>
+                                                </tabs>
+                                            </items>
+                                        </container>
+                                    </items>
+                                    <parentConfig jcr:primaryType="nt:unstructured">
+                                        <next
+                                            granite:class="foundation-wizard-control"
+                                            jcr:primaryType="nt:unstructured"
+                                            sling:resourceType="granite/ui/components/coral/foundation/button"
+                                            text="Save"
+                                            type="submit"
+                                            variant="primary"/>
+                                    </parentConfig>
+                                </propertiesContainer>
+                            </items>
+                        </wizard>
+                    </items>
+                </form>
+            </items>
+        </body>
+    </jcr:content>
+</jcr:root>

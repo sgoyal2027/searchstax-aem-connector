@@ -1,0 +1,271 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jcr:root xmlns:jcr="http://www.jcp.org/jcr/1.0" xmlns:nt="http://www.jcp.org/jcr/nt/1.0" xmlns:granite="http://www.adobe.com/jcr/granite/1.0" xmlns:cq="http://www.day.com/jcr/cq/1.0" xmlns:sling="http://sling.apache.org/jcr/sling/1.0"
+    jcr:primaryType="cq:Page">
+    <jcr:content
+        jcr:primaryType="nt:unstructured"
+        jcr:title="Initial Setup"
+        sling:resourceType="granite/ui/components/coral/foundation/page">
+        <head jcr:primaryType="nt:unstructured">
+            <viewport
+                jcr:primaryType="nt:unstructured"
+                sling:resourceType="granite/ui/components/coral/foundation/admin/page/viewport"/>
+            <meta
+                jcr:primaryType="nt:unstructured"
+                sling:resourceType="granite/ui/components/coral/foundation/meta"
+                content="chrome=1"
+                name="X-UA-Compatible"/>
+            <favicon
+                jcr:primaryType="nt:unstructured"
+                sling:resourceType="granite/ui/components/coral/foundation/page/favicon"/>
+            <clientlibs
+                jcr:primaryType="nt:unstructured"
+                sling:resourceType="granite/ui/components/coral/foundation/includeclientlibs"
+                categories="[searchstaxconnector.initialsetup.config]"/>
+            <fullIndexRunClientlibs
+                jcr:primaryType="nt:unstructured"
+                sling:resourceType="granite/ui/components/coral/foundation/includeclientlibs"
+                categories="[searchstaxconnector.fullindex.run]"/>
+        </head>
+        <body
+            jcr:primaryType="nt:unstructured"
+            sling:resourceType="granite/ui/components/coral/foundation/page/body">
+            <items jcr:primaryType="nt:unstructured">
+                <form
+                    granite:id="edit-configuration-properties-form"
+                    jcr:primaryType="nt:unstructured"
+                    sling:resourceType="granite/ui/components/coral/foundation/form"
+                    action="/bin/searchstaxconnector/wizard/initial-setup-config"
+                    async="{Boolean}true"
+                    foundationForm="{Boolean}true"
+                    maximized="{Boolean}true"
+                    method="post"
+                    style="vertical">
+                    <granite:data
+                        cq:wcmmode="disabled"
+                        jcr:primaryType="nt:unstructured"/>
+                    <items jcr:primaryType="nt:unstructured">
+                        <wizard
+                            jcr:primaryType="nt:unstructured"
+                            jcr:title="Initial Setup Configuration"
+                            sling:resourceType="granite/ui/components/coral/foundation/wizard"
+                            cancelHref="/aem/start.html">
+                            <items jcr:primaryType="nt:unstructured">
+                                <propertiesContainer
+                                    jcr:primaryType="nt:unstructured"
+                                    sling:resourceType="granite/ui/components/coral/foundation/fixedcolumns"
+                                    maximized="{Boolean}true">
+                                    <items jcr:primaryType="nt:unstructured">
+                                        <container
+                                            jcr:primaryType="nt:unstructured"
+                                            jcr:title="General"
+                                            sling:resourceType="granite/ui/components/coral/foundation/container"
+                                            margin="{Boolean}true">
+                                            <items jcr:primaryType="nt:unstructured">
+                                                <tabs
+                                                    jcr:primaryType="nt:unstructured"
+                                                    sling:resourceType="granite/ui/components/coral/foundation/tabs"
+                                                    size="L">
+                                                    <items jcr:primaryType="nt:unstructured">
+                                                        <general
+                                                            jcr:primaryType="nt:unstructured"
+                                                            jcr:title="General"
+                                                            sling:resourceType="granite/ui/components/coral/foundation/fixedcolumns"
+                                                            margin="{Boolean}true">
+                                                            <items jcr:primaryType="nt:unstructured">
+                                                                <generalContainer
+                                                                    jcr:primaryType="nt:unstructured"
+                                                                    sling:resourceType="granite/ui/components/coral/foundation/container">
+                                                                    <items jcr:primaryType="nt:unstructured">
+                                                                        <enabled
+                                                                            jcr:primaryType="nt:unstructured"
+                                                                            sling:resourceType="granite/ui/components/coral/foundation/form/checkbox"
+                                                                            fieldDescription="Enable or disable the connector."
+                                                                            name="./enableConnector"
+                                                                            text="Enable Connector"
+                                                                            uncheckedValue="false"
+                                                                            value="true"/>
+                                                                        <rootPath
+                                                                            jcr:primaryType="nt:unstructured"
+                                                                            sling:resourceType="granite/ui/components/coral/foundation/form/multifield"
+                                                                            fieldDescription="Specify one or more root paths from which content should be discovered and indexed."
+                                                                            fieldLabel="Root Paths"
+                                                                            required="{Boolean}true">
+                                                                            <field
+                                                                                jcr:primaryType="nt:unstructured"
+                                                                                sling:resourceType="granite/ui/components/coral/foundation/form/pathfield"
+                                                                                name="./rootPaths"
+                                                                                rootPath="/content"/>
+                                                                        </rootPath>
+                                                                        <excludePaths
+                                                                            jcr:primaryType="nt:unstructured"
+                                                                            sling:resourceType="granite/ui/components/coral/foundation/form/multifield"
+                                                                            fieldDescription="Add content paths that should be excluded from indexing."
+                                                                            fieldLabel="Indexing Exclude Paths">
+                                                                            <field
+                                                                                jcr:primaryType="nt:unstructured"
+                                                                                sling:resourceType="granite/ui/components/coral/foundation/form/pathfield"
+                                                                                name="./excludePaths"
+                                                                                rootPath="/content"/>
+                                                                        </excludePaths>
+                                                                        <allowedFiles
+                                                                            jcr:primaryType="nt:unstructured"
+                                                                            sling:resourceType="granite/ui/components/coral/foundation/form/select"
+                                                                            fieldLabel="Allowed File Types For Asset Indexing"
+                                                                            fieldDescription="Select the file types that should be indexed when assets are indexed."
+                                                                            multiple="{Boolean}true"
+                                                                            name="./allowedFiles">
+                                                                            <items jcr:primaryType="nt:unstructured">
+                                                                                <csv
+                                                                                    jcr:primaryType="nt:unstructured"
+                                                                                    text="CSV"
+                                                                                    value="csv"/>
+                                                                                <doc
+                                                                                    jcr:primaryType="nt:unstructured"
+                                                                                    text="DOC"
+                                                                                    value="doc"/>
+                                                                                <docx
+                                                                                    jcr:primaryType="nt:unstructured"
+                                                                                    text="DOCX"
+                                                                                    value="docx"/>
+                                                                                <json
+                                                                                    jcr:primaryType="nt:unstructured"
+                                                                                    text="JSON"
+                                                                                    value="json"/>
+                                                                                <pdf
+                                                                                    jcr:primaryType="nt:unstructured"
+                                                                                    text="PDF"
+                                                                                    value="pdf"/>
+                                                                                <ppt
+                                                                                    jcr:primaryType="nt:unstructured"
+                                                                                    text="PPT"
+                                                                                    value="ppt"/>
+                                                                                <pptx
+                                                                                    jcr:primaryType="nt:unstructured"
+                                                                                    text="PPTX"
+                                                                                    value="pptx"/>
+                                                                                <tsv
+                                                                                    jcr:primaryType="nt:unstructured"
+                                                                                    text="TSV"
+                                                                                    value="tsv"/>
+                                                                                <txt
+                                                                                    jcr:primaryType="nt:unstructured"
+                                                                                    text="TXT"
+                                                                                    value="txt"/>
+                                                                                <xls
+                                                                                    jcr:primaryType="nt:unstructured"
+                                                                                    text="XLS"
+                                                                                    value="xls"/>
+                                                                                <xlsx
+                                                                                    jcr:primaryType="nt:unstructured"
+                                                                                    text="XLSX"
+                                                                                    value="xlsx"/>
+                                                                                <jpg
+                                                                                    jcr:primaryType="nt:unstructured"
+                                                                                    text="JPG"
+                                                                                    value="jpg"/>
+                                                                                <jpeg
+                                                                                    jcr:primaryType="nt:unstructured"
+                                                                                    text="JPEG"
+                                                                                    value="jpeg"/>
+                                                                                <png
+                                                                                    jcr:primaryType="nt:unstructured"
+                                                                                    text="PNG"
+                                                                                    value="png"/>
+                                                                                <gif
+                                                                                    jcr:primaryType="nt:unstructured"
+                                                                                    text="GIF"
+                                                                                    value="gif"/>
+                                                                                <svg
+                                                                                    jcr:primaryType="nt:unstructured"
+                                                                                    text="SVG"
+                                                                                    value="svg"/>
+                                                                                <webp
+                                                                                    jcr:primaryType="nt:unstructured"
+                                                                                    text="WEBP"
+                                                                                    value="webp"/>
+                                                                                <mp4
+                                                                                    jcr:primaryType="nt:unstructured"
+                                                                                    text="MP4"
+                                                                                    value="mp4"/>
+                                                                                <mov
+                                                                                    jcr:primaryType="nt:unstructured"
+                                                                                    text="MOV"
+                                                                                    value="mov"/>
+                                                                                <avi
+                                                                                    jcr:primaryType="nt:unstructured"
+                                                                                    text="AVI"
+                                                                                    value="avi"/>
+                                                                                <mkv
+                                                                                    jcr:primaryType="nt:unstructured"
+                                                                                    text="MKV"
+                                                                                    value="mkv"/>
+                                                                                <webm
+                                                                                    jcr:primaryType="nt:unstructured"
+                                                                                    text="WEBM"
+                                                                                    value="webm"/>
+                                                                            </items>
+                                                                        </allowedFiles>
+                                                                    </items>
+                                                                </generalContainer>
+                                                            </items>
+                                                        </general>
+                                                        <maintenance
+                                                            jcr:primaryType="nt:unstructured"
+                                                            jcr:title="Maintenance"
+                                                            sling:resourceType="granite/ui/components/coral/foundation/fixedcolumns"
+                                                            margin="{Boolean}true">
+                                                            <items jcr:primaryType="nt:unstructured">
+                                                                <maintenanceContainer
+                                                                    jcr:primaryType="nt:unstructured"
+                                                                    sling:resourceType="granite/ui/components/coral/foundation/container">
+                                                                    <items jcr:primaryType="nt:unstructured">
+                                                                        <maintenanceModeManual
+                                                                            jcr:primaryType="nt:unstructured"
+                                                                            sling:resourceType="granite/ui/components/coral/foundation/form/checkbox"
+                                                                            fieldDescription="When enabled, indexing and search are paused regardless of API health."
+                                                                            name="./maintenanceModeManual"
+                                                                            text="Enable maintenance mode manually"
+                                                                            uncheckedValue="false"
+                                                                            value="true"/>
+                                                                        <maintenanceMessage
+                                                                            jcr:primaryType="nt:unstructured"
+                                                                            sling:resourceType="granite/ui/components/coral/foundation/form/textarea"
+                                                                            fieldDescription="Message shown on the search component and in indexing audit when maintenance is active."
+                                                                            fieldLabel="Maintenance message"
+                                                                            name="./maintenanceMessage"/>
+                                                                        <maintenanceFailureThreshold
+                                                                            jcr:primaryType="nt:unstructured"
+                                                                            sling:resourceType="granite/ui/components/coral/foundation/form/numberfield"
+                                                                            fieldDescription="Consecutive SearchStax 5xx responses before automatic maintenance mode activates."
+                                                                            fieldLabel="Automatic maintenance threshold (5xx count)"
+                                                                            name="./maintenanceFailureThreshold"
+                                                                            min="1"
+                                                                            step="1"
+                                                                            value="3"/>
+                                                                    </items>
+                                                                </maintenanceContainer>
+                                                            </items>
+                                                        </maintenance>
+                                                    </items>
+                                                </tabs>
+                                            </items>
+                                        </container>
+                                    </items>
+                                    <parentConfig jcr:primaryType="nt:unstructured">
+                                        <next
+                                            granite:class="foundation-wizard-control"
+                                            jcr:primaryType="nt:unstructured"
+                                            sling:resourceType="granite/ui/components/coral/foundation/button"
+                                            text="Save"
+                                            type="submit"
+                                            variant="primary"/>
+                                    </parentConfig>
+                                </propertiesContainer>
+                            </items>
+                        </wizard>
+                    </items>
+                </form>
+            </items>
+        </body>
+    </jcr:content>
+</jcr:root>

@@ -1,0 +1,18 @@
+{
+    "endpointUrl": "",
+    "apiToken": "",
+    "selectEndpoint": "",
+    "selectToken": "",
+    "updateEndpoint": "",
+    "updateToken": "",
+    "autoSuggestApi": "",
+    "relatedSearchesEndpoint": "",
+    "popularSearchesEndpoint": "",
+    "discoveryApiKey": "",
+    "analyticsTrackingUrl": "",
+    "analyticsTrackingKey": "",
+    "analyticsReportingUrl": "",
+    "analyticsReportingApiKey": "",
+    "forwardGeocodingEndpoint": "",
+    "reverseGeocodingEndpoint": ""
+}

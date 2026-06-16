@@ -1,0 +1,327 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jcr:root xmlns:jcr="http://www.jcp.org/jcr/1.0" xmlns:nt="http://www.jcp.org/jcr/nt/1.0" xmlns:granite="http://www.adobe.com/jcr/granite/1.0" xmlns:cq="http://www.day.com/jcr/cq/1.0" xmlns:sling="http://sling.apache.org/jcr/sling/1.0"
+    jcr:primaryType="cq:Page">
+    <jcr:content
+        jcr:primaryType="nt:unstructured"
+        jcr:title="Field Mapping Configuration"
+        sling:resourceType="granite/ui/components/coral/foundation/page">
+        <head jcr:primaryType="nt:unstructured">
+            <viewport
+                jcr:primaryType="nt:unstructured"
+                sling:resourceType="granite/ui/components/coral/foundation/admin/page/viewport"/>
+            <meta
+                jcr:primaryType="nt:unstructured"
+                sling:resourceType="granite/ui/components/coral/foundation/meta"
+                content="chrome=1"
+                name="X-UA-Compatible"/>
+            <favicon
+                jcr:primaryType="nt:unstructured"
+                sling:resourceType="granite/ui/components/coral/foundation/page/favicon"/>
+            <clientlibs
+                jcr:primaryType="nt:unstructured"
+                sling:resourceType="granite/ui/components/coral/foundation/includeclientlibs"
+                categories="[searchstax.cloudconfig.touch]"/>
+            <fullIndexRunClientlibs
+                jcr:primaryType="nt:unstructured"
+                sling:resourceType="granite/ui/components/coral/foundation/includeclientlibs"
+                categories="[searchstaxconnector.wizard]"/>
+        </head>
+        <body
+            jcr:primaryType="nt:unstructured"
+            sling:resourceType="granite/ui/components/coral/foundation/page/body">
+            <items jcr:primaryType="nt:unstructured">
+                <form
+                    granite:id="edit-configuration-properties-form"
+                    jcr:primaryType="nt:unstructured"
+                    sling:resourceType="granite/ui/components/coral/foundation/form"
+                    action="/bin/searchstaxconnector/wizard/metadata-field-mappings"
+                    async="{Boolean}true"
+                    autocomplete="off"
+                    dataPath="${requestPathInfo.suffix}/jcr:content"
+                    foundationForm="{Boolean}true"
+                    maximized="{Boolean}true"
+                    method="post"
+                    novalidate="{Boolean}true"
+                    style="vertical">
+                    <successresponse
+                        jcr:primaryType="nt:unstructured"
+                        sling:resourceType="granite/ui/components/coral/foundation/form/responses/redirect"
+                        href="${empty header.Referer ? '/aem/start.html' : header.Referer}"/>
+                    <items jcr:primaryType="nt:unstructured">
+                        <wizard
+                            jcr:primaryType="nt:unstructured"
+                            jcr:title="Metadata Field Mapping Configuration"
+                            sling:resourceType="granite/ui/components/coral/foundation/wizard"
+                            cancelHref="${empty header.Referer ? '/aem/start.html' : header.Referer}">
+                            <items jcr:primaryType="nt:unstructured">
+                                <propertiesContainer
+                                    jcr:primaryType="nt:unstructured"
+                                    sling:resourceType="granite/ui/components/coral/foundation/fixedcolumns"
+                                    maximized="{Boolean}true">
+                                    <items jcr:primaryType="nt:unstructured">
+                                        <container
+                                            jcr:primaryType="nt:unstructured"
+                                            jcr:title="General"
+                                            sling:resourceType="granite/ui/components/coral/foundation/container"
+                                            margin="{Boolean}true">
+                                            <items jcr:primaryType="nt:unstructured">
+                                                <tabs
+                                                    jcr:primaryType="nt:unstructured"
+                                                    sling:resourceType="granite/ui/components/coral/foundation/tabs"
+                                                    size="L">
+                                                    <items jcr:primaryType="nt:unstructured">
+                                                        <general
+                                                            jcr:primaryType="nt:unstructured"
+                                                            jcr:title="General"
+                                                            sling:resourceType="granite/ui/components/coral/foundation/fixedcolumns"
+                                                            margin="{Boolean}true">
+                                                            <items jcr:primaryType="nt:unstructured">
+                                                                <generalContainer
+                                                                    jcr:primaryType="nt:unstructured"
+                                                                    sling:resourceType="granite/ui/components/coral/foundation/container">
+                                                                    <items jcr:primaryType="nt:unstructured">
+                                                                        <metadataMappings
+                                                                            jcr:primaryType="nt:unstructured"
+                                                                            sling:resourceType="granite/ui/components/coral/foundation/form/multifield"
+                                                                            composite="{Boolean}true"
+                                                                            fieldLabel="Metadata Field Mappings"
+                                                                            fieldDescription="Configure AEM metadata fields and corresponding SearchStax index field mappings.">
+                                                                            <field
+                                                                                jcr:primaryType="nt:unstructured"
+                                                                                sling:resourceType="granite/ui/components/coral/foundation/container"
+                                                                                name="./metadataMappings">
+                                                                                <items jcr:primaryType="nt:unstructured">
+                                                                                    <mappingType
+                                                                                        jcr:primaryType="nt:unstructured"
+                                                                                        sling:resourceType="granite/ui/components/coral/foundation/form/select"
+                                                                                        fieldLabel="AEM Metadata Field"
+                                                                                        fieldDescription="Select the AEM metadata field to map."
+                                                                                        name="./mappingType"
+                                                                                        emptyText="Select AEM Metadata Field"
+                                                                                        granite:class="cq-dialog-dropdown-showhide">
+                                                                                        <granite:data
+                                                                                            jcr:primaryType="nt:unstructured"
+                                                                                            cq-dialog-dropdown-showhide-target=".custom-field-showhide-target"/>
+                                                                                        <items jcr:primaryType="nt:unstructured">
+
+                                                                                            <jcrTitle
+                                                                                                jcr:primaryType="nt:unstructured"
+                                                                                                text="jcr:title"
+                                                                                                value="jcr:title"/>
+
+                                                                                            <jcrDescription
+                                                                                                jcr:primaryType="nt:unstructured"
+                                                                                                text="jcr:description"
+                                                                                                value="jcr:description"/>
+                                                                                            
+                                                                                            <cqTags
+                                                                                                jcr:primaryType="nt:unstructured"
+                                                                                                text="cq:tags"
+                                                                                                value="cq:tags"/>
+
+                                                                                            <jcrCreated
+                                                                                                jcr:primaryType="nt:unstructured"
+                                                                                                text="jcr:created"
+                                                                                                value="jcr:created"/>
+
+                                                                                            <jcrCreatedBy
+                                                                                                jcr:primaryType="nt:unstructured"
+                                                                                                text="jcr:createdBy"
+                                                                                                value="jcr:createdBy"/>
+
+                                                                                            <jcrLastModified
+                                                                                                jcr:primaryType="nt:unstructured"
+                                                                                                text="jcr:lastModified"
+                                                                                                value="jcr:lastModified"/>
+
+                                                                                            <jcrLastModifiedBy
+                                                                                                jcr:primaryType="nt:unstructured"
+                                                                                                text="jcr:lastModifiedBy"
+                                                                                                value="jcr:lastModifiedBy"/>
+
+                                                                                            <cqLastModified
+                                                                                                jcr:primaryType="nt:unstructured"
+                                                                                                text="cq:lastModified"
+                                                                                                value="cq:lastModified"/>
+
+                                                                                            <cqLastModifiedBy
+                                                                                                jcr:primaryType="nt:unstructured"
+                                                                                                text="cq:lastModifiedBy"
+                                                                                                value="cq:lastModifiedBy"/>
+
+                                                                                            <slingResourceType
+                                                                                                jcr:primaryType="nt:unstructured"
+                                                                                                text="sling:resourceType"
+                                                                                                value="sling:resourceType"/>
+
+                                                                                            <dcTitle
+                                                                                                jcr:primaryType="nt:unstructured"
+                                                                                                text="dc:title"
+                                                                                                value="dc:title"/>
+
+                                                                                            <dcDescription
+                                                                                                jcr:primaryType="nt:unstructured"
+                                                                                                text="dc:description"
+                                                                                                value="dc:description"/>
+
+                                                                                            <dcFormat
+                                                                                                jcr:primaryType="nt:unstructured"
+                                                                                                text="dc:format"
+                                                                                                value="dc:format"/>
+
+                                                                                            <dcCreator
+                                                                                                jcr:primaryType="nt:unstructured"
+                                                                                                text="dc:creator"
+                                                                                                value="dc:creator"/>
+
+                                                                                            <dcCreated
+                                                                                                jcr:primaryType="nt:unstructured"
+                                                                                                text="dc:created"
+                                                                                                value="dc:created"/>
+
+                                                                                            <damSize
+                                                                                                jcr:primaryType="nt:unstructured"
+                                                                                                text="dam:size"
+                                                                                                value="dam:size"/>
+
+                                                                                            <mimeType
+                                                                                                jcr:primaryType="nt:unstructured"
+                                                                                                text="jcr:mimeType"
+                                                                                                value="jcr:mimeType"/>
+
+                                                                                            <dcLanguage
+                                                                                                jcr:primaryType="nt:unstructured"
+                                                                                                text="dc:language"
+                                                                                                value="dc:language"/>
+
+                                                                                            <dcModified
+                                                                                                jcr:primaryType="nt:unstructured"
+                                                                                                text="dc:modified"
+                                                                                                value="dc:modified"/>
+
+                                                                                            <dcSubject
+                                                                                                jcr:primaryType="nt:unstructured"
+                                                                                                text="dc:subject"
+                                                                                                value="dc:subject"/>
+
+                                                                                            <custom
+                                                                                                jcr:primaryType="nt:unstructured"
+                                                                                                text="Custom"
+                                                                                                value="custom"/>
+                                                                                        </items>
+                                                                                    </mappingType>
+                                                                                    <customPropertyWrapper
+                                                                                        jcr:primaryType="nt:unstructured"
+                                                                                        sling:resourceType="granite/ui/components/coral/foundation/container"
+                                                                                        granite:class="custom-field-showhide-target">
+                                                                                        <granite:data
+                                                                                            jcr:primaryType="nt:unstructured"
+                                                                                            showhidetargetvalue="custom"/>
+                                                                                        <items jcr:primaryType="nt:unstructured">
+                                                                                            <customProperty
+                                                                                                jcr:primaryType="nt:unstructured"
+                                                                                                sling:resourceType="granite/ui/components/coral/foundation/form/textfield"
+                                                                                                fieldLabel="Custom AEM Metadata Field"
+                                                                                                fieldDescription="Enter custom AEM metadata property. Example: myproject:seoTitle"
+                                                                                                name="./customProperty"/>
+                                                                                        </items>
+                                                                                    </customPropertyWrapper>
+                                                                                    <indexFieldName
+                                                                                        jcr:primaryType="nt:unstructured"
+                                                                                        sling:resourceType="granite/ui/components/coral/foundation/form/textfield"
+                                                                                        fieldLabel="SearchStax Index Field Name"
+                                                                                        fieldDescription="Enter the target SearchStax index field name."
+                                                                                        name="./indexFieldName"
+                                                                                        required="{Boolean}true"/>
+                                                                                    <fieldType
+                                                                                        jcr:primaryType="nt:unstructured"
+                                                                                        sling:resourceType="granite/ui/components/coral/foundation/form/select"
+                                                                                        fieldLabel="SearchStax Field Type"
+                                                                                        fieldDescription="Select the SearchStax field type for field mapping."
+                                                                                        name="./searchStaxFieldType"
+                                                                                        emptyText="Select field type">
+                                                                                        <items jcr:primaryType="nt:unstructured">
+                                                                                            <text
+                                                                                                jcr:primaryType="nt:unstructured"
+                                                                                                text="text"
+                                                                                                value="text"/>
+                                                                                            <strings
+                                                                                                jcr:primaryType="nt:unstructured"
+                                                                                                text="strings"
+                                                                                                value="strings"/>
+                                                                                            <string
+                                                                                                jcr:primaryType="nt:unstructured"
+                                                                                                text="string"
+                                                                                                value="string"/>
+                                                                                            <int
+                                                                                                jcr:primaryType="nt:unstructured"
+                                                                                                text="int"
+                                                                                                value="int"/>
+                                                                                            <long
+                                                                                                jcr:primaryType="nt:unstructured"
+                                                                                                text="long"
+                                                                                                value="long"/>
+                                                                                            <double
+                                                                                                jcr:primaryType="nt:unstructured"
+                                                                                                text="double"
+                                                                                                value="double"/>
+                                                                                            <float
+                                                                                                jcr:primaryType="nt:unstructured"
+                                                                                                text="float"
+                                                                                                value="float"/>
+                                                                                            <boolean
+                                                                                                jcr:primaryType="nt:unstructured"
+                                                                                                text="boolean"
+                                                                                                value="boolean"/>
+                                                                                            <date
+                                                                                                jcr:primaryType="nt:unstructured"
+                                                                                                text="date"
+                                                                                                value="date"/>
+                                                                                        </items>
+                                                                                    </fieldType>
+                                                                                    <enabled
+                                                                                        jcr:primaryType="nt:unstructured"
+                                                                                        sling:resourceType="granite/ui/components/coral/foundation/form/checkbox"
+                                                                                        text="Enable Field Mapping"
+                                                                                        fieldDescription="Enable or disable this metadata mapping."
+                                                                                        name="./enabled"
+                                                                                        value="true"
+                                                                                        uncheckedValue="false"/>
+                                                                                    <mandatory
+                                                                                        jcr:primaryType="nt:unstructured"
+                                                                                        sling:resourceType="granite/ui/components/coral/foundation/form/checkbox"
+                                                                                        text="Mandatory field"
+                                                                                        fieldDescription="When enabled, documents missing this field are skipped during indexing."
+                                                                                        name="./mandatory"
+                                                                                        value="true"
+                                                                                        uncheckedValue="false"/>
+                                                                                </items>
+                                                                            </field>
+                                                                        </metadataMappings>
+                                                                    </items>
+                                                                </generalContainer>
+                                                            </items>
+                                                        </general>
+                                                    </items>
+                                                </tabs>
+                                            </items>
+                                        </container>
+                                    </items>
+                                    <parentConfig jcr:primaryType="nt:unstructured">
+                                        <next
+                                            granite:class="foundation-wizard-control"
+                                            jcr:primaryType="nt:unstructured"
+                                            sling:resourceType="granite/ui/components/coral/foundation/button"
+                                            text="Save"
+                                            type="submit"
+                                            variant="primary"/>
+                                    </parentConfig>
+                                </propertiesContainer>
+                            </items>
+                        </wizard>
+                    </items>
+                </form>
+            </items>
+        </body>
+    </jcr:content>
+</jcr:root>
