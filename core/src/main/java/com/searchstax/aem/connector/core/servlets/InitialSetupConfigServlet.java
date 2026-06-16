@@ -70,12 +70,6 @@ public class InitialSetupConfigServlet extends SlingAllMethodsServlet {
                 request.getParameterValues(
                         "./allowedFiles");
 
-        final boolean maintenanceModeManual =
-                Boolean.parseBoolean(request.getParameter("./maintenanceModeManual"));
-        final String maintenanceMessage = request.getParameter("./maintenanceMessage");
-        final int maintenanceFailureThreshold = parseInt(
-                request.getParameter("./maintenanceFailureThreshold"), 3);
-
         /*
          * Root path validation
          */
@@ -202,14 +196,6 @@ public class InitialSetupConfigServlet extends SlingAllMethodsServlet {
                         "allowedFiles");
             }
 
-            properties.put("maintenanceModeManual", maintenanceModeManual);
-            if (maintenanceMessage != null && !maintenanceMessage.isBlank()) {
-                properties.put("maintenanceMessage", maintenanceMessage.trim());
-            } else {
-                properties.remove("maintenanceMessage");
-            }
-            properties.put("maintenanceFailureThreshold", maintenanceFailureThreshold);
-
             resolver.commit();
 
             LOG.info(
@@ -282,14 +268,4 @@ public class InitialSetupConfigServlet extends SlingAllMethodsServlet {
             .toArray(String[]::new);
 }
 
-    private static int parseInt(final String value, final int defaultValue) {
-        if (value == null || value.isBlank()) {
-            return defaultValue;
-        }
-        try {
-            return Integer.parseInt(value.trim());
-        } catch (NumberFormatException e) {
-            return defaultValue;
-        }
-    }
 }

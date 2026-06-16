@@ -22,19 +22,6 @@
         return null;
     }
 
-    function setFieldValue(name, value) {
-        var field = document.querySelector("[name='" + name + "']");
-        if (!field) {
-            return;
-        }
-
-        Coral.commons.ready(field, function (el) {
-            if (el.value !== undefined) {
-                el.value = value === undefined || value === null ? "" : value;
-            }
-        });
-    }
-
     function setCheckboxValue(name, checked) {
         var field = document.querySelector("[name='" + name + "']");
         if (!field) {
@@ -101,9 +88,6 @@
             }
         }
 
-        setCheckboxValue("./maintenanceModeManual", data.maintenanceModeManual);
-        setFieldValue("./maintenanceMessage", data.maintenanceMessage || "");
-        setFieldValue("./maintenanceFailureThreshold", data.maintenanceFailureThreshold || 3);
     }
 
     function loadConfiguration() {
