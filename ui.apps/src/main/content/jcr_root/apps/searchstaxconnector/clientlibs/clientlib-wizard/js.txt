@@ -1,7 +1,6 @@
 #base=js
 
 searchstax-multifield-utils.js
-searchstax-config-util.js
 searchstax-wizard.js
 metadata-field-mapping.js
 language-mapping.js
