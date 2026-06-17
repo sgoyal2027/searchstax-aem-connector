@@ -35,7 +35,6 @@ Failures → dead-letter JCR + IndexingAuditService → Indexing Report UI
 | `/conf/searchstaxconnector/settings/initialsetup` | Connector enable, paths, maintenance |
 | `/conf/searchstaxconnector/settings/apiconfig` | Endpoints and tokens |
 | `/conf/searchstaxconnector/settings/metadatafieldmapping` | Field mappings |
-| `/conf/searchstaxconnector/settings/siteapplicationmapping` | Site routing |
 | `/var/searchstaxconnector/incremental-index/pending` | Incremental queue |
 | `/var/searchstaxconnector/incremental-index/audit` | Indexing audit events |
 

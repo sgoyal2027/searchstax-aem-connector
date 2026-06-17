@@ -117,7 +117,6 @@ $wizardGets = @(
     "/bin/searchstaxconnector/wizard/metadata-field-mappings-load",
     "/bin/searchstaxconnector/wizard/language-mappings-load",
     "/bin/searchstaxconnector/wizard/full-index-load",
-    "/bin/searchstaxconnector/wizard/site-application-mappings-load",
     "/bin/searchstaxconnector/wizard/indexing-report?limit=10"
 )
 

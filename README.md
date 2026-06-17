@@ -52,7 +52,6 @@ Configure `filevault-package-maven-plugin` embeddeds to install under your proje
 | **Initial Setup** | Enable connector, root/exclude paths, asset file types, maintenance mode |
 | **API Configuration** | Update, select, discovery, and analytics endpoints + tokens |
 | **Metadata Field Mapping** | AEM → Solr field mappings; mark fields as mandatory |
-| **Site Application Mapping** | Map AEM site roots to SearchStax application IDs and search profiles |
 | **Full Index** | Run or monitor a full reindex job |
 | **Indexing Report** | View incremental queue audit events; double-click a row to reprocess |
 

@@ -31,13 +31,6 @@
                 href="/apps/searchstaxconnector/admin/wizards/languagemapping/wizard.html"
                 icon="globeGrid"
                 id="language-mapping-wizard"/>
-        <siteapplicationmapping
-                jcr:description="Site to SearchStax Application routing"
-                jcr:primaryType="nt:unstructured"
-                jcr:title="Site Application Mapping"
-                href="/apps/searchstaxconnector/admin/wizards/siteapplicationmapping/wizard.html"
-                icon="globeClock"
-                id="site-application-mapping-wizard"/>
         <fullindexconfigurations
                 jcr:description="Full Index Configurations"
                 jcr:primaryType="nt:unstructured"

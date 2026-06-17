@@ -4,4 +4,3 @@ searchstax-multifield-utils.js
 searchstax-wizard.js
 metadata-field-mapping.js
 language-mapping.js
-site-application-mapping.js

@@ -10,7 +10,6 @@
     "create path (sling:Folder) /conf/searchstaxconnector/settings/fullindexsetupconfig",
     "create path (sling:Folder) /conf/searchstaxconnector/settings/metadatafieldmapping",
     "create path (sling:Folder) /conf/searchstaxconnector/settings/languagemapping",
-    "create path (sling:Folder) /conf/searchstaxconnector/settings/siteapplicationmapping",
     "create path (sling:Folder) /var/searchstaxconnector",
     "create path (sling:Folder) /var/searchstaxconnector/fullindex",
     "create path (sling:Folder) /var/searchstaxconnector/fullindex/failure",
@@ -36,8 +35,6 @@
     "set ACL on /conf/searchstaxconnector/settings/metadatafieldmapping (ACLOptions=merge)\n allow jcr:read,rep:write for searchstax-service-user\nend",
 
     "set ACL on /conf/searchstaxconnector/settings/languagemapping (ACLOptions=merge)\n allow jcr:read,rep:write for searchstax-service-user\nend",
-
-    "set ACL on /conf/searchstaxconnector/settings/siteapplicationmapping (ACLOptions=merge)\n allow jcr:read,rep:write for searchstax-service-user\nend",
 
     "set ACL on /var (ACLOptions=merge)\n    allow jcr:read,jcr:addChildNodes,jcr:modifyProperties for searchstax-service-user\nend",
 

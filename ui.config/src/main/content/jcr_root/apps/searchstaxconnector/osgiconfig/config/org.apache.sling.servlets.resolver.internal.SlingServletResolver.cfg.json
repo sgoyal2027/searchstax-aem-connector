@@ -19,8 +19,6 @@
         "/bin/searchstaxconnector/wizard/full-index-load",
         "/bin/searchstaxconnector/wizard/fullindex-config-save",
         "/bin/searchstaxconnector/wizard/indexing-report",
-        "/bin/searchstaxconnector/wizard/indexing-report-reprocess",
-        "/bin/searchstaxconnector/wizard/site-application-mappings",
-        "/bin/searchstaxconnector/wizard/site-application-mappings-load"
+        "/bin/searchstaxconnector/wizard/indexing-report-reprocess"
     ]
 }

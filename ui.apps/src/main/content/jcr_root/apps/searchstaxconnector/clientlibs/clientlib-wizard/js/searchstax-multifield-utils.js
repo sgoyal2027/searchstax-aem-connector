@@ -231,3 +231,110 @@
         populateIncludePaths: populateIncludePaths
     };
 })(window);
+
+(function (window, document) {
+    "use strict";
+
+    function isServletRequest(url, path) {
+        if (!url || !path) {
+            return false;
+        }
+        var normalizedUrl = url.split("?")[0].split("#")[0];
+        return normalizedUrl === path || normalizedUrl.endsWith(path);
+    }
+
+    function findFormField(name) {
+        return document.querySelector("[name='" + name + "']");
+    }
+
+    function clearMultifieldForConfig(multifield, done) {
+        if (window.SearchStaxMultifieldUtil) {
+            window.SearchStaxMultifieldUtil.clearMultifield(multifield, done);
+        } else if (done) {
+            done();
+        }
+    }
+
+    function setEnabledSelect(item, enabled) {
+        var checkbox = item && item.querySelector("coral-checkbox[name*='enabled'], input[name*='enabled']");
+        if (!checkbox) {
+            return;
+        }
+        Coral.commons.ready(checkbox, function (el) {
+            if (el.checked !== undefined) {
+                el.checked = Boolean(enabled);
+            }
+        });
+    }
+
+    function setSelectOptionsDisabled(select, used, currentValue) {
+        if (!select) {
+            return;
+        }
+        Coral.commons.ready(select, function (el) {
+            var items = el.items ? el.items.getAll() : el.querySelectorAll("coral-select-item");
+            var i;
+            for (i = 0; i < items.length; i++) {
+                var item = items[i];
+                var value = item.value;
+                if (!value || value === "custom" || value === currentValue) {
+                    item.disabled = false;
+                } else {
+                    item.disabled = used[value] === true;
+                }
+            }
+        });
+    }
+
+    function applySecretFieldStates(data, secretFields) {
+        if (!data || !secretFields) {
+            return;
+        }
+        secretFields.forEach(function (fieldName) {
+            var field = findFormField(fieldName);
+            if (!field) {
+                return;
+            }
+            Coral.commons.ready(field, function (el) {
+                el.value = "";
+                if (data[fieldName + "Configured"]) {
+                    el.setAttribute("placeholder", "Value saved — leave blank to keep");
+                } else {
+                    el.removeAttribute("placeholder");
+                }
+            });
+        });
+    }
+
+    function attachSaveHandlers(savePath, successMessage, validateFn) {
+        if (!validateFn) {
+            return;
+        }
+        var form = document.querySelector("form[action*='" + savePath + "']");
+        if (!form || form.dataset.searchstaxValidationBound === "true") {
+            return;
+        }
+        form.dataset.searchstaxValidationBound = "true";
+        form.addEventListener("submit", function (event) {
+            var message = validateFn();
+            if (message) {
+                event.preventDefault();
+                event.stopImmediatePropagation();
+                window.alert(message);
+            }
+        }, true);
+    }
+
+    window.SearchStaxConfigUtil = {
+        attachSaveHandlers: attachSaveHandlers,
+        applySecretFieldStates: applySecretFieldStates,
+        clearMultifield: clearMultifieldForConfig,
+        findNamedField: findFormField,
+        isServletRequest: isServletRequest,
+        setEnabledSelect: setEnabledSelect,
+        setSelectOptionsDisabled: setSelectOptionsDisabled,
+        showDuplicateWarning: function (message) {
+            window.alert(message);
+        }
+    };
+})(window, document);

@@ -12,21 +12,44 @@
         "zh_CN", "zh_TW", "ko", "ko_KR", "ar", "ru"
     ];
 
+    var MAX_LOAD_ATTEMPTS = 20;
+
+    function loadLanguageMappings(attempt) {
+        attempt = attempt || 0;
+
+        $.getJSON(
+            "/bin/searchstaxconnector/wizard/language-mappings-load",
+            function (data) {
+                var multifield = document.querySelector("coral-multifield");
+
+                if (!multifield) {
+                    if (attempt < MAX_LOAD_ATTEMPTS) {
+                        setTimeout(function () {
+                            loadLanguageMappings(attempt + 1);
+                        }, 200);
+                    }
+                    return;
+                }
+
+                if (data && data.length > 0) {
+                    populateLanguageMappings(data);
+                } else {
+                    initializeAllMultifieldItems();
+                }
+            }
+        ).fail(function () {
+            if (attempt < MAX_LOAD_ATTEMPTS) {
+                setTimeout(function () {
+                    loadLanguageMappings(attempt + 1);
+                }, 200);
+            }
+        });
+    }
+
     $(document).ready(function () {
 
         Coral.commons.ready(document, function () {
-
-            $.getJSON(
-                "/bin/searchstaxconnector/wizard/language-mappings-load",
-                function (data) {
-
-                    if (data && data.length > 0) {
-                        populateLanguageMappings(data);
-                    } else {
-                        initializeAllMultifieldItems();
-                    }
-                }
-            );
+            loadLanguageMappings(0);
         });
 
         SearchStaxConfigUtil.attachSaveHandlers(
@@ -34,6 +57,10 @@
             "Language mappings saved successfully.",
             validateLanguageMappingsForm
         );
+    });
+
+    document.addEventListener("foundation-contentloaded", function () {
+        loadLanguageMappings(0);
     });
 
     function validateLanguageMappingsForm() {
@@ -170,6 +197,32 @@
         });
     }
 
+    function setItemFieldValue(item, nameFragment, value) {
+        var field = item.querySelector(
+            "coral-textfield[name*='" + nameFragment + "'], input[name*='" + nameFragment + "']"
+        );
+
+        if (!field) {
+            return;
+        }
+
+        var normalized = value === undefined || value === null ? "" : String(value);
+
+        Coral.commons.ready(field, function (el) {
+            if (el.value !== undefined) {
+                el.value = normalized;
+            }
+
+            var inner = el.querySelector("input:not([type='hidden']), textarea");
+            if (inner) {
+                inner.value = normalized;
+            }
+
+            el.dispatchEvent(new Event("input", { bubbles: true }));
+            el.dispatchEvent(new Event("change", { bubbles: true }));
+        });
+    }
+
     function populateLanguageMappings(mappings) {
 
         var multifield = $("coral-multifield")[0];
@@ -178,52 +231,63 @@
             return;
         }
 
-        SearchStaxConfigUtil.clearMultifield(multifield);
+        SearchStaxConfigUtil.clearMultifield(multifield, function () {
+            var index = 0;
 
-        mappings.forEach(function (mapping, index) {
-
-            multifield.items.add();
-
-            setTimeout(function () {
-
-                var items = multifield.items.getAll();
-                var item = items[index];
-
-                if (!item) {
+            function addNext() {
+                if (index >= mappings.length) {
                     return;
                 }
 
-                var aemLanguageType = item.querySelector("coral-select[name*='aemLanguageType']");
-                var customAemLanguage = item.querySelector("input[name*='customAemLanguage']");
-                var searchStaxLanguage = item.querySelector("input[name*='searchStaxLanguage']");
-                var resolvedType = resolveAemLanguageType(mapping.aemLanguage);
+                var mapping = mappings[index];
+                var itemIndex = index;
+                index += 1;
 
-                if (searchStaxLanguage) {
-                    searchStaxLanguage.value = mapping.searchStaxLanguage || "";
-                    searchStaxLanguage.dispatchEvent(new Event("input", { bubbles: true }));
-                }
+                multifield.items.add();
 
-                if (resolvedType === "custom" && customAemLanguage) {
-                    customAemLanguage.value = mapping.aemLanguage || "";
-                    customAemLanguage.dispatchEvent(new Event("change", { bubbles: true }));
-                }
+                setTimeout(function () {
+                    var items = multifield.items.getAll();
+                    var item = items[itemIndex];
 
-                if (aemLanguageType) {
-                    Coral.commons.ready(aemLanguageType, function () {
-                        aemLanguageType.value = resolvedType;
-                        aemLanguageType.__initTriggered = true;
-                        aemLanguageType.dispatchEvent(new Event("change", { bubbles: true }));
-                    });
-                }
+                    if (!item) {
+                        setTimeout(addNext, 150);
+                        return;
+                    }
 
-                SearchStaxConfigUtil.setEnabledSelect(item, mapping.enabled);
+                    var aemLanguageType = item.querySelector("coral-select[name*='aemLanguageType']");
+                    var resolvedType = resolveAemLanguageType(mapping.aemLanguage);
 
+                    setItemFieldValue(item, "searchStaxLanguage", mapping.searchStaxLanguage);
 
-                item.__lastAemLanguageType = resolvedType || "";
-                item.__lastCustomAemLanguage = resolvedType === "custom" ? (mapping.aemLanguage || "") : "";
-                refreshLanguageMappingOptions();
+                    if (resolvedType === "custom") {
+                        setItemFieldValue(
+                            item,
+                            "customAemLanguage",
+                            mapping.customAemLanguage || mapping.aemLanguage
+                        );
+                    }
 
-            }, 50);
+                    if (aemLanguageType) {
+                        Coral.commons.ready(aemLanguageType, function () {
+                            aemLanguageType.value = resolvedType;
+                            aemLanguageType.__initTriggered = true;
+                            aemLanguageType.dispatchEvent(new Event("change", { bubbles: true }));
+                        });
+                    }
+
+                    SearchStaxConfigUtil.setEnabledSelect(item, mapping.enabledLanguageMapping);
+
+                    item.__lastAemLanguageType = resolvedType || "";
+                    item.__lastCustomAemLanguage = resolvedType === "custom"
+                        ? (mapping.customAemLanguage || mapping.aemLanguage || "")
+                        : "";
+                    refreshLanguageMappingOptions();
+
+                    setTimeout(addNext, 150);
+                }, 250);
+            }
+
+            addNext();
         });
     }
 

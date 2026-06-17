@@ -28,8 +28,7 @@ class ConnectorCrossPlatformSmokeTest {
             "/bin/searchstaxconnector/wizard/language-mappings-load",
             "/bin/searchstaxconnector/wizard/full-index-load",
             "/bin/searchstaxconnector/wizard/fullindex-config-save",
-            "/bin/searchstaxconnector/wizard/indexing-report",
-            "/bin/searchstaxconnector/wizard/site-application-mappings-load");
+            "/bin/searchstaxconnector/wizard/indexing-report");
 
     private static final Set<String> REQUIRED_REPOINIT_PATHS = Set.of(
             "/conf/searchstaxconnector/settings/apiconfig",
