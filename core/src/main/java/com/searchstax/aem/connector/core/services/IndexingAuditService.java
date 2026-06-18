@@ -22,7 +22,7 @@ public interface IndexingAuditService {
             long durationMs,
             String batchId);
 
-    List<Map<String, Object>> listEvents(String statusFilter, int maxResults);
+    List<Map<String, Object>> listEvents(String statusFilter, String actionFilter, boolean excludeQueued, int maxResults);
 
     void purgeOlderThanHours(int hours);
 

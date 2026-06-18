@@ -39,10 +39,69 @@
                         <description
                             jcr:primaryType="nt:unstructured"
                             sling:resourceType="granite/ui/components/coral/foundation/text"
-                            text="Shows QUEUED, SUCCESS, FAILURE, and SKIPPED indexing events from the last 24 hours. Use the status filters above the table to focus on a single outcome. Data is automatically purged after 24 hours."/>
+                            text="Shows SUCCESS, FAILURE, and SKIPPED indexing events from the last 24 hours. Use filters to focus by action and status. Data is automatically purged after 24 hours."/>
+                        <filters
+                            jcr:primaryType="nt:unstructured"
+                            sling:resourceType="granite/ui/components/coral/foundation/container">
+                            <items jcr:primaryType="nt:unstructured">
+                                <actionFilter
+                                    jcr:primaryType="nt:unstructured"
+                                    sling:resourceType="granite/ui/components/coral/foundation/form/select"
+                                    emptyText="All actions"
+                                    granite:id="searchstax-indexing-report-action-filter"
+                                    name="./actionFilter">
+                                    <items jcr:primaryType="nt:unstructured">
+                                        <all
+                                            jcr:primaryType="nt:unstructured"
+                                            selected="{Boolean}true"
+                                            text="All actions"
+                                            value="ALL"/>
+                                        <activate
+                                            jcr:primaryType="nt:unstructured"
+                                            text="Activate"
+                                            value="ACTIVATE"/>
+                                        <deactivate
+                                            jcr:primaryType="nt:unstructured"
+                                            text="Deactivate"
+                                            value="DEACTIVATE"/>
+                                        <delete
+                                            jcr:primaryType="nt:unstructured"
+                                            text="Delete"
+                                            value="DELETE"/>
+                                    </items>
+                                </actionFilter>
+                                <statusFilter
+                                    jcr:primaryType="nt:unstructured"
+                                    sling:resourceType="granite/ui/components/coral/foundation/form/select"
+                                    emptyText="All statuses"
+                                    granite:id="searchstax-indexing-report-status-filter"
+                                    name="./statusFilter">
+                                    <items jcr:primaryType="nt:unstructured">
+                                        <all
+                                            jcr:primaryType="nt:unstructured"
+                                            selected="{Boolean}true"
+                                            text="All statuses"
+                                            value="ALL"/>
+                                        <success
+                                            jcr:primaryType="nt:unstructured"
+                                            text="Success"
+                                            value="SUCCESS"/>
+                                        <failure
+                                            jcr:primaryType="nt:unstructured"
+                                            text="Failure"
+                                            value="FAILURE"/>
+                                        <skipped
+                                            jcr:primaryType="nt:unstructured"
+                                            text="Skipped"
+                                            value="SKIPPED"/>
+                                    </items>
+                                </statusFilter>
+                            </items>
+                        </filters>
                         <reportTable
                             jcr:primaryType="nt:unstructured"
                             sling:resourceType="granite/ui/components/coral/foundation/table"
+                            class="searchstax-indexing-report-table"
                             granite:id="searchstax-indexing-report-table"
                             selectionMode="none"
                             sortMode="local">
@@ -67,10 +126,6 @@
                                     jcr:primaryType="nt:unstructured"
                                     jcr:title="Duration (ms)"
                                     name="duration"/>
-                                <correlationId
-                                    jcr:primaryType="nt:unstructured"
-                                    jcr:title="Correlation ID"
-                                    name="correlationId"/>
                                 <message
                                     jcr:primaryType="nt:unstructured"
                                     jcr:title="Message"

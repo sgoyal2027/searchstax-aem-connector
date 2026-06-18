@@ -74,7 +74,11 @@ public class IndexingAuditServiceImpl implements IndexingAuditService {
     }
 
     @Override
-    public List<Map<String, Object>> listEvents(final String statusFilter, final int maxResults) {
+    public List<Map<String, Object>> listEvents(
+            final String statusFilter,
+            final String actionFilter,
+            final boolean excludeQueued,
+            final int maxResults) {
         final List<Map<String, Object>> events = new ArrayList<>();
         final Calendar cutoff = Calendar.getInstance();
         cutoff.add(Calendar.HOUR, -24);
@@ -99,15 +103,25 @@ public class IndexingAuditServiceImpl implements IndexingAuditService {
                         && !statusFilter.equalsIgnoreCase(status)) {
                     continue;
                 }
+                if (excludeQueued && STATUS_QUEUED.equalsIgnoreCase(status)) {
+                    continue;
+                }
+
+                final String action = vm.get("action", "");
+                if (actionFilter != null
+                        && !actionFilter.isBlank()
+                        && !"ALL".equalsIgnoreCase(actionFilter)
+                        && !actionFilter.equalsIgnoreCase(action)) {
+                    continue;
+                }
 
                 final Map<String, Object> row = new HashMap<>();
                 row.put("timestamp", formatTimestamp(timestamp));
                 row.put("path", vm.get("path", ""));
-                row.put("action", vm.get("action", ""));
+                row.put("action", action);
                 row.put("status", status);
                 row.put("duration", vm.get("durationMs", 0L));
                 row.put("message", vm.get("message", ""));
-                row.put("correlationId", vm.get("correlationId", ""));
                 events.add(row);
             }
 

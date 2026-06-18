@@ -34,9 +34,11 @@ public class IndexingReportServlet extends SlingSafeMethodsServlet {
             throws IOException {
 
         final String status = request.getParameter("status");
+        final String action = request.getParameter("action");
+        final boolean excludeQueued = parseBoolean(request.getParameter("excludeQueued"), true);
         final int limit = parseInt(request.getParameter("limit"), 500);
 
-        final List<Map<String, Object>> events = indexingAuditService.listEvents(status, limit);
+        final List<Map<String, Object>> events = indexingAuditService.listEvents(status, action, excludeQueued, limit);
 
         final Map<String, Object> payload = new HashMap<>();
         payload.put("success", true);
@@ -56,5 +58,12 @@ public class IndexingReportServlet extends SlingSafeMethodsServlet {
         } catch (NumberFormatException e) {
             return defaultValue;
         }
+    }
+
+    private static boolean parseBoolean(final String value, final boolean defaultValue) {
+        if (value == null || value.isBlank()) {
+            return defaultValue;
+        }
+        return Boolean.parseBoolean(value);
     }
 }
