@@ -5,7 +5,25 @@
     var REPROCESS_URL = "/bin/searchstaxconnector/wizard/indexing-report-reprocess";
     var REFRESH_MS = 60000;
 
+    var refreshTimer = null;
+    var filtersInitialized = false;
+    var activeRequestId = 0;
+
+    function getReportTbody() {
+        var root = document.querySelector("#searchstax-indexing-report-table");
+        if (!root) {
+            return null;
+        }
+
+        root.querySelectorAll(":scope > tbody").forEach(function (orphan) {
+            orphan.remove();
+        });
+
+        return root.querySelector("table tbody") || root.querySelector("tbody");
+    }
+
     function loadReport(statusFilter, actionFilter) {
+        var requestId = ++activeRequestId;
         var url = REPORT_URL + "?limit=500";
         if (statusFilter && statusFilter !== "ALL") {
             url += "&status=" + encodeURIComponent(statusFilter);
@@ -17,23 +35,23 @@
 
         $.ajax({ url: url, method: "GET", dataType: "json" })
             .done(function (data) {
+                if (requestId !== activeRequestId) {
+                    return;
+                }
                 renderRows(data && data.events ? data.events : []);
             })
             .fail(function () {
+                if (requestId !== activeRequestId) {
+                    return;
+                }
                 renderRows([]);
             });
     }
 
     function renderRows(events) {
-        var table = document.querySelector("#searchstax-indexing-report-table");
-        if (!table) {
-            return;
-        }
-
-        var tbody = table.querySelector("tbody");
+        var tbody = getReportTbody();
         if (!tbody) {
-            tbody = document.createElement("tbody");
-            table.appendChild(tbody);
+            return;
         }
 
         tbody.innerHTML = "";

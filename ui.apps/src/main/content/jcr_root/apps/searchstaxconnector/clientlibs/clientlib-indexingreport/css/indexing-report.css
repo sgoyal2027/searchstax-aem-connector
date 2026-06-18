@@ -1,9 +1,27 @@
+.searchstax-indexing-report-description {
+    margin: 12px 0 28px;
+    max-width: 960px;
+}
+
+.searchstax-indexing-report-description .coral-Form-fieldwrapper,
+.searchstax-indexing-report-description p {
+    font-size: 15px;
+    line-height: 1.65;
+    color: #4b4b4b;
+    margin: 0 0 10px;
+}
+
+.searchstax-indexing-report-description .coral-Form-fieldwrapper:last-child,
+.searchstax-indexing-report-description p:last-child {
+    margin-bottom: 0;
+}
+
 .searchstax-indexing-report-filters {
     display: flex;
     flex-wrap: wrap;
-    gap: 12px;
-    margin: 16px 0 20px;
-    padding: 12px 16px;
+    gap: 16px;
+    margin: 0 0 32px;
+    padding: 16px 20px;
     background: #fafafa;
     border: 1px solid #e5e5e5;
     border-radius: 8px;
@@ -15,7 +33,7 @@
 }
 
 .searchstax-indexing-report-table {
-    margin-top: 12px;
+    margin-top: 0;
 }
 
 #searchstax-indexing-report-table,

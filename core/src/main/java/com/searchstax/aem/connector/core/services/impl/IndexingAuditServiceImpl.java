@@ -19,6 +19,7 @@ import java.util.Calendar;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -125,6 +126,7 @@ public class IndexingAuditServiceImpl implements IndexingAuditService {
                 events.add(row);
             }
 
+            deduplicateEvents(events);
             events.sort(Comparator.comparing(m -> (String) m.get("timestamp"), Comparator.reverseOrder()));
             if (events.size() > maxResults) {
                 return new ArrayList<>(events.subList(0, maxResults));
@@ -134,6 +136,22 @@ public class IndexingAuditServiceImpl implements IndexingAuditService {
         }
 
         return events;
+    }
+
+    private static void deduplicateEvents(final List<Map<String, Object>> events) {
+        final Map<String, Map<String, Object>> unique = new LinkedHashMap<>();
+        for (final Map<String, Object> row : events) {
+            final String key = String.format(
+                    "%s|%s|%s|%s|%s",
+                    row.getOrDefault("path", ""),
+                    row.getOrDefault("action", ""),
+                    row.getOrDefault("status", ""),
+                    row.getOrDefault("timestamp", ""),
+                    row.getOrDefault("message", ""));
+            unique.putIfAbsent(key, row);
+        }
+        events.clear();
+        events.addAll(unique.values());
     }
 
     @Override
