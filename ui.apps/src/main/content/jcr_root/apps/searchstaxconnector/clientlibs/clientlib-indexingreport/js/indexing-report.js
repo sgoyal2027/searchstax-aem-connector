@@ -38,6 +38,14 @@
 
         tbody.innerHTML = "";
 
+        if (!events.length) {
+            var emptyRow = document.createElement("tr");
+            emptyRow.className = "searchstax-indexing-report-empty";
+            emptyRow.innerHTML = "<td colspan=\"6\">No indexing events found for the selected filters.</td>";
+            tbody.appendChild(emptyRow);
+            return;
+        }
+
         events.forEach(function (event) {
             var row = document.createElement("tr");
             row.innerHTML =
@@ -68,16 +76,27 @@
             method: "POST",
             data: { path: path }
         }).always(function () {
-            loadReport(getSelectedValue("#searchstax-indexing-report-status-filter"), getSelectedValue("#searchstax-indexing-report-action-filter"));
+            refreshReport();
         });
     }
 
     function getSelectedValue(selector) {
-        var input = document.querySelector(selector);
-        if (!input) {
+        var wrapper = document.querySelector(selector);
+        if (!wrapper) {
             return "ALL";
         }
-        return input.value || "ALL";
+
+        var field = $(wrapper).adaptTo("foundation-field");
+        if (field && typeof field.getValue === "function") {
+            return field.getValue() || "ALL";
+        }
+
+        var coralSelect = wrapper.querySelector("coral-select");
+        if (coralSelect && coralSelect.value) {
+            return coralSelect.value;
+        }
+
+        return "ALL";
     }
 
     function formatStatus(status) {
@@ -105,26 +124,23 @@
             .replace(/"/g, "&quot;");
     }
 
+    function refreshReport() {
+        loadReport(
+            getSelectedValue("#searchstax-indexing-report-status-filter"),
+            getSelectedValue("#searchstax-indexing-report-action-filter"));
+    }
+
     $(document).on("foundation-contentloaded", function () {
         if (!document.querySelector("#searchstax-indexing-report-table")) {
             return;
         }
-        var actionFilter = document.querySelector("#searchstax-indexing-report-action-filter");
-        var statusFilter = document.querySelector("#searchstax-indexing-report-status-filter");
-        var refresh = function () {
-            loadReport(getSelectedValue("#searchstax-indexing-report-status-filter"), getSelectedValue("#searchstax-indexing-report-action-filter"));
-        };
 
-        if (actionFilter) {
-            actionFilter.addEventListener("change", refresh);
-        }
-        if (statusFilter) {
-            statusFilter.addEventListener("change", refresh);
-        }
+        $(document).on(
+            "change",
+            "#searchstax-indexing-report-action-filter coral-select, #searchstax-indexing-report-status-filter coral-select",
+            refreshReport);
 
-        refresh();
-        setInterval(function () {
-            refresh();
-        }, REFRESH_MS);
+        refreshReport();
+        setInterval(refreshReport, REFRESH_MS);
     });
 })(document, Granite.$);

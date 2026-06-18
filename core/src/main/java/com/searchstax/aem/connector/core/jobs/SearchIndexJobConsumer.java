@@ -2,7 +2,6 @@ package com.searchstax.aem.connector.core.jobs;
 
 import com.day.cq.replication.ReplicationActionType;
 import com.searchstax.aem.connector.core.services.IncrementalQueueService;
-import com.searchstax.aem.connector.core.services.IndexingAuditService;
 import org.apache.sling.event.jobs.Job;
 import org.apache.sling.event.jobs.consumer.JobConsumer;
 import org.osgi.service.component.annotations.Component;
@@ -24,9 +23,6 @@ public class SearchIndexJobConsumer implements JobConsumer {
 
     @Reference
     private IncrementalQueueService queueService;
-
-    @Reference
-    private IndexingAuditService indexingAuditService;
 
     @Override
     public JobResult process(final Job job) {
@@ -56,15 +52,6 @@ public class SearchIndexJobConsumer implements JobConsumer {
         }
 
         queueService.addRequest(path, actionType, job.getId());
-
-        indexingAuditService.recordEvent(
-                path,
-                actionType.name(),
-                IndexingAuditService.STATUS_QUEUED,
-                "Added to incremental queue",
-                job.getId(),
-                0,
-                null);
 
         LOG.info("Request added to queue. Queue Size={}", queueService.size());
 

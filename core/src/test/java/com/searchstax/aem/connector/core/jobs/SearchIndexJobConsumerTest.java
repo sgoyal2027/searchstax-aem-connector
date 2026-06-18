@@ -1,7 +1,6 @@
 package com.searchstax.aem.connector.core.jobs;
 
 import com.day.cq.replication.ReplicationActionType;
-import com.searchstax.aem.connector.core.services.IndexingAuditService;
 import com.searchstax.aem.connector.core.services.IncrementalQueueService;
 import org.apache.sling.event.jobs.Job;
 import org.apache.sling.event.jobs.consumer.JobConsumer.JobResult;
@@ -25,9 +24,6 @@ class SearchIndexJobConsumerTest {
     private IncrementalQueueService queueService;
 
     @Mock
-    private IndexingAuditService indexingAuditService;
-
-    @Mock
     private Job job;
 
     @InjectMocks
@@ -43,14 +39,6 @@ class SearchIndexJobConsumerTest {
         assertEquals(JobResult.OK, consumer.process(job));
 
         verify(queueService).addRequest("/content/wknd/en/page", ReplicationActionType.ACTIVATE, "job-1");
-        verify(indexingAuditService).recordEvent(
-                eq("/content/wknd/en/page"),
-                eq("ACTIVATE"),
-                eq(IndexingAuditService.STATUS_QUEUED),
-                any(),
-                eq("job-1"),
-                eq(0L),
-                eq(null));
     }
 
     @Test
