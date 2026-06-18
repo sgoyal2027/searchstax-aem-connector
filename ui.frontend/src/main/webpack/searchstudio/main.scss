@@ -1,0 +1,48 @@
+.cmp-searchstudio {
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 16px;
+    box-sizing: border-box;
+    font-family: inherit;
+}
+
+#searchstudio-input-container {
+    margin-bottom: 24px;
+}
+
+.searchstax-page-layout-container {
+    display: flex;
+    gap: 24px;
+    align-items: flex-start;
+}
+
+.searchstax-page-layout-facet-container {
+    flex: 0 0 240px;
+    min-width: 0;
+}
+
+.searchstax-page-layout-result-container {
+    flex: 1;
+    min-width: 0;
+}
+
+#searchstudio-results-container {
+    margin-bottom: 24px;
+}
+
+#searchstudio-pagination-container {
+    display: flex;
+    justify-content: center;
+}
+
+@media (max-width: 768px) {
+    .searchstax-page-layout-container {
+        flex-direction: column;
+    }
+
+    .searchstax-page-layout-facet-container {
+        flex: none;
+        width: 100%;
+    }
+}
