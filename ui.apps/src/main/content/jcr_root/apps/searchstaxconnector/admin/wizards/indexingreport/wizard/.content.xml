@@ -39,7 +39,7 @@
                         <description
                             jcr:primaryType="nt:unstructured"
                             sling:resourceType="granite/ui/components/coral/foundation/text"
-                            text="Shows SUCCESS, FAILURE, and SKIPPED indexing events from the last 24 hours. Use filters to focus by action and status. Data is automatically purged after 24 hours."/>
+                            text="Shows SUCCESS, FAILURE, and SKIPPED indexing events from the last 24 hours. * Use the Action and Status filters to focus results. * Data is automatically purged after 24 hours."/>
                         <filters
                             jcr:primaryType="nt:unstructured"
                             sling:resourceType="granite/ui/components/coral/foundation/container"
