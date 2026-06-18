@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.searchstax.aem.connector.core.config.LanguageConfigService;
 import com.searchstax.aem.connector.core.config.model.LanguageMappingConfig;
+import com.searchstax.aem.connector.core.config.model.LanguageMappingConfig;
 import com.searchstax.aem.connector.core.utils.ResolverUtil;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
@@ -123,8 +124,7 @@ public class LanguageConfigServiceImpl implements LanguageConfigService {
                         "Configuration resource not found at path: {}",
                         CONFIG_PATH);
 
-                cachedMappings=
-                        Collections.emptyList();
+                cachedMappings = LanguageMappingConfig.defaultMappings();
 
                 return;
             }
@@ -139,12 +139,13 @@ public class LanguageConfigServiceImpl implements LanguageConfigService {
                     mappingsJson);
 
             if (mappingsJson == null
-                    || mappingsJson.trim().isEmpty()) {
+                    || mappingsJson.trim().isEmpty()
+                    || "[]".equals(mappingsJson.trim())) {
 
-                LOG.warn(
-                        "No language field mappings found in configuration");
+                LOG.info(
+                        "No language field mappings found in configuration; using default en mapping");
 
-                cachedMappings = Collections.emptyList();
+                cachedMappings = LanguageMappingConfig.defaultMappings();
 
                 return;
             }

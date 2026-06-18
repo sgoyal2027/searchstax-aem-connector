@@ -104,11 +104,6 @@
     width: 130px;
 }
 
-#searchstax-indexing-report-table tbody td:nth-child(5) {
-    white-space: nowrap;
-    width: 130px;
-}
-
 .searchstax-action {
     font-weight: 600;
     letter-spacing: 0.2px;

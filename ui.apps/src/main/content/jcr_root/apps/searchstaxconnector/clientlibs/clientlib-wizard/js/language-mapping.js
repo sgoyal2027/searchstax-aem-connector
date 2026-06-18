@@ -13,6 +13,11 @@
     ];
 
     var MAX_LOAD_ATTEMPTS = 20;
+    var DEFAULT_LANGUAGE_MAPPINGS = [{
+        aemLanguage: "en",
+        searchStaxLanguage: "en",
+        enabledLanguageMapping: true
+    }];
 
     function loadLanguageMappings(attempt) {
         attempt = attempt || 0;
@@ -34,7 +39,7 @@
                 if (data && data.length > 0) {
                     populateLanguageMappings(data);
                 } else {
-                    initializeAllMultifieldItems();
+                    populateLanguageMappings(DEFAULT_LANGUAGE_MAPPINGS);
                 }
             }
         ).fail(function () {

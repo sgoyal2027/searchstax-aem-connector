@@ -74,11 +74,11 @@
                                             value="ALL"/>
                                         <activate
                                             jcr:primaryType="nt:unstructured"
-                                            text="Activate"
+                                            text="Publish"
                                             value="ACTIVATE"/>
                                         <deactivate
                                             jcr:primaryType="nt:unstructured"
-                                            text="Deactivate"
+                                            text="Unpublish"
                                             value="DEACTIVATE"/>
                                         <delete
                                             jcr:primaryType="nt:unstructured"
@@ -138,10 +138,6 @@
                                     jcr:primaryType="nt:unstructured"
                                     jcr:title="Status"
                                     name="status"/>
-                                <duration
-                                    jcr:primaryType="nt:unstructured"
-                                    jcr:title="Duration (ms)"
-                                    name="duration"/>
                                 <message
                                     jcr:primaryType="nt:unstructured"
                                     jcr:title="Message"

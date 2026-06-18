@@ -59,7 +59,7 @@
         if (!events.length) {
             var emptyRow = document.createElement("tr");
             emptyRow.className = "searchstax-indexing-report-empty";
-            emptyRow.innerHTML = "<td colspan=\"6\">No indexing events found for the selected filters.</td>";
+            emptyRow.innerHTML = "<td colspan=\"5\">No indexing events found for the selected filters.</td>";
             tbody.appendChild(emptyRow);
             return;
         }
@@ -71,7 +71,6 @@
                 "<td>" + escapeHtml(event.path || "") + "</td>" +
                 "<td>" + formatAction(event.action || "") + "</td>" +
                 "<td>" + formatStatus(event.status || "") + "</td>" +
-                "<td>" + escapeHtml(String(event.duration != null ? event.duration : "")) + "</td>" +
                 "<td>" + escapeHtml(event.message || "") + "</td>";
             tbody.appendChild(row);
 
@@ -176,7 +175,13 @@
     }
 
     function formatAction(action) {
-        return "<span class=\"searchstax-action\">" + escapeHtml(action || "") + "</span>";
+        var label = action || "";
+        if (action === "ACTIVATE") {
+            label = "Publish";
+        } else if (action === "DEACTIVATE") {
+            label = "Unpublish";
+        }
+        return "<span class=\"searchstax-action\">" + escapeHtml(label) + "</span>";
     }
 
     function escapeHtml(value) {

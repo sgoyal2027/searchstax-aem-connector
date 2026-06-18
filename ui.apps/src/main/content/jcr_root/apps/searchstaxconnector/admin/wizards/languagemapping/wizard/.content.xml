@@ -106,6 +106,7 @@
                                                                                         <items jcr:primaryType="nt:unstructured">
                                                                                             <en
                                                                                                 jcr:primaryType="nt:unstructured"
+                                                                                                selected="{Boolean}true"
                                                                                                 text="en (English)"
                                                                                                 value="en"/>
                                                                                             <en_US
