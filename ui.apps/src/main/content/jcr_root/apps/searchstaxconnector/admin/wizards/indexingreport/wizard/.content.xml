@@ -36,25 +36,10 @@
                             sling:resourceType="granite/ui/components/coral/foundation/heading"
                             level="{Long}2"
                             text="Incremental Indexing Report"/>
-                        <descriptionPanel
+                        <description
                             jcr:primaryType="nt:unstructured"
-                            sling:resourceType="granite/ui/components/coral/foundation/container"
-                            class="searchstax-indexing-report-description">
-                            <items jcr:primaryType="nt:unstructured">
-                                <intro
-                                    jcr:primaryType="nt:unstructured"
-                                    sling:resourceType="granite/ui/components/coral/foundation/text"
-                                    text="Review SUCCESS, FAILURE, and SKIPPED incremental indexing events from the last 24 hours."/>
-                                <filterNote
-                                    jcr:primaryType="nt:unstructured"
-                                    sling:resourceType="granite/ui/components/coral/foundation/text"
-                                    text="* Use the Action and Status filters below to narrow the results."/>
-                                <retentionNote
-                                    jcr:primaryType="nt:unstructured"
-                                    sling:resourceType="granite/ui/components/coral/foundation/text"
-                                    text="* Events are automatically removed after 24 hours."/>
-                            </items>
-                        </descriptionPanel>
+                            sling:resourceType="granite/ui/components/coral/foundation/text"
+                            text="Shows SUCCESS, FAILURE, and SKIPPED indexing events from the last 24 hours. * Use the Action and Status filters to focus results. * Data is automatically purged after 24 hours."/>
                         <filters
                             jcr:primaryType="nt:unstructured"
                             sling:resourceType="granite/ui/components/coral/foundation/container"

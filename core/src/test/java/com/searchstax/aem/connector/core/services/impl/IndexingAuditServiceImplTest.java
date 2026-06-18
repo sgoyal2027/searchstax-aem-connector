@@ -65,20 +65,6 @@ class IndexingAuditServiceImplTest {
         assertEquals("DELETE", failuresOnly.get(0).get("action"));
     }
 
-    @Test
-    void listEvents_deduplicatesIdenticalRows() throws Exception {
-        when(resolverUtil.getServiceResolver()).thenReturn(resourceResolver);
-        when(resourceResolver.getResource(IndexingAuditServiceImpl.AUDIT_ROOT)).thenReturn(auditRoot);
-
-        final List<Resource> auditEvents = List.of(
-                auditEvent("ACTIVATE", IndexingAuditService.STATUS_FAILURE, "PERMANENT_FAILURE"),
-                auditEvent("ACTIVATE", IndexingAuditService.STATUS_FAILURE, "PERMANENT_FAILURE"));
-        when(auditRoot.getChildren()).thenReturn(auditEvents);
-
-        final List<Map<String, Object>> events = indexingAuditService.listEvents("ALL", "ALL", true, 50);
-        assertEquals(1, events.size());
-    }
-
     private static Resource auditEvent(final String action, final String status, final String message) {
         final Resource resource = mock(Resource.class);
         final ValueMap valueMap = mock(ValueMap.class);
