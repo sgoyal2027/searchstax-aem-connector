@@ -90,7 +90,7 @@
                                                                                 jcr:primaryType="nt:unstructured"
                                                                                 sling:resourceType="granite/ui/components/coral/foundation/form/password"
                                                                                 autoComplete="off"
-                                                                                fieldDescription="When a token is already saved, the field is locked. Click Update token to enter a new value."
+                                                                                fieldDescription="Insert a new value to update/change API Token."
                                                                                 fieldLabel="API Token"
                                                                                 name="apiToken"
                                                                                 required="{Boolean}true"/>

@@ -219,6 +219,7 @@
                                                                                                 sling:resourceType="granite/ui/components/coral/foundation/form/textfield"
                                                                                                 fieldLabel="Custom AEM Language"
                                                                                                 fieldDescription="Enter a custom AEM language code. Example: en-ca"
+                                                                                                required="{Boolean}true"
                                                                                                 name="./customAemLanguage"/>
                                                                                         </items>
                                                                                     </customAemLanguageWrapper>
