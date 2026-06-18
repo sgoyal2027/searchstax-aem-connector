@@ -196,7 +196,6 @@ public class IndexingAuditServiceImpl implements IndexingAuditService {
         }
 
         incrementalQueueService.addRequest(path, actionType);
-        recordEvent(path, actionType.name(), STATUS_QUEUED, "Reprocess requested", null, 0, null);
         LOG.info("Re-queued failed path for incremental indexing. Path={}", path);
     }
 

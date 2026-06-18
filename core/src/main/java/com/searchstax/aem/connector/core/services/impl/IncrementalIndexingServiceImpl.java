@@ -208,7 +208,7 @@ public class IncrementalIndexingServiceImpl implements IncrementalIndexingServic
             if (indexingHelperService.isSuccess(response)) {
                 successfulRequests.addAll(payloadBatch.getRequests());
                 for (final IndexRequest request : payloadBatch.getRequests()) {
-                    auditEvent(request, IndexingAuditService.STATUS_SUCCESS, "Indexed", duration);
+                    auditEvent(request, IndexingAuditService.STATUS_SUCCESS, successMessage(request.getActionType()), duration);
                 }
                 LOG.info(
                         "Successfully indexed payload batch. Documents={} Size={} KB",
@@ -218,13 +218,13 @@ public class IncrementalIndexingServiceImpl implements IncrementalIndexingServic
                 for (final IndexRequest request : payloadBatch.getRequests()) {
                     failedRequestService.saveFailedRequest(request, "PLAN_LIMIT_EXCEEDED", response);
                     failedRequests.add(request);
+                    auditEvent(request, IndexingAuditService.STATUS_FAILURE, "PLAN_LIMIT_EXCEEDED", 0);
                 }
                 LOG.error(
                         "SearchStax plan limit exceeded. Removing {} requests from queue.",
                         payloadBatch.getRequests().size());
                 successfulRequests.addAll(payloadBatch.getRequests());
-            } else if (indexingHelperService.isPlanLimitExceeded(response)
-                    || indexingHelperService.isPermanentFailure(response)) {
+            } else if (indexingHelperService.isPermanentFailure(response)) {
                 LOG.error(
                         "Non-retryable error detected. Status={} Removing {} requests from queue.",
                         response != null ? response.getStatusCode() : "NULL",
@@ -233,6 +233,7 @@ public class IncrementalIndexingServiceImpl implements IncrementalIndexingServic
                 for (final IndexRequest request : payloadBatch.getRequests()) {
                     failedRequestService.saveFailedRequest(request, "PERMANENT_FAILURE", response);
                     failedRequests.add(request);
+                    auditEvent(request, IndexingAuditService.STATUS_FAILURE, "PERMANENT_FAILURE", 0);
                     LOG.error("Removing request due to permanent failure. Path={}", request.getPath());
                 }
                 successfulRequests.addAll(payloadBatch.getRequests());
@@ -292,7 +293,7 @@ public class IncrementalIndexingServiceImpl implements IncrementalIndexingServic
                 if (indexingHelperService.isSuccess(response)) {
                     successfulRequests.addAll(deleteBatch.getRequests());
                     for (final IndexRequest request : deleteBatch.getRequests()) {
-                        auditEvent(request, IndexingAuditService.STATUS_SUCCESS, "Deleted", duration);
+                        auditEvent(request, IndexingAuditService.STATUS_SUCCESS, successMessage(request.getActionType()), duration);
                     }
                     LOG.info(
                             "Successfully deleted batch. Documents={} Size={} KB",
@@ -307,6 +308,7 @@ public class IncrementalIndexingServiceImpl implements IncrementalIndexingServic
                     for (final IndexRequest request : deleteBatch.getRequests()) {
                         failedRequestService.saveFailedRequest(request, "DELETE_PERMANENT_FAILURE", response);
                         failedRequests.add(request);
+                        auditEvent(request, IndexingAuditService.STATUS_FAILURE, "DELETE_PERMANENT_FAILURE", 0);
                     }
                     successfulRequests.addAll(deleteBatch.getRequests());
                 } else {
@@ -361,6 +363,16 @@ public class IncrementalIndexingServiceImpl implements IncrementalIndexingServic
             sleepBackoff(request.getRetryCount());
             queueService.updateRequest(request);
         }
+    }
+
+    private static String successMessage(final ReplicationActionType actionType) {
+        if (actionType == ReplicationActionType.ACTIVATE) {
+            return "Indexed";
+        }
+        if (actionType == ReplicationActionType.DEACTIVATE) {
+            return "Deactivated";
+        }
+        return "Deleted";
     }
 
     private void auditEvent(
