@@ -1,0 +1,40 @@
+<!--/*
+    SearchStudio Search UI component — input, facets, results, pagination.
+    Clientlib: searchstaxconnector.searchstudio
+*/-->
+<sly data-sly-use.clientlib="core/wcm/components/commons/v1/templates/clientlib.html">
+    <sly data-sly-call="${clientlib.css @ categories='searchstaxconnector.searchstudio'}"/>
+</sly>
+
+<sly data-sly-use.config="com.searchstax.aem.connector.core.models.SearchStudioConfigModel"/>
+
+<div class="cmp-searchstudio"
+     data-search-url="${config.searchURL @ context='attribute'}"
+     data-search-auth="${config.searchAuth @ context='attribute'}"
+     data-suggester-url="${config.suggesterURL @ context='attribute'}"
+     data-track-key="${config.trackApiKey @ context='attribute'}"
+     data-analytics-url="${config.analyticsBaseUrl @ context='attribute'}">
+
+    <div id="searchstudio-input-container">
+        <input id="searchstudio-query-input" type="text" placeholder="Search…" aria-label="Search"/>
+        <button id="searchstudio-search-button" type="button">Search</button>
+    </div>
+
+    <div class="searchstax-page-layout-container">
+
+        <div class="searchstax-page-layout-facet-container">
+            <div id="searchstudio-facets-container"></div>
+        </div>
+
+        <div class="searchstax-page-layout-result-container">
+            <div id="searchstudio-results-container"></div>
+            <div id="searchstudio-pagination-container"></div>
+        </div>
+
+    </div>
+
+</div>
+
+<sly data-sly-use.clientlib="core/wcm/components/commons/v1/templates/clientlib.html">
+    <sly data-sly-call="${clientlib.js @ categories='searchstaxconnector.searchstudio'}"/>
+</sly>
