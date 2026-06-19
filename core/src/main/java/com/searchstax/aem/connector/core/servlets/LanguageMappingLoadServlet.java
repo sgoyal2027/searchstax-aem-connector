@@ -1,5 +1,7 @@
 package com.searchstax.aem.connector.core.servlets;
 
+import com.google.gson.Gson;
+import com.searchstax.aem.connector.core.config.model.LanguageMappingConfig;
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.SlingHttpServletResponse;
 import org.apache.sling.api.resource.Resource;
@@ -21,6 +23,8 @@ import java.io.IOException;
 )
 public class LanguageMappingLoadServlet extends SlingSafeMethodsServlet {
 
+    private static final Gson GSON = new Gson();
+
     private static final String CONFIG_PATH = "/conf/searchstaxconnector/settings/languagemapping";
 
     private static final String PROPERTY_NAME = "languageMappings";
@@ -32,9 +36,12 @@ public class LanguageMappingLoadServlet extends SlingSafeMethodsServlet {
         final ResourceResolver resolver = request.getResourceResolver();
         final Resource resource = resolver.getResource(CONFIG_PATH);
 
-        String mappingsJson = "[]";
+        String mappingsJson = GSON.toJson(LanguageMappingConfig.defaultMappings());
         if (resource != null) {
-            mappingsJson = resource.getValueMap().get(PROPERTY_NAME, "[]");
+            final String stored = resource.getValueMap().get(PROPERTY_NAME, "[]");
+            if (stored != null && !stored.trim().isEmpty() && !"[]".equals(stored.trim())) {
+                mappingsJson = stored;
+            }
         }
 
         response.setContentType("application/json");

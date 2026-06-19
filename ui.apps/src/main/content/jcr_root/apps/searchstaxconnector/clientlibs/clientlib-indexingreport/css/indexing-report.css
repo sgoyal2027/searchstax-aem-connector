@@ -1,17 +1,39 @@
+.searchstax-indexing-report-description {
+    margin: 12px 0 28px;
+    max-width: 960px;
+}
+
+.searchstax-indexing-report-description .coral-Form-fieldwrapper,
+.searchstax-indexing-report-description p {
+    font-size: 15px;
+    line-height: 1.65;
+    color: #4b4b4b;
+    margin: 0 0 10px;
+}
+
+.searchstax-indexing-report-description .coral-Form-fieldwrapper:last-child,
+.searchstax-indexing-report-description p:last-child {
+    margin-bottom: 0;
+}
+
 .searchstax-indexing-report-filters {
     display: flex;
     flex-wrap: wrap;
-    gap: 12px;
-    margin: 12px 0 16px;
+    gap: 16px;
+    margin: 0 0 32px;
+    padding: 16px 20px;
+    background: #fafafa;
+    border: 1px solid #e5e5e5;
+    border-radius: 8px;
 }
 
 #searchstax-indexing-report-action-filter,
 #searchstax-indexing-report-status-filter {
-    min-width: 200px;
+    min-width: 220px;
 }
 
 .searchstax-indexing-report-table {
-    margin-top: 8px;
+    margin-top: 0;
 }
 
 #searchstax-indexing-report-table,
@@ -19,6 +41,14 @@
 #searchstax-indexing-report-table .coral-Table {
     width: 100%;
     border-collapse: collapse;
+    background: #ffffff;
+}
+
+#searchstax-indexing-report-table,
+#searchstax-indexing-report-table .coral-Table {
+    border: 1px solid #e5e5e5;
+    border-radius: 8px;
+    overflow: hidden;
 }
 
 #searchstax-indexing-report-table thead th,
@@ -29,7 +59,7 @@
     font-size: 12px;
     font-weight: 700;
     letter-spacing: 0.4px;
-    padding: 10px 12px;
+    padding: 12px 14px;
     text-align: left;
     text-transform: uppercase;
 }
@@ -40,7 +70,7 @@
     color: #323232;
     font-size: 13px;
     line-height: 1.4;
-    padding: 10px 12px;
+    padding: 12px 14px;
     vertical-align: top;
     word-break: break-word;
 }
@@ -57,6 +87,21 @@
     color: #707070;
     font-style: italic;
     text-align: center;
+}
+
+#searchstax-indexing-report-table tbody td:nth-child(1) {
+    white-space: nowrap;
+    width: 180px;
+}
+
+#searchstax-indexing-report-table tbody td:nth-child(2) {
+    max-width: 440px;
+}
+
+#searchstax-indexing-report-table tbody td:nth-child(3),
+#searchstax-indexing-report-table tbody td:nth-child(4) {
+    white-space: nowrap;
+    width: 130px;
 }
 
 .searchstax-action {

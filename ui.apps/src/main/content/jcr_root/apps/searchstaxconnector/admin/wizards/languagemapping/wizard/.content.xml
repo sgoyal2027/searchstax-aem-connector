@@ -106,6 +106,7 @@
                                                                                         <items jcr:primaryType="nt:unstructured">
                                                                                             <en
                                                                                                 jcr:primaryType="nt:unstructured"
+                                                                                                selected="{Boolean}true"
                                                                                                 text="en (English)"
                                                                                                 value="en"/>
                                                                                             <en_US
@@ -219,6 +220,7 @@
                                                                                                 sling:resourceType="granite/ui/components/coral/foundation/form/textfield"
                                                                                                 fieldLabel="Custom AEM Language"
                                                                                                 fieldDescription="Enter a custom AEM language code. Example: en-ca"
+                                                                                                required="{Boolean}true"
                                                                                                 name="./customAemLanguage"/>
                                                                                         </items>
                                                                                     </customAemLanguageWrapper>

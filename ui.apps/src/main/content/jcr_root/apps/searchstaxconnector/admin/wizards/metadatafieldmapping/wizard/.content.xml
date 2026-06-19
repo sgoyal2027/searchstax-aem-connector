@@ -98,6 +98,7 @@
                                                                                         fieldDescription="Select the AEM metadata field to map."
                                                                                         name="./mappingType"
                                                                                         emptyText="Select AEM Metadata Field"
+                                                                                        required="{Boolean}true">
                                                                                         granite:class="cq-dialog-dropdown-showhide">
                                                                                         <granite:data
                                                                                             jcr:primaryType="nt:unstructured"
@@ -223,7 +224,8 @@
                                                                                                 sling:resourceType="granite/ui/components/coral/foundation/form/textfield"
                                                                                                 fieldLabel="Custom AEM Metadata Field"
                                                                                                 fieldDescription="Enter custom AEM metadata property. Example: myproject:seoTitle"
-                                                                                                name="./customProperty"/>
+                                                                                                name="./customProperty"
+                                                                                                required="{Boolean}true"/>
                                                                                         </items>
                                                                                     </customPropertyWrapper>
                                                                                     <indexFieldName

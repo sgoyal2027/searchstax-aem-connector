@@ -1,11 +1,21 @@
 package com.searchstax.aem.connector.core.config.model;
 
+import java.util.List;
+
 public class LanguageMappingConfig {
 
     private String aemLanguage;
     private String customAemLanguage;
     private String searchStaxLanguage;
     private boolean enabledLanguageMapping;
+
+    public static List<LanguageMappingConfig> defaultMappings() {
+        final LanguageMappingConfig english = new LanguageMappingConfig();
+        english.setAemLanguage("en");
+        english.setSearchStaxLanguage("en");
+        english.setEnabledLanguageMapping(true);
+        return List.of(english);
+    }
 
     public String getAemLanguage() {
         return aemLanguage;
