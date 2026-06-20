@@ -8,7 +8,9 @@ import org.junit.jupiter.api.io.TempDir;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -129,10 +131,46 @@ class SearchStaxFullIndexFailureStoreTest {
     }
 
     @Test
-    void listFailuresSince_emptyWhenDirectoryMissing() throws Exception {
-        final Path missing = tempDir.resolve("missing");
-        final SearchStaxFullIndexFailureStore store = new SearchStaxFullIndexFailureStore(missing);
+    void listFailureEventsForReport_flattensPathsAndFiltersByRetention() throws Exception {
+        final SearchStaxFullIndexFailureStore store = new SearchStaxFullIndexFailureStore(tempDir);
+        final Instant recent = Instant.now().minus(1, ChronoUnit.HOURS);
+        final Instant old = Instant.now().minus(48, ChronoUnit.HOURS);
 
-        assertTrue(store.listFailuresSince(Instant.now()).isEmpty());
+        store.recordFailure(
+                new SearchStaxFullIndexFailureStore.FailureRecord(
+                        "batch-10",
+                        List.of("/content/a", "/content/b"),
+                        503,
+                        "Service Unavailable",
+                        4096,
+                        recent,
+                        2));
+        store.recordFailure(
+                new SearchStaxFullIndexFailureStore.FailureRecord(
+                        "path-document-limit-/content/c",
+                        List.of("/content/c"),
+                        413,
+                        "Payload too large",
+                        2048,
+                        recent,
+                        0));
+        store.recordFailure(
+                new SearchStaxFullIndexFailureStore.FailureRecord(
+                        "batch-old",
+                        List.of("/content/old"),
+                        500,
+                        "old failure",
+                        100,
+                        old,
+                        1));
+
+        final List<Map<String, Object>> events = store.listFailureEventsForReport(50, 24);
+
+        assertEquals(3, events.size());
+        assertTrue(events.stream().anyMatch(e -> "/content/a".equals(e.get("path"))));
+        assertTrue(events.stream().anyMatch(e -> "/content/b".equals(e.get("path"))));
+        assertTrue(events.stream().anyMatch(e -> "PATH".equals(e.get("failureKind"))));
+        assertTrue(events.stream().anyMatch(e -> "BATCH".equals(e.get("failureKind"))));
+        assertFalse(events.stream().anyMatch(e -> "/content/old".equals(e.get("path"))));
     }
 }

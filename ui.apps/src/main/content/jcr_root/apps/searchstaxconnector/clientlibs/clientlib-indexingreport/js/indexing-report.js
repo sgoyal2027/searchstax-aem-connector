@@ -3,14 +3,16 @@
 
     var REPORT_URL = "/bin/searchstaxconnector/wizard/indexing-report";
     var REPROCESS_URL = "/bin/searchstaxconnector/wizard/indexing-report-reprocess";
+    var FULL_INDEX_STATUS_URL = "/bin/searchstaxconnector/wizard/fullindex-status";
     var REFRESH_MS = 60000;
 
     var refreshTimer = null;
     var filtersInitialized = false;
     var activeRequestId = 0;
+    var activeTab = "incremental";
 
-    function getReportTbody() {
-        var root = document.querySelector("#searchstax-indexing-report-table");
+    function getReportTbody(tableId) {
+        var root = document.querySelector(tableId);
         if (!root) {
             return null;
         }
@@ -22,9 +24,9 @@
         return root.querySelector("table tbody") || root.querySelector("tbody");
     }
 
-    function loadReport(statusFilter, actionFilter) {
+    function loadIncrementalReport(statusFilter, actionFilter) {
         var requestId = ++activeRequestId;
-        var url = REPORT_URL + "?limit=500";
+        var url = REPORT_URL + "?limit=500&type=incremental";
         if (statusFilter && statusFilter !== "ALL") {
             url += "&status=" + encodeURIComponent(statusFilter);
         }
@@ -35,21 +37,92 @@
 
         $.ajax({ url: url, method: "GET", dataType: "json" })
             .done(function (data) {
-                if (requestId !== activeRequestId) {
+                if (requestId !== activeRequestId || activeTab !== "incremental") {
                     return;
                 }
-                renderRows(data && data.events ? data.events : []);
+                renderIncrementalRows(data && data.events ? data.events : []);
             })
             .fail(function () {
-                if (requestId !== activeRequestId) {
+                if (requestId !== activeRequestId || activeTab !== "incremental") {
                     return;
                 }
-                renderRows([]);
+                renderIncrementalRows([]);
             });
     }
 
-    function renderRows(events) {
-        var tbody = getReportTbody();
+    function loadFullReindexReport(failureKindFilter) {
+        var requestId = ++activeRequestId;
+        var url = REPORT_URL + "?limit=500&type=full";
+        if (failureKindFilter && failureKindFilter !== "ALL") {
+            url += "&failureKind=" + encodeURIComponent(failureKindFilter);
+        }
+
+        $.ajax({ url: url, method: "GET", dataType: "json" })
+            .done(function (data) {
+                if (requestId !== activeRequestId || activeTab !== "full") {
+                    return;
+                }
+                renderFullReindexRows(data && data.events ? data.events : []);
+            })
+            .fail(function () {
+                if (requestId !== activeRequestId || activeTab !== "full") {
+                    return;
+                }
+                renderFullReindexRows([]);
+            });
+
+        loadFullReindexSummary();
+    }
+
+    function loadFullReindexSummary() {
+        var summary = document.querySelector("#searchstax-full-reindex-run-summary");
+        if (!summary) {
+            return;
+        }
+
+        $.ajax({ url: FULL_INDEX_STATUS_URL, method: "GET", dataType: "json" })
+            .done(function (data) {
+                if (activeTab !== "full") {
+                    return;
+                }
+                renderFullReindexSummary(summary, data || {});
+            })
+            .fail(function () {
+                if (activeTab !== "full") {
+                    return;
+                }
+                summary.innerHTML = "";
+            });
+    }
+
+    function renderFullReindexSummary(container, data) {
+        var state = data.state || "IDLE";
+        var running = !!data.running;
+        var successCount = data.successCount != null ? data.successCount : 0;
+        var failureCount = data.failureCount != null ? data.failureCount : 0;
+        var totalAttempted = data.totalAttempted != null ? data.totalAttempted : 0;
+        var message = data.message || "";
+
+        if (state === "IDLE" && !running && totalAttempted === 0) {
+            container.innerHTML = "";
+            return;
+        }
+
+        container.innerHTML =
+            "<div class='searchstax-full-reindex-summary-panel'>" +
+                "<div class='searchstax-full-reindex-summary-title'>Last full reindex run</div>" +
+                "<div class='searchstax-full-reindex-summary-stats'>" +
+                    "<span><strong>State:</strong> " + escapeHtml(state) + "</span>" +
+                    "<span><strong>Indexed:</strong> " + escapeHtml(String(successCount)) + "</span>" +
+                    "<span><strong>Failed paths:</strong> " + escapeHtml(String(failureCount)) + "</span>" +
+                    "<span><strong>Attempted:</strong> " + escapeHtml(String(totalAttempted)) + "</span>" +
+                "</div>" +
+                (message ? "<div class='searchstax-full-reindex-summary-message'>" + escapeHtml(message) + "</div>" : "") +
+            "</div>";
+    }
+
+    function renderIncrementalRows(events) {
+        var tbody = getReportTbody("#searchstax-indexing-report-table");
         if (!tbody) {
             return;
         }
@@ -57,10 +130,7 @@
         tbody.innerHTML = "";
 
         if (!events.length) {
-            var emptyRow = document.createElement("tr");
-            emptyRow.className = "searchstax-indexing-report-empty";
-            emptyRow.innerHTML = "<td colspan=\"5\">No indexing events found for the selected filters.</td>";
-            tbody.appendChild(emptyRow);
+            appendEmptyRow(tbody, "No incremental indexing events found for the selected filters.");
             return;
         }
 
@@ -69,7 +139,7 @@
             row.innerHTML =
                 "<td>" + escapeHtml(event.timestamp || "") + "</td>" +
                 "<td>" + escapeHtml(event.path || "") + "</td>" +
-                "<td>" + formatAction(event.action || "") + "</td>" +
+                "<td>" + formatIncrementalAction(event.action || "") + "</td>" +
                 "<td>" + formatStatus(event.status || "") + "</td>" +
                 "<td>" + escapeHtml(event.message || "") + "</td>";
             tbody.appendChild(row);
@@ -82,6 +152,38 @@
                 });
             }
         });
+    }
+
+    function renderFullReindexRows(events) {
+        var tbody = getReportTbody("#searchstax-full-reindex-report-table");
+        if (!tbody) {
+            return;
+        }
+
+        tbody.innerHTML = "";
+
+        if (!events.length) {
+            appendEmptyRow(tbody, "No full reindex failures found for the selected filters.");
+            return;
+        }
+
+        events.forEach(function (event) {
+            var row = document.createElement("tr");
+            row.innerHTML =
+                "<td>" + escapeHtml(event.timestamp || "") + "</td>" +
+                "<td>" + escapeHtml(event.path || "") + "</td>" +
+                "<td>" + formatFullReindexType(event.failureKind || "") + "</td>" +
+                "<td>" + formatStatus(event.status || "FAILURE") + "</td>" +
+                "<td>" + escapeHtml(event.message || "") + "</td>";
+            tbody.appendChild(row);
+        });
+    }
+
+    function appendEmptyRow(tbody, message) {
+        var emptyRow = document.createElement("tr");
+        emptyRow.className = "searchstax-indexing-report-empty";
+        emptyRow.innerHTML = "<td colspan=\"5\">" + escapeHtml(message) + "</td>";
+        tbody.appendChild(emptyRow);
     }
 
     function reprocess(path) {
@@ -174,12 +276,22 @@
         return "<span class=\"" + cssClass + "\">" + normalized + "</span>";
     }
 
-    function formatAction(action) {
+    function formatIncrementalAction(action) {
         var label = action || "";
         if (action === "ACTIVATE") {
             label = "Publish";
         } else if (action === "DEACTIVATE") {
             label = "Unpublish";
+        }
+        return "<span class=\"searchstax-action\">" + escapeHtml(label) + "</span>";
+    }
+
+    function formatFullReindexType(failureKind) {
+        var label = "Full Reindex";
+        if (failureKind === "BATCH") {
+            label = "Batch failure";
+        } else if (failureKind === "PATH") {
+            label = "Path failure";
         }
         return "<span class=\"searchstax-action\">" + escapeHtml(label) + "</span>";
     }
@@ -193,27 +305,83 @@
     }
 
     function refreshReport() {
-        loadReport(
+        if (activeTab === "full") {
+            loadFullReindexReport(getSelectedValue("#searchstax-full-reindex-failure-kind-filter"));
+            return;
+        }
+        loadIncrementalReport(
             getSelectedValue("#searchstax-indexing-report-status-filter"),
             getSelectedValue("#searchstax-indexing-report-action-filter"));
     }
 
+    function resolveActiveTab() {
+        var tabs = document.querySelector("#searchstax-indexing-report-tabs");
+        if (!tabs) {
+            return "incremental";
+        }
+        var tabView = tabs.tagName === "CORAL-TABVIEW" ? tabs : tabs.querySelector("coral-tabview");
+        if (!tabView || !tabView.selectedItem) {
+            return "incremental";
+        }
+        var panelId = tabView.selectedItem.getAttribute("aria-controls") || "";
+        if (panelId.indexOf("fullReindexTab") >= 0 || panelId.indexOf("fullreindex") >= 0) {
+            return "full";
+        }
+        var label = (tabView.selectedItem.label && tabView.selectedItem.label.textContent) || "";
+        if (label.toLowerCase().indexOf("full reindex") >= 0) {
+            return "full";
+        }
+        return "incremental";
+    }
+
+    function bindTabs() {
+        var tabs = document.querySelector("#searchstax-indexing-report-tabs");
+        if (!tabs || tabs.dataset.searchstaxTabsBound === "true") {
+            return;
+        }
+        tabs.dataset.searchstaxTabsBound = "true";
+
+        var attachTabHandler = function (tabView) {
+            tabView.addEventListener("coral-tabview:change", function () {
+                activeTab = resolveActiveTab();
+                refreshReport();
+            });
+        };
+
+        if (window.Coral && Coral.commons && typeof Coral.commons.ready === "function") {
+            Coral.commons.ready(tabs, function (tabView) {
+                var element = tabView.tagName === "CORAL-TABVIEW" ? tabView : tabView.querySelector("coral-tabview");
+                if (element) {
+                    attachTabHandler(element);
+                }
+            });
+        } else {
+            var tabView = tabs.querySelector("coral-tabview");
+            if (tabView) {
+                attachTabHandler(tabView);
+            }
+        }
+    }
+
     function initIndexingReport() {
-        if (!document.querySelector("#searchstax-indexing-report-table")) {
+        if (!document.querySelector("#searchstax-indexing-report-tabs")) {
             return;
         }
 
         if (!filtersInitialized) {
             filtersInitialized = true;
+            bindTabs();
             bindFilter("#searchstax-indexing-report-action-filter");
             bindFilter("#searchstax-indexing-report-status-filter");
+            bindFilter("#searchstax-full-reindex-failure-kind-filter");
             $(document).on(
                 "foundation-field-change",
-                "#searchstax-indexing-report-action-filter, #searchstax-indexing-report-status-filter",
+                "#searchstax-indexing-report-action-filter, #searchstax-indexing-report-status-filter, #searchstax-full-reindex-failure-kind-filter",
                 refreshReport);
             refreshTimer = setInterval(refreshReport, REFRESH_MS);
         }
 
+        activeTab = resolveActiveTab();
         refreshReport();
     }
 

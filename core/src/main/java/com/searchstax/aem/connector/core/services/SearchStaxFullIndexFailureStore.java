@@ -16,8 +16,12 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -74,6 +78,90 @@ public class SearchStaxFullIndexFailureStore {
             return listFailuresFilesystemSince(since);
         }
         return listFailuresJcrSince(since);
+    }
+
+    /**
+     * Flattens persisted full-index failure records into report rows (one row per path).
+     */
+    public List<Map<String, Object>> listFailureEventsForReport(final int maxResults, final int retentionHours)
+            throws IOException {
+        final Instant since = Instant.now().minus(retentionHours, ChronoUnit.HOURS);
+        final List<FailureRecord> records = listFailuresSince(since);
+        records.sort(Comparator.comparing(FailureRecord::getTimestamp, Comparator.nullsLast(Comparator.reverseOrder())));
+
+        final List<Map<String, Object>> events = new ArrayList<>();
+        for (final FailureRecord record : records) {
+            final List<String> paths = record.getPaths();
+            if (paths == null || paths.isEmpty()) {
+                events.add(toReportEvent(record, record.getBatchId()));
+                continue;
+            }
+            for (final String path : paths) {
+                events.add(toReportEvent(record, path));
+            }
+        }
+
+        if (events.size() <= maxResults) {
+            return events;
+        }
+        return new ArrayList<>(events.subList(0, maxResults));
+    }
+
+    private static Map<String, Object> toReportEvent(final FailureRecord record, final String path) {
+        final Map<String, Object> row = new LinkedHashMap<>();
+        row.put("timestamp", formatInstantTimestamp(record.getTimestamp()));
+        row.put("path", path != null ? path : "");
+        row.put("action", "FULL_REINDEX");
+        row.put("status", "FAILURE");
+        row.put(
+                "message",
+                buildFailureMessage(record.getStatusCode(), record.getErrorMessage(), record.getRetryAttempts()));
+        row.put("batchId", record.getBatchId() != null ? record.getBatchId() : "");
+        row.put("failureKind", resolveFailureKind(record.getBatchId()));
+        return row;
+    }
+
+    private static String buildFailureMessage(
+            final int statusCode, final String errorMessage, final int retryAttempts) {
+        final StringBuilder message = new StringBuilder();
+        if (statusCode > 0) {
+            message.append("HTTP ").append(statusCode);
+        }
+        if (errorMessage != null && !errorMessage.isEmpty()) {
+            if (message.length() > 0) {
+                message.append(": ");
+            }
+            message.append(errorMessage);
+        }
+        if (retryAttempts > 0) {
+            if (message.length() > 0) {
+                message.append(" ");
+            }
+            message.append("(retries: ").append(retryAttempts).append(")");
+        }
+        return message.toString();
+    }
+
+    private static String resolveFailureKind(final String batchId) {
+        if (batchId != null && batchId.startsWith("path-")) {
+            return "PATH";
+        }
+        return "BATCH";
+    }
+
+    private static String formatInstantTimestamp(final String timestamp) {
+        if (timestamp == null || timestamp.isEmpty()) {
+            return "";
+        }
+        final ZonedDateTime zoned = Instant.parse(timestamp).atZone(ZoneId.systemDefault());
+        return String.format(
+                "%04d-%02d-%02d %02d:%02d:%02d",
+                zoned.getYear(),
+                zoned.getMonthValue(),
+                zoned.getDayOfMonth(),
+                zoned.getHour(),
+                zoned.getMinute(),
+                zoned.getSecond());
     }
 
     private List<FailureRecord> listFailuresJcrSince(final Instant since) throws IOException {

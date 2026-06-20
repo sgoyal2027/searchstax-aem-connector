@@ -2,6 +2,7 @@ package com.searchstax.aem.connector.core.servlets;
 
 import com.google.gson.Gson;
 import com.searchstax.aem.connector.core.services.IndexingAuditService;
+import com.searchstax.aem.connector.core.services.SearchStaxFullIndexFailureStore;
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.SlingHttpServletResponse;
 import org.apache.sling.api.servlets.HttpConstants;
@@ -25,28 +26,61 @@ import java.util.Map;
 public class IndexingReportServlet extends SlingSafeMethodsServlet {
 
     private static final Gson GSON = new Gson();
+    private static final String TYPE_FULL = "full";
+    private static final int DEFAULT_RETENTION_HOURS = 24;
 
     @Reference
     private IndexingAuditService indexingAuditService;
+
+    @Reference
+    private SearchStaxFullIndexFailureStore fullIndexFailureStore;
 
     @Override
     protected void doGet(final SlingHttpServletRequest request, final SlingHttpServletResponse response)
             throws IOException {
 
-        final String status = request.getParameter("status");
-        final String action = request.getParameter("action");
-        final boolean excludeQueued = parseBoolean(request.getParameter("excludeQueued"), true);
+        final String type = request.getParameter("type");
         final int limit = parseInt(request.getParameter("limit"), 500);
+        final int retentionHours = parseInt(request.getParameter("retentionHours"), DEFAULT_RETENTION_HOURS);
 
-        final List<Map<String, Object>> events = indexingAuditService.listEvents(status, action, excludeQueued, limit);
+        final List<Map<String, Object>> events;
+        if (TYPE_FULL.equalsIgnoreCase(type)) {
+            events = listFullIndexEvents(request, limit, retentionHours);
+        } else {
+            events = listIncrementalEvents(request, limit);
+        }
 
         final Map<String, Object> payload = new HashMap<>();
         payload.put("success", true);
+        payload.put("type", TYPE_FULL.equalsIgnoreCase(type) ? TYPE_FULL : "incremental");
         payload.put("events", events);
 
         response.setContentType("application/json");
         response.setCharacterEncoding("UTF-8");
         response.getWriter().write(GSON.toJson(payload));
+    }
+
+    private List<Map<String, Object>> listIncrementalEvents(
+            final SlingHttpServletRequest request, final int limit) {
+        final String status = request.getParameter("status");
+        final String action = request.getParameter("action");
+        final boolean excludeQueued = parseBoolean(request.getParameter("excludeQueued"), true);
+        return indexingAuditService.listEvents(status, action, excludeQueued, limit);
+    }
+
+    private List<Map<String, Object>> listFullIndexEvents(
+            final SlingHttpServletRequest request, final int limit, final int retentionHours) throws IOException {
+        final String failureKind = request.getParameter("failureKind");
+        final List<Map<String, Object>> events =
+                fullIndexFailureStore.listFailureEventsForReport(limit, retentionHours);
+        if (failureKind == null
+                || failureKind.isBlank()
+                || "ALL".equalsIgnoreCase(failureKind)) {
+            return events;
+        }
+        return events.stream()
+                .filter(event -> failureKind.equalsIgnoreCase(String.valueOf(event.get("failureKind"))))
+                .collect(java.util.stream.Collectors.toList());
     }
 
     private static int parseInt(final String value, final int defaultValue) {

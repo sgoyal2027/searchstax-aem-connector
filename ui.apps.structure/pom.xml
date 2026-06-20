@@ -55,13 +55,10 @@
                         <!-- Immutable context-aware configurations -->
                         <filter><root>/apps/settings</root></filter>
 
-                        <!-- Connector-owned DAM root (merge install only) -->
-                        <filter><root>/content</root></filter>
-                        <filter><root>/content/dam</root></filter>
+                        <!-- Connector-owned DAM root (repoinit only; not packaged in ui.apps) -->
                         <filter><root>/content/dam/searchstaxconnector</root></filter>
 
                         <!-- Connector-owned conf root (created via repoinit, not packaged) -->
-                        <filter><root>/conf</root></filter>
                         <filter><root>/conf/searchstaxconnector</root></filter>
 
                     </filters>
