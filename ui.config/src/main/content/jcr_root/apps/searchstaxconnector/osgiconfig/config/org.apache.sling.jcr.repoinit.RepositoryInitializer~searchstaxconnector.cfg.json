@@ -52,9 +52,6 @@
 
     "set ACL on /var/searchstaxconnector/incremental-index/audit (ACLOptions=merge)\n    allow jcr:read,jcr:addChildNodes,jcr:modifyProperties,jcr:removeNode,jcr:removeChildNodes,jcr:nodeTypeManagement for searchstax-service-user\nend",
 
-    "create path (sling:OrderedFolder) /content",
-    "create path (sling:Folder) /content/dam",
-
     "set ACL on /content (ACLOptions=merge)\n    allow jcr:read for searchstax-service-user\nend",
 
     "set ACL on /content/dam (ACLOptions=merge)\n    allow jcr:read for searchstax-service-user\nend"

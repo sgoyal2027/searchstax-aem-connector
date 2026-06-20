@@ -42,6 +42,8 @@
                         <filter><root>/apps/cq/core</root></filter>
                         <filter><root>/apps/cq/core/content</root></filter>
                         <filter><root>/apps/cq/core/content/nav</root></filter>
+                        <filter><root>/apps/cq/core/content/nav/tools</root></filter>
+                        <filter><root>/apps/cq/core/content/nav/tools/Searchstax</root></filter>
                         <filter><root>/apps/dam</root></filter>
                         <filter><root>/apps/dam/content</root></filter>
                         <filter><root>/apps/dam/content/configurations</root></filter>
@@ -53,8 +55,14 @@
                         <!-- Immutable context-aware configurations -->
                         <filter><root>/apps/settings</root></filter>
 
-                        <!-- DAM folder root, will be created via repoinit -->
+                        <!-- Connector-owned DAM root (merge install only) -->
+                        <filter><root>/content</root></filter>
+                        <filter><root>/content/dam</root></filter>
                         <filter><root>/content/dam/searchstaxconnector</root></filter>
+
+                        <!-- Connector-owned conf root (created via repoinit, not packaged) -->
+                        <filter><root>/conf</root></filter>
+                        <filter><root>/conf/searchstaxconnector</root></filter>
 
                     </filters>
                 </configuration>
