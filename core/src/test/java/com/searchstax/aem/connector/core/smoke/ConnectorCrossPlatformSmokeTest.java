@@ -93,20 +93,10 @@ class ConnectorCrossPlatformSmokeTest {
     }
 
     @Test
-    void structurePackage_mustNotDeclareBroadAppsRoot() throws Exception {
-        final Path structurePom = REPO_ROOT.resolve("ui.apps.structure/pom.xml");
-        assertTrue(Files.exists(structurePom), "Missing ui.apps.structure/pom.xml");
-
-        final String content = Files.readString(structurePom);
+    void structureModule_isNotPartOfProject() {
         assertTrue(
-                !content.contains("<root>/apps</root>"),
-                "Structure package must not declare bare /apps (install would delete WKND)");
-        assertTrue(
-                !content.contains("<root>/apps/cq</root>"),
-                "Structure package must not declare /apps/cq (install would delete cq overlays)");
-        assertTrue(
-                !content.contains("<root>/apps/wcm</root>"),
-                "Structure package must not declare unrelated /apps/wcm root");
+                !Files.exists(REPO_ROOT.resolve("ui.apps.structure/pom.xml")),
+                "ui.apps.structure was removed; only ui.apps ships /apps content");
     }
 
     @Test

@@ -10,7 +10,6 @@ Production AEM connector for push-based indexing to SearchStax Site Search. Supp
 | `core` | OSGi bundle (indexing, jobs, servlets, Sling models) |
 | `ui.apps` | Admin wizards, site components, clientlibs, Tools navigation |
 | `ui.config` | Repoinit, service user, OSGi configuration |
-| `ui.apps.structure` | Vault repository structure validation |
 
 ## Build
 
