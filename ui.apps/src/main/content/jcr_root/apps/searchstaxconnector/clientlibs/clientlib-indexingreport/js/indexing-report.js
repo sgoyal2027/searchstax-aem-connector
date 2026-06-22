@@ -10,6 +10,8 @@
     var filtersInitialized = false;
     var activeRequestId = 0;
     var activeTab = "incremental";
+    var fullReindexRunning = false;
+    var REFRESH_MS_RUNNING = 10000;
 
     function getReportTbody(tableId) {
         var root = document.querySelector(tableId);
@@ -21,7 +23,28 @@
             orphan.remove();
         });
 
-        return root.querySelector("table tbody") || root.querySelector("tbody");
+        var table = root.tagName === "TABLE" ? root : root.querySelector("table");
+        if (!table) {
+            table = document.createElement("table");
+            table.className = "coral-Table";
+            root.appendChild(table);
+        }
+
+        var thead = table.querySelector("thead");
+        if (!thead) {
+            thead = document.createElement("thead");
+            thead.className = "coral-Table-head";
+            table.insertBefore(thead, table.firstChild);
+        }
+
+        var tbody = table.querySelector("tbody");
+        if (!tbody) {
+            tbody = document.createElement("tbody");
+            tbody.className = "coral-Table-body";
+            table.appendChild(tbody);
+        }
+
+        return tbody;
     }
 
     function loadIncrementalReport(statusFilter, actionFilter) {
@@ -88,14 +111,39 @@
                 if (activeTab !== "full") {
                     return;
                 }
+                fullReindexRunning = !!(data && data.running);
+                scheduleRefreshInterval();
                 renderFullReindexSummary(summary, data || {});
             })
             .fail(function () {
                 if (activeTab !== "full") {
                     return;
                 }
+                fullReindexRunning = false;
+                scheduleRefreshInterval();
                 summary.innerHTML = "";
             });
+    }
+
+    function scheduleRefreshInterval() {
+        if (!refreshTimer) {
+            return;
+        }
+        clearInterval(refreshTimer);
+        refreshTimer = setInterval(refreshReport, fullReindexRunning ? REFRESH_MS_RUNNING : REFRESH_MS);
+    }
+
+    function formatElapsed(ms) {
+        if (!ms || ms < 0) {
+            return "0s";
+        }
+        var totalSeconds = Math.floor(ms / 1000);
+        var minutes = Math.floor(totalSeconds / 60);
+        var seconds = totalSeconds % 60;
+        if (minutes > 0) {
+            return minutes + "m " + seconds + "s";
+        }
+        return seconds + "s";
     }
 
     function renderFullReindexSummary(container, data) {
@@ -104,23 +152,46 @@
         var successCount = data.successCount != null ? data.successCount : 0;
         var failureCount = data.failureCount != null ? data.failureCount : 0;
         var totalAttempted = data.totalAttempted != null ? data.totalAttempted : 0;
+        var pagesIndexed = data.pagesIndexed != null ? data.pagesIndexed : 0;
+        var assetsIndexed = data.assetsIndexed != null ? data.assetsIndexed : 0;
+        var currentBatchNumber = data.currentBatchNumber != null ? data.currentBatchNumber : 0;
+        var lastIndexedPath = data.lastIndexedPath || "";
+        var elapsedMs = data.elapsedMs != null ? data.elapsedMs : 0;
         var message = data.message || "";
 
-        if (state === "IDLE" && !running && totalAttempted === 0) {
+        if (state === "IDLE" && !running && totalAttempted === 0 && pagesIndexed === 0 && assetsIndexed === 0) {
             container.innerHTML = "";
             return;
         }
 
+        var stats =
+            "<span><strong>State:</strong> " + escapeHtml(state) + "</span>" +
+            "<span><strong>Posted:</strong> " + escapeHtml(String(successCount)) + "</span>" +
+            "<span><strong>Failed paths:</strong> " + escapeHtml(String(failureCount)) + "</span>" +
+            "<span><strong>Prepared:</strong> " + escapeHtml(String(pagesIndexed + assetsIndexed)) + "</span>";
+
+        if (currentBatchNumber > 0) {
+            stats += "<span><strong>Last batch:</strong> " + escapeHtml(String(currentBatchNumber)) + "</span>";
+        }
+
+        stats += "<span><strong>Elapsed:</strong> " + escapeHtml(formatElapsed(elapsedMs)) + "</span>";
+
         container.innerHTML =
             "<div class='searchstax-full-reindex-summary-panel'>" +
-                "<div class='searchstax-full-reindex-summary-title'>Last full reindex run</div>" +
-                "<div class='searchstax-full-reindex-summary-stats'>" +
-                    "<span><strong>State:</strong> " + escapeHtml(state) + "</span>" +
-                    "<span><strong>Indexed:</strong> " + escapeHtml(String(successCount)) + "</span>" +
-                    "<span><strong>Failed paths:</strong> " + escapeHtml(String(failureCount)) + "</span>" +
-                    "<span><strong>Attempted:</strong> " + escapeHtml(String(totalAttempted)) + "</span>" +
+                "<div class='searchstax-full-reindex-summary-title'>" +
+                    (running ? "Full reindex in progress" : "Last full reindex run") +
                 "</div>" +
-                (message ? "<div class='searchstax-full-reindex-summary-message'>" + escapeHtml(message) + "</div>" : "") +
+                "<div class='searchstax-full-reindex-summary-stats'>" + stats + "</div>" +
+                (lastIndexedPath ?
+                    "<div class='searchstax-full-reindex-summary-message'><strong>Last path:</strong> " +
+                        escapeHtml(lastIndexedPath) + "</div>" : "") +
+                (message ?
+                    "<div class='searchstax-full-reindex-summary-message'>" + escapeHtml(message) + "</div>" : "") +
+                (running && successCount === 0 ?
+                    "<div class='searchstax-full-reindex-summary-hint'>" +
+                        "Report rows appear after the first batch is posted to SearchStax. " +
+                        "Large sites may take several minutes before the first batch completes." +
+                    "</div>" : "") +
             "</div>";
     }
 
@@ -166,7 +237,12 @@
         tbody.innerHTML = "";
 
         if (!events.length) {
-            appendEmptyRow(tbody, "No full reindex events found for the selected filters.");
+            var emptyMessage = "No full reindex events found for the selected filters.";
+            if (fullReindexRunning) {
+                emptyMessage =
+                    "Full reindex is running. Success and failure rows appear here after the first batch is posted to SearchStax.";
+            }
+            appendEmptyRow(tbody, emptyMessage);
             return;
         }
 
@@ -443,6 +519,9 @@
         }
 
         activeTab = resolveActiveTab();
+        if (activeTab === "full") {
+            loadFullReindexSummary();
+        }
         refreshReport();
     }
 

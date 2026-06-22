@@ -24,6 +24,13 @@
     margin: 0 0 24px;
 }
 
+.searchstax-full-reindex-summary-hint {
+    margin-top: 8px;
+    color: #6d6d6d;
+    font-size: 13px;
+    line-height: 1.4;
+}
+
 .searchstax-full-reindex-summary-panel {
     padding: 16px 20px;
     background: #f0f7ff;

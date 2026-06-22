@@ -10,6 +10,8 @@ import org.apache.sling.api.servlets.HttpConstants;
 import org.apache.sling.api.servlets.SlingSafeMethodsServlet;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.servlet.Servlet;
 import java.io.IOException;
@@ -29,6 +31,7 @@ import java.util.stream.Collectors;
         })
 public class IndexingReportServlet extends SlingSafeMethodsServlet {
 
+    private static final Logger LOG = LoggerFactory.getLogger(IndexingReportServlet.class);
     private static final Gson GSON = new Gson();
     private static final String TYPE_FULL = "full";
     private static final int DEFAULT_RETENTION_HOURS = 24;
@@ -51,10 +54,19 @@ public class IndexingReportServlet extends SlingSafeMethodsServlet {
         final int retentionHours = parseInt(request.getParameter("retentionHours"), DEFAULT_RETENTION_HOURS);
 
         final List<Map<String, Object>> events;
-        if (TYPE_FULL.equalsIgnoreCase(type)) {
-            events = listFullIndexEvents(request, limit, retentionHours);
-        } else {
-            events = listIncrementalEvents(request, limit);
+        try {
+            if (TYPE_FULL.equalsIgnoreCase(type)) {
+                events = listFullIndexEvents(request, limit, retentionHours);
+            } else {
+                events = listIncrementalEvents(request, limit);
+            }
+        } catch (IOException e) {
+            LOG.error("Unable to load indexing report events. type={}", type, e);
+            response.setStatus(SlingHttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            response.setContentType("application/json");
+            response.setCharacterEncoding("UTF-8");
+            response.getWriter().write("{\"success\":false,\"message\":\"Unable to load indexing report\"}");
+            return;
         }
 
         final Map<String, Object> payload = new HashMap<>();

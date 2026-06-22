@@ -173,4 +173,20 @@ class SearchStaxFullIndexFailureStoreTest {
         assertTrue(events.stream().anyMatch(e -> "BATCH".equals(e.get("failureKind"))));
         assertFalse(events.stream().anyMatch(e -> "/content/old".equals(e.get("path"))));
     }
+
+    @Test
+    void listFailureEventsForReport_returnsEmptyForSuccessStatusFilter() throws Exception {
+        final SearchStaxFullIndexFailureStore store = new SearchStaxFullIndexFailureStore(tempDir);
+        store.recordFailure(
+                new SearchStaxFullIndexFailureStore.FailureRecord(
+                        "batch-1",
+                        List.of("/content/a"),
+                        503,
+                        "Service Unavailable",
+                        100,
+                        Instant.now(),
+                        1));
+
+        assertTrue(store.listFailureEventsForReport("SUCCESS", 50, 24).isEmpty());
+    }
 }

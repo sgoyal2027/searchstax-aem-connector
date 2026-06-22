@@ -49,6 +49,7 @@ public class FullIndexAuditServiceImpl implements FullIndexAuditService {
                     continue;
                 }
                 final Map<String, Object> properties = new HashMap<>();
+                properties.put("jcr:primaryType", "nt:unstructured");
                 properties.put("path", path);
                 properties.put("action", ACTION_FULL_REINDEX);
                 properties.put("status", STATUS_SUCCESS);
@@ -57,9 +58,10 @@ public class FullIndexAuditServiceImpl implements FullIndexAuditService {
                 properties.put("durationMs", durationMs);
                 properties.put("eventKind", "BATCH");
                 properties.put("timestamp", timestamp);
-                resolver.create(auditRoot, "event-" + UUID.randomUUID(), properties);
+                resolver.create(auditRoot, buildEventNodeName(), properties);
             }
             resolver.commit();
+            LOG.info("Recorded {} full index success audit events for batch {}", paths.size(), batchNumber);
         } catch (Exception e) {
             LOG.error("Unable to record full index success audit events for batch {}", batchNumber, e);
         }
@@ -145,6 +147,10 @@ public class FullIndexAuditServiceImpl implements FullIndexAuditService {
         } catch (Exception e) {
             LOG.error("Unable to purge full index audit events", e);
         }
+    }
+
+    private static String buildEventNodeName() {
+        return "event-" + UUID.randomUUID().toString().replace("-", "");
     }
 
     private static long longValue(final Object value) {

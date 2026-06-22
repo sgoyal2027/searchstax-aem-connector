@@ -66,4 +66,38 @@ class IndexingHelperServiceImplTest {
         assertTrue(message.contains("plan document limit exceeded"));
         assertTrue(message.contains("HTTP 429"));
     }
+
+    @Test
+    void formatFailureMessage_maxRetryCountExhausted_includesRetryLimit() {
+        final String message = helper.formatFailureMessage(
+                "MAX_RETRY_COUNT_EXHAUSTED",
+                new com.searchstax.aem.connector.core.dto.response.ApiResponse(503, "Service Unavailable"),
+                null);
+
+        assertTrue(message.contains("5 retry attempts"));
+        assertTrue(message.contains("HTTP 503"));
+    }
+
+    @Test
+    void formatFailureMessage_deletePermanentFailure_isReadable() {
+        final String message = helper.formatFailureMessage(
+                "DELETE_PERMANENT_FAILURE",
+                new com.searchstax.aem.connector.core.dto.response.ApiResponse(404, "not found"),
+                null);
+
+        assertTrue(message.contains("delete request"));
+        assertTrue(message.contains("will not be retried"));
+        assertTrue(message.contains("HTTP 404"));
+    }
+
+    @Test
+    void formatFailureMessage_buildFailure_includesExceptionDetail() {
+        final String message = helper.formatFailureMessage(
+                "MAX_RETRY_COUNT_REACHED",
+                null,
+                new IllegalStateException("document build failed"));
+
+        assertTrue(message.contains("Could not build the index document"));
+        assertTrue(message.contains("document build failed"));
+    }
 }

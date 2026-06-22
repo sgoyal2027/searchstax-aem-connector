@@ -587,6 +587,14 @@ public class SearchStaxFullIndexExecutionServiceImpl implements SearchStaxFullIn
                 } else {
                     assetsIndexed++;
                 }
+                final long prepared = pagesIndexed + assetsIndexed;
+                if (prepared == 1 || prepared % 25 == 0) {
+                    progressMessage = String.format(
+                            "Preparing full reindex batch (%d pages, %d assets queued, batch size %d)",
+                            pagesIndexed,
+                            assetsIndexed,
+                            runtimeConfigService.getBatchSize());
+                }
             }
             if (page && referencedAssets != null) {
                 referencedAssets.addAll(documentBuilder.collectDamReferencesFromPage(resolver, path));
@@ -637,6 +645,10 @@ public class SearchStaxFullIndexExecutionServiceImpl implements SearchStaxFullIn
         synchronized (progressLock) {
             currentBatchNumber++;
             batchNum = currentBatchNumber;
+            progressMessage = String.format(
+                    "Posting full reindex batch %d (%d documents) to SearchStax",
+                    batchNum,
+                    batch.size());
         }
 
         final boolean hardCommit =
