@@ -13,6 +13,7 @@
     "create path (sling:Folder) /var/searchstaxconnector",
     "create path (sling:Folder) /var/searchstaxconnector/fullindex",
     "create path (sling:Folder) /var/searchstaxconnector/fullindex/failure",
+    "create path (sling:Folder) /var/searchstaxconnector/fullindex/audit",
     "create path (sling:Folder) /var/searchstaxconnector/incremental-index",
     "create path (sling:Folder) /var/searchstaxconnector/incremental-index/failed",
     "create path (sling:Folder) /var/searchstaxconnector/incremental-index/pending",
@@ -43,6 +44,8 @@
     "set ACL on /var/searchstaxconnector/fullindex (ACLOptions=merge)\n    allow jcr:read,jcr:addChildNodes,jcr:modifyProperties,jcr:removeNode,jcr:removeChildNodes,jcr:nodeTypeManagement for searchstax-service-user\nend",
 
     "set ACL on /var/searchstaxconnector/fullindex/failure (ACLOptions=merge)\n    allow jcr:read,jcr:addChildNodes,jcr:modifyProperties,jcr:removeNode,jcr:removeChildNodes,jcr:nodeTypeManagement for searchstax-service-user\nend",
+
+    "set ACL on /var/searchstaxconnector/fullindex/audit (ACLOptions=merge)\n    allow jcr:read,jcr:addChildNodes,jcr:modifyProperties,jcr:removeNode,jcr:removeChildNodes,jcr:nodeTypeManagement for searchstax-service-user\nend",
 
     "set ACL on /var/searchstaxconnector/incremental-index (ACLOptions=merge)\n    allow jcr:read,jcr:addChildNodes,jcr:modifyProperties,jcr:removeNode,jcr:removeChildNodes,jcr:nodeTypeManagement for searchstax-service-user\nend",
 

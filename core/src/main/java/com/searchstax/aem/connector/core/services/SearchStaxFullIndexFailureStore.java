@@ -83,8 +83,11 @@ public class SearchStaxFullIndexFailureStore {
     /**
      * Flattens persisted full-index failure records into report rows (one row per path).
      */
-    public List<Map<String, Object>> listFailureEventsForReport(final int maxResults, final int retentionHours)
-            throws IOException {
+    public List<Map<String, Object>> listFailureEventsForReport(
+            final String statusFilter, final int maxResults, final int retentionHours) throws IOException {
+        if (!matchesStatusFilter(statusFilter, "FAILURE")) {
+            return List.of();
+        }
         final Instant since = Instant.now().minus(retentionHours, ChronoUnit.HOURS);
         final List<FailureRecord> records = listFailuresSince(since);
         records.sort(Comparator.comparing(FailureRecord::getTimestamp, Comparator.nullsLast(Comparator.reverseOrder())));
@@ -147,6 +150,13 @@ public class SearchStaxFullIndexFailureStore {
             return "PATH";
         }
         return "BATCH";
+    }
+
+    private static boolean matchesStatusFilter(final String statusFilter, final String status) {
+        if (statusFilter == null || statusFilter.isBlank() || "ALL".equalsIgnoreCase(statusFilter)) {
+            return true;
+        }
+        return statusFilter.equalsIgnoreCase(status);
     }
 
     private static String formatInstantTimestamp(final String timestamp) {

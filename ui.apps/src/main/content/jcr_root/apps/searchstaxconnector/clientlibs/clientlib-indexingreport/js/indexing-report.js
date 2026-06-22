@@ -50,9 +50,12 @@
             });
     }
 
-    function loadFullReindexReport(failureKindFilter) {
+    function loadFullReindexReport(statusFilter, failureKindFilter) {
         var requestId = ++activeRequestId;
         var url = REPORT_URL + "?limit=500&type=full";
+        if (statusFilter && statusFilter !== "ALL") {
+            url += "&status=" + encodeURIComponent(statusFilter);
+        }
         if (failureKindFilter && failureKindFilter !== "ALL") {
             url += "&failureKind=" + encodeURIComponent(failureKindFilter);
         }
@@ -163,7 +166,7 @@
         tbody.innerHTML = "";
 
         if (!events.length) {
-            appendEmptyRow(tbody, "No full reindex failures found for the selected filters.");
+            appendEmptyRow(tbody, "No full reindex events found for the selected filters.");
             return;
         }
 
@@ -172,8 +175,8 @@
             row.innerHTML =
                 "<td>" + escapeHtml(event.timestamp || "") + "</td>" +
                 "<td>" + escapeHtml(event.path || "") + "</td>" +
-                "<td>" + formatFullReindexType(event.failureKind || "") + "</td>" +
-                "<td>" + formatStatus(event.status || "FAILURE") + "</td>" +
+                "<td>" + formatFullReindexType(event) + "</td>" +
+                "<td>" + formatStatus(event.status || "") + "</td>" +
                 "<td>" + escapeHtml(event.message || "") + "</td>";
             tbody.appendChild(row);
         });
@@ -286,11 +289,13 @@
         return "<span class=\"searchstax-action\">" + escapeHtml(label) + "</span>";
     }
 
-    function formatFullReindexType(failureKind) {
+    function formatFullReindexType(event) {
         var label = "Full Reindex";
-        if (failureKind === "BATCH") {
+        if (event && event.status === "SUCCESS") {
+            label = "Batch success";
+        } else if (event && event.failureKind === "BATCH") {
             label = "Batch failure";
-        } else if (failureKind === "PATH") {
+        } else if (event && event.failureKind === "PATH") {
             label = "Path failure";
         }
         return "<span class=\"searchstax-action\">" + escapeHtml(label) + "</span>";
@@ -306,7 +311,9 @@
 
     function refreshReport() {
         if (activeTab === "full") {
-            loadFullReindexReport(getSelectedValue("#searchstax-full-reindex-failure-kind-filter"));
+            loadFullReindexReport(
+                getSelectedValue("#searchstax-full-reindex-status-filter"),
+                getSelectedValue("#searchstax-full-reindex-failure-kind-filter"));
             return;
         }
         loadIncrementalReport(
@@ -373,10 +380,11 @@
             bindTabs();
             bindFilter("#searchstax-indexing-report-action-filter");
             bindFilter("#searchstax-indexing-report-status-filter");
+            bindFilter("#searchstax-full-reindex-status-filter");
             bindFilter("#searchstax-full-reindex-failure-kind-filter");
             $(document).on(
                 "foundation-field-change",
-                "#searchstax-indexing-report-action-filter, #searchstax-indexing-report-status-filter, #searchstax-full-reindex-failure-kind-filter",
+                "#searchstax-indexing-report-action-filter, #searchstax-indexing-report-status-filter, #searchstax-full-reindex-status-filter, #searchstax-full-reindex-failure-kind-filter",
                 refreshReport);
             refreshTimer = setInterval(refreshReport, REFRESH_MS);
         }

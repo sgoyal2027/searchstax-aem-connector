@@ -164,7 +164,7 @@ class SearchStaxFullIndexFailureStoreTest {
                         old,
                         1));
 
-        final List<Map<String, Object>> events = store.listFailureEventsForReport(50, 24);
+        final List<Map<String, Object>> events = store.listFailureEventsForReport("FAILURE", 50, 24);
 
         assertEquals(3, events.size());
         assertTrue(events.stream().anyMatch(e -> "/content/a".equals(e.get("path"))));

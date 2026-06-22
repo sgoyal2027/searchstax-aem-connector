@@ -21,6 +21,7 @@ import com.searchstax.aem.connector.core.services.FullIndexProgress.State;
 import com.searchstax.aem.connector.core.services.SearchStaxFullIndexDocumentBuilder;
 import com.searchstax.aem.connector.core.services.SearchStaxFullIndexDocumentSerializer;
 import com.searchstax.aem.connector.core.services.SearchStaxFullIndexExecutionService;
+import com.searchstax.aem.connector.core.services.FullIndexAuditService;
 import com.searchstax.aem.connector.core.services.SearchStaxFullIndexFailureStore;
 import com.searchstax.aem.connector.core.services.SearchStaxFullIndexPathConfigurationService;
 import com.searchstax.aem.connector.core.services.SearchStaxFullIndexRetryPolicy;
@@ -121,6 +122,9 @@ public class SearchStaxFullIndexExecutionServiceImpl implements SearchStaxFullIn
 
     @Reference
     private SearchStaxFullIndexFailureStore failureStore;
+
+    @Reference
+    private FullIndexAuditService fullIndexAuditService;
 
     @Reference
     private EmailService emailService;
@@ -685,9 +689,18 @@ public class SearchStaxFullIndexExecutionServiceImpl implements SearchStaxFullIn
                 failureCount,
                 lastIndexedPath);
 
+        recordSuccessAudit(paths, batchNum, duration);
+
         batch.clear();
         throttle();
         return true;
+    }
+
+    private void recordSuccessAudit(final List<String> paths, final int batchNum, final long durationMs) {
+        if (fullIndexAuditService == null || paths == null || paths.isEmpty()) {
+            return;
+        }
+        fullIndexAuditService.recordSuccessBatch(paths, batchNum, durationMs);
     }
 
     private static List<String> extractPaths(final SearchStaxIndexBatchBuffer batch) {

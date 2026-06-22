@@ -1,5 +1,6 @@
 package com.searchstax.aem.connector.core.schedulers;
 
+import com.searchstax.aem.connector.core.services.FullIndexAuditService;
 import com.searchstax.aem.connector.core.services.IndexingAuditService;
 import org.apache.sling.commons.scheduler.ScheduleOptions;
 import org.apache.sling.commons.scheduler.Scheduler;
@@ -36,6 +37,9 @@ public class IndexingAuditCleanupScheduler implements Runnable {
     private IndexingAuditService indexingAuditService;
 
     @Reference
+    private FullIndexAuditService fullIndexAuditService;
+
+    @Reference
     private Scheduler scheduler;
 
     private int retentionHours;
@@ -62,5 +66,6 @@ public class IndexingAuditCleanupScheduler implements Runnable {
     public void run() {
         LOG.info("Running indexing audit cleanup. Retention={}h", retentionHours);
         indexingAuditService.purgeOlderThanHours(retentionHours);
+        fullIndexAuditService.purgeOlderThanHours(retentionHours);
     }
 }

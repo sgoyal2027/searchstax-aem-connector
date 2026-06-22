@@ -1,6 +1,7 @@
 package com.searchstax.aem.connector.core.servlets;
 
 import com.google.gson.Gson;
+import com.searchstax.aem.connector.core.services.FullIndexAuditService;
 import com.searchstax.aem.connector.core.services.IndexingAuditService;
 import com.searchstax.aem.connector.core.services.SearchStaxFullIndexFailureStore;
 import org.apache.sling.api.SlingHttpServletRequest;
@@ -12,9 +13,12 @@ import org.osgi.service.component.annotations.Reference;
 
 import javax.servlet.Servlet;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Component(
         immediate = true,
@@ -34,6 +38,9 @@ public class IndexingReportServlet extends SlingSafeMethodsServlet {
 
     @Reference
     private SearchStaxFullIndexFailureStore fullIndexFailureStore;
+
+    @Reference
+    private FullIndexAuditService fullIndexAuditService;
 
     @Override
     protected void doGet(final SlingHttpServletRequest request, final SlingHttpServletResponse response)
@@ -70,17 +77,36 @@ public class IndexingReportServlet extends SlingSafeMethodsServlet {
 
     private List<Map<String, Object>> listFullIndexEvents(
             final SlingHttpServletRequest request, final int limit, final int retentionHours) throws IOException {
+        final String status = request.getParameter("status");
         final String failureKind = request.getParameter("failureKind");
-        final List<Map<String, Object>> events =
-                fullIndexFailureStore.listFailureEventsForReport(limit, retentionHours);
-        if (failureKind == null
-                || failureKind.isBlank()
-                || "ALL".equalsIgnoreCase(failureKind)) {
-            return events;
+
+        final List<Map<String, Object>> events = new ArrayList<>();
+        events.addAll(fullIndexAuditService.listEventsForReport(status, limit, retentionHours));
+        events.addAll(fullIndexFailureStore.listFailureEventsForReport(status, limit, retentionHours));
+
+        List<Map<String, Object>> filtered = events;
+        if (failureKind != null
+                && !failureKind.isBlank()
+                && !"ALL".equalsIgnoreCase(failureKind)) {
+            filtered = events.stream()
+                    .filter(event -> matchesFailureKindFilter(failureKind, event))
+                    .collect(Collectors.toList());
         }
-        return events.stream()
-                .filter(event -> failureKind.equalsIgnoreCase(String.valueOf(event.get("failureKind"))))
-                .collect(java.util.stream.Collectors.toList());
+
+        filtered.sort(Comparator.comparing(
+                event -> String.valueOf(event.getOrDefault("timestamp", "")),
+                Comparator.reverseOrder()));
+        if (filtered.size() <= limit) {
+            return filtered;
+        }
+        return new ArrayList<>(filtered.subList(0, limit));
+    }
+
+    private static boolean matchesFailureKindFilter(final String failureKind, final Map<String, Object> event) {
+        if ("SUCCESS".equalsIgnoreCase(String.valueOf(event.get("status")))) {
+            return "BATCH".equalsIgnoreCase(failureKind);
+        }
+        return failureKind.equalsIgnoreCase(String.valueOf(event.get("failureKind")));
     }
 
     private static int parseInt(final String value, final int defaultValue) {
