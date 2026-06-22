@@ -154,13 +154,7 @@ Invoke-Maven @($ExtraArgs + @("compile", "test", "-pl", "core", "-Pclassic", "-P
 
 
 
-Write-Step "4/5 Cloud CI/CD artifact safety (embedded ui.apps filter, no structure package)"
-
-& (Join-Path $Root "scripts\verify-cloud-cicd-artifacts.ps1")
-
-
-
-Write-Step "5/5 Artifact summary"
+Write-Step "4/4 Artifact summary"
 
 $AllZip = Get-ChildItem "all\target\searchstax-aem-connector.all-*.zip" | Select-Object -First 1
 

@@ -41,8 +41,6 @@ Embed the connector `all` package in your Cloud Manager project (same pattern as
 
 Configure `filevault-package-maven-plugin` embeddeds to install under your project package install path, then deploy via Cloud Manager.
 
-**Important for Cloud Sandbox:** Local Package Manager installs use whatever zip you build on your machine. Cloud Sandbox only gets what your **Cloud Manager pipeline** builds and deploys. If the pipeline still references an older connector version (or embeds `ui.apps` / `ui.apps.structure` directly instead of `all`), WKND and other `/apps` overlays can be removed on every deploy. See [Smoke test — Cloud Sandbox WKND](docs/SMOKE_TEST.md#cloud-sandbox-wknd--apps-overlays).
-
 **Cloud servlet access:** Ensure `/bin/searchstaxconnector/*` endpoints used by admin wizards are allowed in your dispatcher / Cloud Service servlet allowlists (`SlingServletResolver` cfg is shipped in `ui.config`).
 
 ## Operator guide
