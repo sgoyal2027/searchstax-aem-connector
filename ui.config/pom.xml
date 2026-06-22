@@ -49,7 +49,7 @@
                     <properties>
                         <cloudManagerTarget>none</cloudManagerTarget>
                     </properties>
-                    <packageType>application</packageType>
+                    <packageType>container</packageType>
                     <showImportPackageReport>false</showImportPackageReport>
                     <repositoryStructurePackages>
                         <repositoryStructurePackage>
