@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Assumptions;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.Set;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
@@ -107,6 +108,60 @@ class ConnectorCrossPlatformSmokeTest {
         assertTrue(
                 !content.contains("<root>/apps/wcm</root>"),
                 "Structure package must not declare unrelated /apps/wcm root");
+    }
+
+    @Test
+    void embeddedUiAppsInContainer_usesSafeNavMergeFilter() throws Exception {
+        final Path allZip = REPO_ROOT.resolve(
+                "all/target/searchstax-aem-connector.all-1.0.0-SNAPSHOT.zip");
+        Assumptions.assumeTrue(
+                Files.exists(allZip),
+                "Skip until all module is packaged — run cross-platform-verify after mvn install");
+
+        try (ZipFile all = new ZipFile(allZip.toFile())) {
+            final ZipEntry uiAppsEntry =
+                    all.stream()
+                            .filter(e -> e.getName().contains("searchstax-aem-connector.ui.apps")
+                                    && e.getName().endsWith(".zip"))
+                            .findFirst()
+                            .orElse(null);
+            assertTrue(uiAppsEntry != null, "Container must embed ui.apps zip for Cloud CM deploys");
+
+            final Path tempUiApps = Files.createTempFile("searchstax-ui-apps-", ".zip");
+            try {
+                Files.copy(all.getInputStream(uiAppsEntry), tempUiApps, StandardCopyOption.REPLACE_EXISTING);
+                try (ZipFile uiApps = new ZipFile(tempUiApps.toFile())) {
+                    final ZipEntry filterEntry = uiApps.getEntry("META-INF/vault/filter.xml");
+                    assertTrue(filterEntry != null, "Embedded ui.apps must ship filter.xml");
+                    final String filter = new String(uiApps.getInputStream(filterEntry).readAllBytes());
+                    assertTrue(
+                            filter.contains("/apps/cq/core/content/nav/tools/Searchstax"),
+                            "Cloud-deployed ui.apps must merge Searchstax nav only");
+                    assertTrue(filter.contains("mode=\"merge\""), "Cloud-deployed ui.apps must use merge filters");
+                    assertTrue(
+                            !filter.contains("root=\"/apps/cq/core/content/nav\"/>")
+                                    && !filter.contains("root=\"/apps/cq/core/content/nav\" "),
+                            "Cloud CM pipeline must not ship replace filter on /apps/cq/core/content/nav");
+                }
+            } finally {
+                Files.deleteIfExists(tempUiApps);
+            }
+        }
+    }
+
+    @Test
+    void containerPackage_doesNotEmbedStructurePackage() throws Exception {
+        final Path allZip = REPO_ROOT.resolve(
+                "all/target/searchstax-aem-connector.all-1.0.0-SNAPSHOT.zip");
+        Assumptions.assumeTrue(
+                Files.exists(allZip),
+                "Skip until all module is packaged — run cross-platform-verify after mvn install");
+
+        try (ZipFile zip = new ZipFile(allZip.toFile())) {
+            final boolean hasStructure = zip.stream()
+                    .anyMatch(e -> e.getName().contains("ui.apps.structure") && e.getName().endsWith(".zip"));
+            assertTrue(!hasStructure, "Container must not embed ui.apps.structure (unsafe on Cloud install)");
+        }
     }
 
     @Test

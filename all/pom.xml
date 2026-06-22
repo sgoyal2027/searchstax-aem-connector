@@ -51,6 +51,12 @@
                 <configuration>
                     <group>com.searchstax.aem.connector</group>
                     <packageType>container</packageType>
+                    <properties>
+                        <!-- Required for AEM as a Cloud Service pipeline deployment -->
+                        <cloudManagerTarget>all</cloudManagerTarget>
+                        <!-- Avoid re-applying unchanged subpackage content on every CM deploy -->
+                        <subPackageHandling>incremental_install</subPackageHandling>
+                    </properties>
                     <!-- skip sub package validation for now as some vendor packages like CIF apps will not pass -->
                     <skipSubPackageValidation>true</skipSubPackageValidation>
                     <embeddeds>
