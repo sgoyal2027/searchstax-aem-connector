@@ -118,31 +118,14 @@ public class SearchStaxFullIndexFailureStore {
         row.put("status", "FAILURE");
         row.put(
                 "message",
-                buildFailureMessage(record.getStatusCode(), record.getErrorMessage(), record.getRetryAttempts()));
+                FullIndexReportMessageFormatter.formatFailureMessage(
+                        record.getBatchId(),
+                        record.getStatusCode(),
+                        record.getErrorMessage(),
+                        record.getRetryAttempts()));
         row.put("batchId", record.getBatchId() != null ? record.getBatchId() : "");
         row.put("failureKind", resolveFailureKind(record.getBatchId()));
         return row;
-    }
-
-    private static String buildFailureMessage(
-            final int statusCode, final String errorMessage, final int retryAttempts) {
-        final StringBuilder message = new StringBuilder();
-        if (statusCode > 0) {
-            message.append("HTTP ").append(statusCode);
-        }
-        if (errorMessage != null && !errorMessage.isEmpty()) {
-            if (message.length() > 0) {
-                message.append(": ");
-            }
-            message.append(errorMessage);
-        }
-        if (retryAttempts > 0) {
-            if (message.length() > 0) {
-                message.append(" ");
-            }
-            message.append("(retries: ").append(retryAttempts).append(")");
-        }
-        return message.toString();
     }
 
     private static String resolveFailureKind(final String batchId) {

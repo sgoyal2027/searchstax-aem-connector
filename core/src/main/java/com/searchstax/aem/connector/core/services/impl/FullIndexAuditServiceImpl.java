@@ -1,6 +1,7 @@
 package com.searchstax.aem.connector.core.services.impl;
 
 import com.searchstax.aem.connector.core.services.FullIndexAuditService;
+import com.searchstax.aem.connector.core.services.FullIndexReportMessageFormatter;
 import com.searchstax.aem.connector.core.utils.ResolverUtil;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
@@ -41,7 +42,7 @@ public class FullIndexAuditServiceImpl implements FullIndexAuditService {
                     resolver, AUDIT_ROOT, "sling:Folder", "sling:Folder", true);
             final Calendar timestamp = Calendar.getInstance();
             final String batchId = "batch-" + batchNumber;
-            final String message = "Indexed in batch " + batchNumber;
+            final String message = FullIndexReportMessageFormatter.formatSuccessMessage(batchNumber, durationMs);
 
             for (final String path : paths) {
                 if (path == null || path.isBlank()) {
@@ -94,7 +95,12 @@ public class FullIndexAuditServiceImpl implements FullIndexAuditService {
                 row.put("path", vm.get("path", ""));
                 row.put("action", vm.get("action", ACTION_FULL_REINDEX));
                 row.put("status", status);
-                row.put("message", vm.get("message", ""));
+                row.put(
+                        "message",
+                        FullIndexReportMessageFormatter.formatSuccessMessageFromStored(
+                                vm.get("message", ""),
+                                vm.get("batchId", ""),
+                                longValue(vm.get("durationMs"))));
                 row.put("batchId", vm.get("batchId", ""));
                 row.put("eventKind", vm.get("eventKind", "BATCH"));
                 events.add(row);
@@ -139,6 +145,13 @@ public class FullIndexAuditServiceImpl implements FullIndexAuditService {
         } catch (Exception e) {
             LOG.error("Unable to purge full index audit events", e);
         }
+    }
+
+    private static long longValue(final Object value) {
+        if (value instanceof Number) {
+            return ((Number) value).longValue();
+        }
+        return 0L;
     }
 
     private static boolean matchesStatusFilter(final String statusFilter, final String status) {

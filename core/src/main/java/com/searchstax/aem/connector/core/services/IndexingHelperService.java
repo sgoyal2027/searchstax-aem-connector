@@ -43,6 +43,11 @@ public interface IndexingHelperService {
 
     boolean isPermanentFailure(ApiResponse response);
 
+    /**
+     * Builds a user-facing incremental indexing failure message for the audit report.
+     */
+    String formatFailureMessage(String reasonCode, ApiResponse response, Exception cause);
+
     boolean isTextExtractableAsset(Asset asset);
 
 }

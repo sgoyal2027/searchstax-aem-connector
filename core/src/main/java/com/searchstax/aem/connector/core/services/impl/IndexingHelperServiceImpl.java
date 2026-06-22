@@ -6,6 +6,7 @@ import com.searchstax.aem.connector.core.config.InitialSetupConfigService;
 import com.searchstax.aem.connector.core.config.MetadataFieldConfigService;
 import com.searchstax.aem.connector.core.config.model.InitialSetupConfig;
 import com.searchstax.aem.connector.core.config.model.MetadataFieldMappingConfig;
+import com.searchstax.aem.connector.core.constants.SearchStaxIndexingLimits;
 import com.searchstax.aem.connector.core.dto.response.ApiResponse;
 import com.searchstax.aem.connector.core.services.IndexingHelperService;
 import com.searchstax.aem.connector.core.services.SearchStaxFullIndexRetryPolicy;
@@ -452,6 +453,127 @@ public class IndexingHelperServiceImpl
                 || status == 403
                 || status == 404
                 || status == 413;
+    }
+
+    @Override
+    public String formatFailureMessage(
+            final String reasonCode, final ApiResponse response, final Exception cause) {
+        if (reasonCode == null || reasonCode.isBlank()) {
+            return formatApiDetail(response, cause);
+        }
+
+        switch (reasonCode) {
+            case "PERMANENT_FAILURE":
+                return "SearchStax rejected the index request and it will not be retried"
+                        + describeHttpError(response);
+            case "DELETE_PERMANENT_FAILURE":
+                return "SearchStax rejected the delete request and it will not be retried"
+                        + describeHttpError(response);
+            case "PLAN_LIMIT_EXCEEDED":
+                return "SearchStax plan document limit exceeded (HTTP 429)"
+                        + appendResponseDetail(response);
+            case "MAX_RETRY_COUNT_EXHAUSTED":
+                if (response != null) {
+                    return "Indexing failed after "
+                            + SearchStaxIndexingLimits.MAX_INDEXING_RETRIES
+                            + " retry attempts"
+                            + describeHttpError(response);
+                }
+                return "Indexing failed after "
+                        + SearchStaxIndexingLimits.MAX_INDEXING_RETRIES
+                        + " retry attempts due to transient SearchStax or network errors";
+            case "MAX_RETRY_COUNT_REACHED":
+                return "Could not build the index document after "
+                        + SearchStaxIndexingLimits.MAX_INDEXING_RETRIES
+                        + " retry attempts"
+                        + appendExceptionDetail(cause);
+            case "DELETE_RETRY_EXHAUSTED":
+                if (response != null) {
+                    return "Delete from search index failed after "
+                            + SearchStaxIndexingLimits.MAX_INDEXING_RETRIES
+                            + " retry attempts"
+                            + describeHttpError(response);
+                }
+                return "Delete from search index failed after "
+                        + SearchStaxIndexingLimits.MAX_INDEXING_RETRIES
+                        + " retry attempts"
+                        + appendExceptionDetail(cause);
+            default:
+                return reasonCode + describeHttpError(response) + appendExceptionDetail(cause);
+        }
+    }
+
+    private static String describeHttpError(final ApiResponse response) {
+        if (response == null) {
+            return "";
+        }
+        return " (" + httpStatusLabel(response.getStatusCode()) + appendResponseDetail(response) + ")";
+    }
+
+    private static String appendResponseDetail(final ApiResponse response) {
+        if (response == null) {
+            return "";
+        }
+        final String body = truncate(response.getResponseBody(), 300);
+        if (body.isEmpty()) {
+            return "";
+        }
+        return ": " + body;
+    }
+
+    private static String appendExceptionDetail(final Exception cause) {
+        if (cause == null || cause.getMessage() == null || cause.getMessage().isBlank()) {
+            return "";
+        }
+        return ": " + truncate(cause.getMessage(), 300);
+    }
+
+    private static String formatApiDetail(final ApiResponse response, final Exception cause) {
+        final String http = describeHttpError(response);
+        final String exception = appendExceptionDetail(cause);
+        if (!http.isEmpty()) {
+            return http.substring(2);
+        }
+        if (!exception.isEmpty()) {
+            return exception.substring(2);
+        }
+        return "Indexing failed";
+    }
+
+    private static String httpStatusLabel(final int statusCode) {
+        switch (statusCode) {
+            case 400:
+                return "HTTP 400 Bad Request";
+            case 401:
+                return "HTTP 401 Unauthorized - verify API token";
+            case 403:
+                return "HTTP 403 Forbidden - verify endpoint access";
+            case 404:
+                return "HTTP 404 Not Found - verify SearchStax endpoint or collection";
+            case 413:
+                return "HTTP 413 Payload Too Large - document exceeds SearchStax limit";
+            case 429:
+                return "HTTP 429 Too Many Requests";
+            case 500:
+                return "HTTP 500 Internal Server Error";
+            case 502:
+                return "HTTP 502 Bad Gateway";
+            case 503:
+                return "HTTP 503 Service Unavailable";
+            default:
+                return statusCode > 0 ? "HTTP " + statusCode : "Unknown HTTP status";
+        }
+    }
+
+    private static String truncate(final String value, final int maxLength) {
+        if (value == null || value.isBlank()) {
+            return "";
+        }
+        final String trimmed = value.trim();
+        if (trimmed.length() <= maxLength) {
+            return trimmed;
+        }
+        return trimmed.substring(0, maxLength) + "...";
     }
 
     @Override

@@ -14,6 +14,9 @@ public final class SearchStaxIndexingLimits {
     /** Maximum documents per batch POST. */
     public static final int MAX_BATCH_DOCUMENT_COUNT = 100;
 
+    /** Maximum retry attempts after the first indexing failure (incremental and full reindex). */
+    public static final int MAX_INDEXING_RETRIES = 5;
+
     private SearchStaxIndexingLimits() {
     }
 }

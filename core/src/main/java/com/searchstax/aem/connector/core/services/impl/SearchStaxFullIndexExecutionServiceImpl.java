@@ -752,12 +752,13 @@ public class SearchStaxFullIndexExecutionServiceImpl implements SearchStaxFullIn
                         status,
                         attempt,
                         SearchStaxFullIndexRetryPolicy.MAX_POST_ATTEMPTS);
-                recordBatchFailure(batchNum, paths, lastResult, payloadBytes, attempt);
+                recordBatchFailure(batchNum, paths, lastResult, payloadBytes, Math.max(0, attempt - 1));
                 return lastResult;
             }
 
             if (attempt >= SearchStaxFullIndexRetryPolicy.MAX_POST_ATTEMPTS) {
-                recordBatchFailure(batchNum, paths, lastResult, payloadBytes, attempt);
+                recordBatchFailure(
+                        batchNum, paths, lastResult, payloadBytes, SearchStaxFullIndexRetryPolicy.MAX_INDEXING_RETRIES);
                 return lastResult;
             }
 

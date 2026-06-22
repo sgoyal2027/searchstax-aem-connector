@@ -41,7 +41,8 @@ class SearchStaxFullIndexRetryPolicyTest {
     }
 
     @Test
-    void maxPostAttempts_isFive() {
-        assertEquals(5, SearchStaxFullIndexRetryPolicy.MAX_POST_ATTEMPTS);
+    void maxPostAttempts_includesInitialAttemptPlusRetries() {
+        assertEquals(5, SearchStaxFullIndexRetryPolicy.MAX_INDEXING_RETRIES);
+        assertEquals(6, SearchStaxFullIndexRetryPolicy.MAX_POST_ATTEMPTS);
     }
 }

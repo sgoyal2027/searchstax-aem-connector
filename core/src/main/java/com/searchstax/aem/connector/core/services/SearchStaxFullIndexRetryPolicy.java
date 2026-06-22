@@ -1,11 +1,16 @@
 package com.searchstax.aem.connector.core.services;
 
+import com.searchstax.aem.connector.core.constants.SearchStaxIndexingLimits;
+
 /**
  * Retry rules for full-index batch POST failures (transient HTTP statuses only).
  */
 public final class SearchStaxFullIndexRetryPolicy {
 
-    public static final int MAX_POST_ATTEMPTS = 5;
+    public static final int MAX_INDEXING_RETRIES = SearchStaxIndexingLimits.MAX_INDEXING_RETRIES;
+
+    /** Initial POST plus {@link #MAX_INDEXING_RETRIES} retry attempts. */
+    public static final int MAX_POST_ATTEMPTS = MAX_INDEXING_RETRIES + 1;
 
     public static final long BASE_BACKOFF_MS = 700L;
 

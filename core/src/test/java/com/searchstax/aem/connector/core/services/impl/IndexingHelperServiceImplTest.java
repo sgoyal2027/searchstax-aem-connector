@@ -41,4 +41,29 @@ class IndexingHelperServiceImplTest {
     void isPermanentFailure_includes413() {
         assertTrue(helper.isPermanentFailure(new com.searchstax.aem.connector.core.dto.response.ApiResponse(413, "")));
     }
+
+    @Test
+    void formatFailureMessage_permanentFailure_includesHttpStatusAndBody() {
+        final String message = helper.formatFailureMessage(
+                "PERMANENT_FAILURE",
+                new com.searchstax.aem.connector.core.dto.response.ApiResponse(
+                        401, "{\"error\":\"invalid token\"}"),
+                null);
+
+        assertTrue(message.contains("HTTP 401 Unauthorized"));
+        assertTrue(message.contains("invalid token"));
+        assertTrue(message.contains("will not be retried"));
+    }
+
+    @Test
+    void formatFailureMessage_planLimitExceeded_isReadable() {
+        final String message = helper.formatFailureMessage(
+                "PLAN_LIMIT_EXCEEDED",
+                new com.searchstax.aem.connector.core.dto.response.ApiResponse(
+                        429, "Plan Limit Exceeded"),
+                null);
+
+        assertTrue(message.contains("plan document limit exceeded"));
+        assertTrue(message.contains("HTTP 429"));
+    }
 }

@@ -3,6 +3,7 @@ package com.searchstax.aem.connector.core.services.impl;
 import com.day.cq.replication.ReplicationActionType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.searchstax.aem.connector.core.constants.SearchStaxIndexingLimits;
+import com.searchstax.aem.connector.core.constants.SearchStaxIndexingLimits;
 import com.searchstax.aem.connector.core.dto.request.IndexRequest;
 import com.searchstax.aem.connector.core.dto.response.ApiResponse;
 import com.searchstax.aem.connector.core.models.PayloadBatch;
@@ -33,8 +34,6 @@ import java.util.stream.Collectors;
 public class IncrementalIndexingServiceImpl implements IncrementalIndexingService {
 
     private static final Logger LOG = LoggerFactory.getLogger(IncrementalIndexingServiceImpl.class);
-
-    private static final int MAX_RETRY_COUNT = 5;
 
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
@@ -170,6 +169,7 @@ public class IncrementalIndexingServiceImpl implements IncrementalIndexingServic
                         successfulRequests,
                         failedRequests,
                         "MAX_RETRY_COUNT_REACHED",
+                        null,
                         "Failed building document. Path={} Retry={}",
                         e);
             }
@@ -190,6 +190,7 @@ public class IncrementalIndexingServiceImpl implements IncrementalIndexingServic
                         successfulRequests,
                         failedRequests,
                         "MAX_RETRY_COUNT_EXHAUSTED",
+                        null,
                         "Payload batch build failed for path={} Retry={}",
                         e);
             }
@@ -218,7 +219,11 @@ public class IncrementalIndexingServiceImpl implements IncrementalIndexingServic
                 for (final IndexRequest request : payloadBatch.getRequests()) {
                     failedRequestService.saveFailedRequest(request, "PLAN_LIMIT_EXCEEDED", response);
                     failedRequests.add(request);
-                    auditEvent(request, IndexingAuditService.STATUS_FAILURE, "PLAN_LIMIT_EXCEEDED", 0);
+                    auditEvent(
+                            request,
+                            IndexingAuditService.STATUS_FAILURE,
+                            indexingHelperService.formatFailureMessage("PLAN_LIMIT_EXCEEDED", response, null),
+                            0);
                 }
                 LOG.error(
                         "SearchStax plan limit exceeded. Removing {} requests from queue.",
@@ -233,7 +238,11 @@ public class IncrementalIndexingServiceImpl implements IncrementalIndexingServic
                 for (final IndexRequest request : payloadBatch.getRequests()) {
                     failedRequestService.saveFailedRequest(request, "PERMANENT_FAILURE", response);
                     failedRequests.add(request);
-                    auditEvent(request, IndexingAuditService.STATUS_FAILURE, "PERMANENT_FAILURE", 0);
+                    auditEvent(
+                            request,
+                            IndexingAuditService.STATUS_FAILURE,
+                            indexingHelperService.formatFailureMessage("PERMANENT_FAILURE", response, null),
+                            0);
                     LOG.error("Removing request due to permanent failure. Path={}", request.getPath());
                 }
                 successfulRequests.addAll(payloadBatch.getRequests());
@@ -244,6 +253,7 @@ public class IncrementalIndexingServiceImpl implements IncrementalIndexingServic
                             successfulRequests,
                             failedRequests,
                             "MAX_RETRY_COUNT_EXHAUSTED",
+                            response,
                             "Retry attempt {} for path={}",
                             null);
                 }
@@ -274,6 +284,7 @@ public class IncrementalIndexingServiceImpl implements IncrementalIndexingServic
                         successfulRequests,
                         failedRequests,
                         "DELETE_RETRY_EXHAUSTED",
+                        null,
                         "Delete payload batch build failed for path={} Retry={}",
                         e);
             }
@@ -308,7 +319,11 @@ public class IncrementalIndexingServiceImpl implements IncrementalIndexingServic
                     for (final IndexRequest request : deleteBatch.getRequests()) {
                         failedRequestService.saveFailedRequest(request, "DELETE_PERMANENT_FAILURE", response);
                         failedRequests.add(request);
-                        auditEvent(request, IndexingAuditService.STATUS_FAILURE, "DELETE_PERMANENT_FAILURE", 0);
+                        auditEvent(
+                                request,
+                                IndexingAuditService.STATUS_FAILURE,
+                                indexingHelperService.formatFailureMessage("DELETE_PERMANENT_FAILURE", response, null),
+                                0);
                     }
                     successfulRequests.addAll(deleteBatch.getRequests());
                 } else {
@@ -318,6 +333,7 @@ public class IncrementalIndexingServiceImpl implements IncrementalIndexingServic
                                 successfulRequests,
                                 failedRequests,
                                 "DELETE_RETRY_EXHAUSTED",
+                                response,
                                 "Retry attempt {} for path={}",
                                 null);
                     }
@@ -330,6 +346,7 @@ public class IncrementalIndexingServiceImpl implements IncrementalIndexingServic
                             successfulRequests,
                             failedRequests,
                             "DELETE_RETRY_EXHAUSTED",
+                            null,
                             "Delete retry attempt {} for path={}",
                             e);
                 }
@@ -342,6 +359,7 @@ public class IncrementalIndexingServiceImpl implements IncrementalIndexingServic
             final List<IndexRequest> successfulRequests,
             final List<IndexRequest> failedRequests,
             final String exhaustedReason,
+            final ApiResponse response,
             final String retryLogPattern,
             final Exception cause) {
 
@@ -353,11 +371,18 @@ public class IncrementalIndexingServiceImpl implements IncrementalIndexingServic
             LOG.warn(retryLogPattern, request.getRetryCount(), request.getPath());
         }
 
-        if (request.getRetryCount() >= MAX_RETRY_COUNT) {
-            failedRequestService.saveFailedRequest(request, exhaustedReason, null);
+        if (request.getRetryCount() > SearchStaxIndexingLimits.MAX_INDEXING_RETRIES) {
+            failedRequestService.saveFailedRequest(request, exhaustedReason, response);
             failedRequests.add(request);
-            auditEvent(request, IndexingAuditService.STATUS_FAILURE, exhaustedReason, 0);
-            LOG.error("Maximum retry count reached. Removing request from queue. Path={}", request.getPath());
+            auditEvent(
+                    request,
+                    IndexingAuditService.STATUS_FAILURE,
+                    indexingHelperService.formatFailureMessage(exhaustedReason, response, cause),
+                    0);
+            LOG.error(
+                    "Maximum retry count ({}) reached. Removing request from queue. Path={}",
+                    SearchStaxIndexingLimits.MAX_INDEXING_RETRIES,
+                    request.getPath());
             successfulRequests.add(request);
         } else {
             sleepBackoff(request.getRetryCount());

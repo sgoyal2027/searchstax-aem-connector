@@ -144,7 +144,7 @@
                 "<td>" + escapeHtml(event.path || "") + "</td>" +
                 "<td>" + formatIncrementalAction(event.action || "") + "</td>" +
                 "<td>" + formatStatus(event.status || "") + "</td>" +
-                "<td>" + escapeHtml(event.message || "") + "</td>";
+                "<td>" + escapeHtml(formatIncrementalMessage(event.message || "")) + "</td>";
             tbody.appendChild(row);
 
             if (event.status === "FAILURE") {
@@ -177,7 +177,7 @@
                 "<td>" + escapeHtml(event.path || "") + "</td>" +
                 "<td>" + formatFullReindexType(event) + "</td>" +
                 "<td>" + formatStatus(event.status || "") + "</td>" +
-                "<td>" + escapeHtml(event.message || "") + "</td>";
+                "<td>" + escapeHtml(formatFullReindexMessage(event)) + "</td>";
             tbody.appendChild(row);
         });
     }
@@ -266,6 +266,29 @@
         }
     }
 
+    function formatIncrementalMessage(message) {
+        if (!message || message.indexOf("HTTP ") >= 0) {
+            return message || "";
+        }
+
+        var legacyMessages = {
+            PERMANENT_FAILURE:
+                "SearchStax rejected the index request and it will not be retried. Check API Configuration and the SearchStax response for HTTP status details.",
+            DELETE_PERMANENT_FAILURE:
+                "SearchStax rejected the delete request and it will not be retried. Check API Configuration and the SearchStax response for HTTP status details.",
+            PLAN_LIMIT_EXCEEDED:
+                "SearchStax plan document limit exceeded (HTTP 429).",
+            MAX_RETRY_COUNT_EXHAUSTED:
+                "Indexing failed after 5 retry attempts due to transient SearchStax or network errors.",
+            MAX_RETRY_COUNT_REACHED:
+                "Could not build the index document after 5 retry attempts.",
+            DELETE_RETRY_EXHAUSTED:
+                "Delete from search index failed after 5 retry attempts."
+        };
+
+        return legacyMessages[message] || message;
+    }
+
     function formatStatus(status) {
         var normalized = escapeHtml(status || "");
         var cssClass = "searchstax-badge";
@@ -287,6 +310,36 @@
             label = "Unpublish";
         }
         return "<span class=\"searchstax-action\">" + escapeHtml(label) + "</span>";
+    }
+
+    function formatFullReindexMessage(event) {
+        var message = (event && event.message) || "";
+        if (!message) {
+            return "";
+        }
+        if (message.indexOf("Successfully ") === 0
+                || message.indexOf("Full reindex") === 0
+                || message.indexOf("Could not") === 0
+                || message.indexOf("Document exceeds") === 0
+                || message.indexOf("Path failed") === 0) {
+            return message;
+        }
+
+        if (message.indexOf("HTTP ") === 0) {
+            return "Full reindex request failed (" + message + ")";
+        }
+
+        if (message.indexOf("Indexed in batch ") === 0) {
+            return message.replace(
+                "Indexed in batch ",
+                "Successfully posted to SearchStax in full reindex batch ");
+        }
+
+        if (message.indexOf("(retries:") >= 0) {
+            return "Full reindex batch failed to post to SearchStax " + message;
+        }
+
+        return message;
     }
 
     function formatFullReindexType(event) {
