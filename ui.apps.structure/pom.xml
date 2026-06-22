@@ -19,8 +19,8 @@
     <packaging>content-package</packaging>
     <name>Searchstax AEM Connector Project - Repository Structure Package</name>
     <description>
-        Empty package that defines the structure of the Adobe Experience Manager repository the Code packages in this project deploy into.
-        Any roots in the Code packages of this project should have their parent enumerated in the Filters list below.
+        Build-time repository structure validation only. Do not install this package on AEM —
+        broad /apps filters in replace mode would delete other applications (for example WKND).
     </description>
 
     <build>
@@ -33,35 +33,38 @@
                         <cloudManagerTarget>none</cloudManagerTarget>
                     </properties>
                     <filters>
-                        <!-- /apps root -->
-                        <filter><root>/apps</root></filter>
-                        <filter><root>/apps/searchstaxconnector</root></filter>
-                        <!-- Common overlay roots -->
-                                                <filter><root>/apps/sling</root></filter>
-                        <filter><root>/apps/cq</root></filter>
-                        <filter><root>/apps/cq/core</root></filter>
-                        <filter><root>/apps/cq/core/content</root></filter>
-                        <filter><root>/apps/cq/core/content/nav</root></filter>
-                        <filter><root>/apps/cq/core/content/nav/tools</root></filter>
-                        <filter><root>/apps/cq/core/content/nav/tools/Searchstax</root></filter>
-                        <filter><root>/apps/dam</root></filter>
-                        <filter><root>/apps/dam/content</root></filter>
-                        <filter><root>/apps/dam/content/configurations</root></filter>
-                        <filter><root>/apps/dam/content/configurations/searchstaxconnector</root></filter>
-                        <filter><root>/apps/dam/content/configurations/searchstaxconnector/wizard</root></filter>
-                        <filter><root>/apps/wcm</root></filter>
-                        <filter><root>/apps/msm</root></filter>
+                        <!-- Connector-owned apps roots only (never declare bare /apps or /apps/cq) -->
+                        <filter>
+                            <root>/apps/searchstaxconnector</root>
+                            <mode>merge</mode>
+                        </filter>
+                        <filter>
+                            <root>/apps/cq/core/content/nav/tools</root>
+                            <mode>merge</mode>
+                        </filter>
+                        <filter>
+                            <root>/apps/cq/core/content/nav/tools/Searchstax</root>
+                            <mode>merge</mode>
+                        </filter>
 
-                        <!-- Immutable context-aware configurations -->
-                        <filter><root>/apps/settings</root></filter>
-
-                        <!-- Connector-owned DAM root (repoinit only; not packaged in ui.apps) -->
-                        <filter><root>/content/dam/searchstaxconnector</root></filter>
-
-                        <!-- Connector-owned conf root (created via repoinit, not packaged) -->
-                        <filter><root>/conf/searchstaxconnector</root></filter>
-
+                        <!-- Connector-owned content/conf roots (repoinit; not packaged in ui.apps) -->
+                        <filter>
+                            <root>/content/dam/searchstaxconnector</root>
+                            <mode>merge</mode>
+                        </filter>
+                        <filter>
+                            <root>/conf/searchstaxconnector</root>
+                            <mode>merge</mode>
+                        </filter>
                     </filters>
+                </configuration>
+            </plugin>
+            <!-- Never deploy structure package to AEM (validation artifact only). -->
+            <plugin>
+                <groupId>com.day.jcr.vault</groupId>
+                <artifactId>content-package-maven-plugin</artifactId>
+                <configuration>
+                    <skip>true</skip>
                 </configuration>
             </plugin>
         </plugins>

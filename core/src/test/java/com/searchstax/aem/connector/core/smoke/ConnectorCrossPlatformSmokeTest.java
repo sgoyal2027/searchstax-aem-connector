@@ -77,6 +77,39 @@ class ConnectorCrossPlatformSmokeTest {
     }
 
     @Test
+    void uiAppsFilter_usesMergeForToolsNavOnly() throws Exception {
+        final Path filter = REPO_ROOT.resolve("ui.apps/src/main/content/META-INF/vault/filter.xml");
+        assertTrue(Files.exists(filter), "Missing ui.apps filter.xml");
+
+        final String content = Files.readString(filter);
+        assertTrue(
+                content.contains("/apps/cq/core/content/nav/tools/Searchstax"),
+                "Tools nav must target Searchstax entry only");
+        assertTrue(content.contains("mode=\"merge\""), "ui.apps filters must use merge mode");
+        assertTrue(
+                !content.contains("root=\"/apps/cq/core/content/nav\"/>")
+                        && !content.contains("root=\"/apps/cq/core/content/nav\" "),
+                "Must not replace entire /apps/cq/core/content/nav (removes WKND Tools entries)");
+    }
+
+    @Test
+    void structurePackage_mustNotDeclareBroadAppsRoot() throws Exception {
+        final Path structurePom = REPO_ROOT.resolve("ui.apps.structure/pom.xml");
+        assertTrue(Files.exists(structurePom), "Missing ui.apps.structure/pom.xml");
+
+        final String content = Files.readString(structurePom);
+        assertTrue(
+                !content.contains("<root>/apps</root>"),
+                "Structure package must not declare bare /apps (install would delete WKND)");
+        assertTrue(
+                !content.contains("<root>/apps/cq</root>"),
+                "Structure package must not declare /apps/cq (install would delete cq overlays)");
+        assertTrue(
+                !content.contains("<root>/apps/wcm</root>"),
+                "Structure package must not declare unrelated /apps/wcm root");
+    }
+
+    @Test
     void repoinit_declaresIncrementalAndConfigPaths() throws Exception {
         final Path repoinit = REPO_ROOT.resolve(
                 "ui.config/src/main/content/jcr_root/apps/searchstaxconnector/osgiconfig/config/"
