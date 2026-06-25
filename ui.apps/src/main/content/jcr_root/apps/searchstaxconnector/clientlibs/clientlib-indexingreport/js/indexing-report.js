@@ -110,26 +110,12 @@
             });
     }
 
-    function loadFullReindexReport(statusFilter, actionFilter) {
+    function loadFullReindexReport(statusFilter) {
         var requestId = ++activeRequestId;
         var url = REPORT_URL + "?limit=500&type=full";
-        var resolvedStatus = statusFilter;
-        var failureKind = "ALL";
 
-        if (actionFilter === "FULL_REINDEX") {
-            resolvedStatus = "SUCCESS";
-        } else if (actionFilter === "BATCH") {
-            failureKind = "BATCH";
-        } else if (actionFilter === "PATH") {
-            resolvedStatus = "FAILURE";
-            failureKind = "PATH";
-        }
-
-        if (resolvedStatus && resolvedStatus !== "ALL") {
-            url += "&status=" + encodeURIComponent(resolvedStatus);
-        }
-        if (failureKind && failureKind !== "ALL") {
-            url += "&failureKind=" + encodeURIComponent(failureKind);
+        if (statusFilter && statusFilter !== "ALL") {
+            url += "&status=" + encodeURIComponent(statusFilter);
         }
 
         $.ajax({ url: url, method: "GET", dataType: "json" })
@@ -300,7 +286,7 @@
             row.innerHTML =
                 "<td>" + escapeHtml(event.timestamp || "") + "</td>" +
                 "<td>" + escapeHtml(event.path || "") + "</td>" +
-                "<td>" + formatFullReindexAction(event) + "</td>" +
+                "<td>" + formatFullReindexAction() + "</td>" +
                 "<td>" + formatStatus(event.status || "") + "</td>" +
                 "<td>" + escapeHtml(formatFullReindexMessage(event)) + "</td>";
             tbody.appendChild(row);
@@ -500,16 +486,8 @@
         return stripReportMessageTiming(formatted);
     }
 
-    function formatFullReindexAction(event) {
-        var label = "Full Reindex";
-        if (event && event.status === "FAILURE") {
-            if (event.failureKind === "PATH") {
-                label = "Path failure";
-            } else {
-                label = "Batch failure";
-            }
-        }
-        return "<span class=\"searchstax-action\">" + escapeHtml(label) + "</span>";
+    function formatFullReindexAction() {
+        return "<span class=\"searchstax-action\">Full Index</span>";
     }
 
     function escapeHtml(value) {
@@ -523,9 +501,7 @@
     function refreshReport() {
         activeTab = resolveActiveTab();
         if (activeTab === "full") {
-            loadFullReindexReport(
-                getSelectedValue("#searchstax-full-reindex-status-filter"),
-                getFullReindexActionFilterValue());
+            loadFullReindexReport(getSelectedValue("#searchstax-full-reindex-status-filter"));
             return;
         }
         loadIncrementalReport(
@@ -600,14 +576,6 @@
 
     function redirectToStartPage() {
         window.location.href = "/aem/start.html";
-    }
-
-    function getFullReindexActionFilterValue() {
-        var action = getSelectedValue("#searchstax-full-reindex-action-filter");
-        if (action && action !== "ALL") {
-            return action;
-        }
-        return getSelectedValue("#searchstax-full-reindex-failure-kind-filter");
     }
 
     function setWizardButtonLabel(button, text) {
@@ -712,7 +680,7 @@
             el.classList.add("searchstax-indexing-report-has-spacing");
         });
 
-        ["#searchstax-indexing-report-action-filter", "#searchstax-full-reindex-action-filter"].forEach(function (selector) {
+        ["#searchstax-indexing-report-action-filter"].forEach(function (selector) {
             var filter = document.querySelector(selector);
             if (filter) {
                 var filtersRow = filter.closest(".searchstax-indexing-report-filters")
@@ -804,11 +772,9 @@
             bindFilter("#searchstax-indexing-report-action-filter");
             bindFilter("#searchstax-indexing-report-status-filter");
             bindFilter("#searchstax-full-reindex-status-filter");
-            bindFilter("#searchstax-full-reindex-action-filter");
-            bindFilter("#searchstax-full-reindex-failure-kind-filter");
             $(document).on(
                 "foundation-field-change",
-                "#searchstax-indexing-report-action-filter, #searchstax-indexing-report-status-filter, #searchstax-full-reindex-status-filter, #searchstax-full-reindex-action-filter",
+                "#searchstax-indexing-report-action-filter, #searchstax-indexing-report-status-filter, #searchstax-full-reindex-status-filter",
                 refreshReport);
             refreshTimer = setInterval(refreshReport, REFRESH_MS);
         }

@@ -173,7 +173,7 @@
                                                 <filterNote
                                                     jcr:primaryType="nt:unstructured"
                                                     sling:resourceType="granite/ui/components/coral/foundation/text"
-                                                    text="* Use the Action and Status filters below to narrow the results."/>
+                                                    text="* Use the Status filter below to narrow the results."/>
                                                 <retentionNote
                                                     jcr:primaryType="nt:unstructured"
                                                     sling:resourceType="granite/ui/components/coral/foundation/text"
@@ -190,32 +190,6 @@
                                             sling:resourceType="granite/ui/components/coral/foundation/container"
                                             class="searchstax-indexing-report-filters">
                                             <items jcr:primaryType="nt:unstructured">
-                                                <actionFilter
-                                                    jcr:primaryType="nt:unstructured"
-                                                    sling:resourceType="granite/ui/components/coral/foundation/form/select"
-                                                    emptyText="All actions"
-                                                    granite:id="searchstax-full-reindex-action-filter"
-                                                    name="./fullReindexActionFilter">
-                                                    <items jcr:primaryType="nt:unstructured">
-                                                        <all
-                                                            jcr:primaryType="nt:unstructured"
-                                                            selected="{Boolean}true"
-                                                            text="All actions"
-                                                            value="ALL"/>
-                                                        <fullReindex
-                                                            jcr:primaryType="nt:unstructured"
-                                                            text="Full Reindex"
-                                                            value="FULL_REINDEX"/>
-                                                        <batch
-                                                            jcr:primaryType="nt:unstructured"
-                                                            text="Batch failure"
-                                                            value="BATCH"/>
-                                                        <path
-                                                            jcr:primaryType="nt:unstructured"
-                                                            text="Path failure"
-                                                            value="PATH"/>
-                                                    </items>
-                                                </actionFilter>
                                                 <statusFilter
                                                     jcr:primaryType="nt:unstructured"
                                                     sling:resourceType="granite/ui/components/coral/foundation/form/select"
