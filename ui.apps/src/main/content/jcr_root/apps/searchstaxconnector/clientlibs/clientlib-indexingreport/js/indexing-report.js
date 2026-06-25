@@ -470,6 +470,153 @@
         return "incremental";
     }
 
+    function redirectToStartPage() {
+        window.location.href = "/aem/start.html";
+    }
+
+    function setWizardButtonLabel(button, text) {
+        var label = button.querySelector("coral-button-label");
+        if (label) {
+            label.textContent = text;
+            return;
+        }
+        if (button.label && button.label.textContent !== undefined) {
+            button.label.textContent = text;
+            return;
+        }
+        button.textContent = text;
+    }
+
+    function styleWizardCloseButton(button) {
+        button.setAttribute("is", "coral-anchorbutton");
+        button.setAttribute("variant", "secondary");
+        button.setAttribute("role", "button");
+        button.className = "coral-Button coral-Button--secondary searchstax-indexing-report-close-btn";
+    }
+
+    function createWizardCloseButton() {
+        var closeBtn = document.createElement("a");
+        closeBtn.id = "searchstax-indexing-report-close";
+        closeBtn.href = "#";
+        styleWizardCloseButton(closeBtn);
+        closeBtn.textContent = "Close";
+
+        closeBtn.addEventListener("click", function (event) {
+            event.preventDefault();
+            redirectToStartPage();
+        });
+
+        if (window.Coral && Coral.commons && typeof Coral.commons.ready === "function") {
+            Coral.commons.ready(closeBtn, function () {
+                setWizardButtonLabel(closeBtn, "Close");
+            });
+        }
+
+        return closeBtn;
+    }
+
+    function ensureReportHeader() {
+        var existingRow = document.querySelector(".searchstax-indexing-report-header-row");
+        if (existingRow) {
+            var existingBtn = existingRow.querySelector("#searchstax-indexing-report-close");
+            if (existingBtn) {
+                if (existingBtn.tagName !== "A") {
+                    var replacement = createWizardCloseButton();
+                    existingBtn.parentNode.replaceChild(replacement, existingBtn);
+                } else {
+                    styleWizardCloseButton(existingBtn);
+                    setWizardButtonLabel(existingBtn, "Close");
+                }
+            }
+            return;
+        }
+
+        var tabs = document.querySelector("#searchstax-indexing-report-tabs");
+        if (!tabs || !tabs.parentNode) {
+            return;
+        }
+
+        var oldHeader = document.querySelector(".searchstax-indexing-report-header");
+        if (oldHeader) {
+            oldHeader.remove();
+        }
+
+        var row = document.createElement("div");
+        row.className = "searchstax-indexing-report-header-row";
+
+        var title = document.createElement("div");
+        title.className = "searchstax-indexing-report-header-title";
+        title.innerHTML = "<h2 class=\"coral-Heading coral-Heading--2\">Indexing Report</h2>";
+
+        var actions = document.createElement("div");
+        actions.className = "searchstax-indexing-report-header-actions";
+
+        var closeBtn = createWizardCloseButton();
+
+        actions.appendChild(closeBtn);
+        row.appendChild(title);
+        row.appendChild(actions);
+        tabs.parentNode.insertBefore(row, tabs);
+        tabs.parentNode.classList.add("searchstax-indexing-report-body");
+    }
+
+    function ensureReportSpacing() {
+        var tabs = document.querySelector("#searchstax-indexing-report-tabs");
+        if (tabs) {
+            tabs.querySelectorAll("coral-panel, .coral-Panel, .coral-TabPanel").forEach(function (panel) {
+                panel.classList.add("searchstax-indexing-report-tab-panel");
+            });
+        }
+
+        document.querySelectorAll(".searchstax-indexing-report-description").forEach(function (el) {
+            el.classList.add("searchstax-indexing-report-has-spacing");
+        });
+
+        document.querySelectorAll(".searchstax-indexing-report-filters").forEach(function (el) {
+            el.classList.add("searchstax-indexing-report-has-spacing");
+        });
+
+        ["#searchstax-indexing-report-action-filter", "#searchstax-full-reindex-status-filter"].forEach(function (selector) {
+            var filter = document.querySelector(selector);
+            if (filter) {
+                var filtersRow = filter.closest(".searchstax-indexing-report-filters")
+                    || filter.closest(".coral-Form-fieldwrapper")
+                    || filter.parentElement;
+                if (filtersRow) {
+                    filtersRow.classList.add("searchstax-indexing-report-has-spacing");
+                }
+            }
+        });
+
+        ["#searchstax-indexing-report-table", "#searchstax-full-reindex-report-table"].forEach(function (selector) {
+            var table = document.querySelector(selector);
+            if (table) {
+                table.classList.add("searchstax-indexing-report-table-spaced");
+            }
+        });
+    }
+
+    function ensureReportContentInsets() {
+        var tabs = document.querySelector("#searchstax-indexing-report-tabs");
+        if (!tabs || !tabs.parentNode) {
+            return;
+        }
+
+        tabs.parentNode.classList.add("searchstax-indexing-report-body");
+    }
+
+    function bindCloseButton() {
+        if (document.body.dataset.searchstaxIndexingReportCloseBound === "true") {
+            return;
+        }
+        document.body.dataset.searchstaxIndexingReportCloseBound = "true";
+
+        $(document).on("click", "#searchstax-indexing-report-close", function (event) {
+            event.preventDefault();
+            redirectToStartPage();
+        });
+    }
+
     function bindTabs() {
         var tabs = document.querySelector("#searchstax-indexing-report-tabs");
         if (!tabs || tabs.dataset.searchstaxTabsBound === "true") {
@@ -486,12 +633,14 @@
 
         if (window.Coral && Coral.commons && typeof Coral.commons.ready === "function") {
             Coral.commons.ready(tabs, function (tabView) {
+                ensureReportSpacing();
                 var element = tabView.tagName === "CORAL-TABVIEW" ? tabView : tabView.querySelector("coral-tabview");
                 if (element) {
                     attachTabHandler(element);
                 }
             });
         } else {
+            ensureReportSpacing();
             var tabView = tabs.querySelector("coral-tabview");
             if (tabView) {
                 attachTabHandler(tabView);
@@ -500,12 +649,18 @@
     }
 
     function initIndexingReport() {
+        ensureReportHeader();
+        ensureReportContentInsets();
+        ensureReportSpacing();
+        bindCloseButton();
+
         if (!document.querySelector("#searchstax-indexing-report-tabs")) {
             return;
         }
 
         if (!filtersInitialized) {
             filtersInitialized = true;
+            bindCloseButton();
             bindTabs();
             bindFilter("#searchstax-indexing-report-action-filter");
             bindFilter("#searchstax-indexing-report-status-filter");

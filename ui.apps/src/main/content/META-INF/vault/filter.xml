@@ -2,8 +2,8 @@
 <workspaceFilter version="1.0">
     <!-- Merge only our Tools nav entry; never replace /apps/cq/core/content/nav (would remove WKND etc.) -->
     <filter root="/apps/cq/core/content/nav/tools/Searchstax" mode="merge"/>
-    <filter root="/apps/searchstaxconnector/clientlibs" mode="merge"/>
-    <filter root="/apps/searchstaxconnector/i18n" mode="merge"/>
-    <filter root="/apps/searchstaxconnector/admin" mode="merge"/>
-    <filter root="/apps/searchstaxconnector/components" mode="merge"/>
+    <filter root="/apps/searchstaxconnector/clientlibs"/>
+    <filter root="/apps/searchstaxconnector/i18n"/>
+    <filter root="/apps/searchstaxconnector/admin"/>
+    <filter root="/apps/searchstaxconnector/components"/>
 </workspaceFilter>

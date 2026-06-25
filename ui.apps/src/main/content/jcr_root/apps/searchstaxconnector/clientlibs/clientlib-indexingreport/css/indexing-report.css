@@ -1,6 +1,84 @@
 .searchstax-indexing-report-description {
-    margin: 12px 0 28px;
+    margin: 0;
     max-width: 960px;
+    box-sizing: border-box;
+}
+
+.searchstax-indexing-report-page {
+    box-sizing: border-box;
+}
+
+.searchstax-indexing-report-body {
+    padding-left: 24px;
+    padding-right: 24px;
+    box-sizing: border-box;
+}
+
+.searchstax-indexing-report-body [data-granite-layout~="margin"] {
+    margin-left: 0;
+    margin-right: 0;
+}
+
+.searchstax-indexing-report-header-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    width: 100%;
+    margin: 0 0 16px;
+    box-sizing: border-box;
+}
+
+.searchstax-indexing-report-header-title {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.searchstax-indexing-report-header-actions {
+    flex: 0 0 auto;
+    margin-left: auto;
+}
+
+.searchstax-indexing-report-close-btn,
+.searchstax-indexing-report-header-actions .coral-Button--secondary,
+.searchstax-indexing-report-header-actions a[is="coral-anchorbutton"] {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 2rem;
+    min-width: 5.625rem;
+    padding: 0 1rem;
+    border: 2px solid #4b4b4b;
+    border-radius: 1rem;
+    background: #ffffff;
+    color: #4b4b4b;
+    font-family: adobe-clean, "Source Sans Pro", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font-size: 0.875rem;
+    font-weight: 700;
+    line-height: 1.25rem;
+    text-decoration: none;
+    cursor: pointer;
+    box-sizing: border-box;
+}
+
+.searchstax-indexing-report-close-btn:hover,
+.searchstax-indexing-report-header-actions .coral-Button--secondary:hover,
+.searchstax-indexing-report-header-actions a[is="coral-anchorbutton"]:hover {
+    background: #f5f5f5;
+    color: #2c2c2c;
+    text-decoration: none;
+}
+
+.searchstax-indexing-report-close-btn:focus,
+.searchstax-indexing-report-header-actions .coral-Button--secondary:focus,
+.searchstax-indexing-report-header-actions a[is="coral-anchorbutton"]:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px #ffffff, 0 0 0 4px #378ef0;
+}
+
+.searchstax-indexing-report-header-title .coral-Heading--2,
+.searchstax-indexing-report-header-title h2 {
+    margin: 0;
 }
 
 .searchstax-indexing-report-description .coral-Form-fieldwrapper,
@@ -18,6 +96,15 @@
 
 #searchstax-indexing-report-tabs {
     margin-top: 8px;
+    box-sizing: border-box;
+}
+
+#searchstax-indexing-report-tabs .searchstax-indexing-report-tab-panel,
+#searchstax-indexing-report-tabs coral-panel,
+#searchstax-indexing-report-tabs .coral-Panel,
+#searchstax-indexing-report-tabs .coral-TabPanel {
+    padding-top: 24px;
+    box-sizing: border-box;
 }
 
 .searchstax-full-reindex-run-summary {
@@ -60,15 +147,32 @@
     color: #4b4b4b;
 }
 
+.searchstax-indexing-report-has-spacing {
+    margin-top: 24px;
+}
+
+.searchstax-indexing-report-description.searchstax-indexing-report-has-spacing {
+    margin-top: 0;
+}
+
+.searchstax-indexing-report-table-spaced,
+#searchstax-indexing-report-table,
+#searchstax-full-reindex-report-table,
+.searchstax-indexing-report-table {
+    margin-top: 32px;
+    box-sizing: border-box;
+}
+
 .searchstax-indexing-report-filters {
     display: flex;
     flex-wrap: wrap;
     gap: 16px;
-    margin: 0 0 32px;
-    padding: 16px 20px;
-    background: #fafafa;
-    border: 1px solid #e5e5e5;
-    border-radius: 8px;
+    margin: 0;
+    padding: 0;
+    background: transparent;
+    border: none;
+    border-radius: 0;
+    box-sizing: border-box;
 }
 
 #searchstax-indexing-report-action-filter,
@@ -76,10 +180,6 @@
 #searchstax-full-reindex-status-filter,
 #searchstax-full-reindex-failure-kind-filter {
     min-width: 220px;
-}
-
-.searchstax-indexing-report-table {
-    margin-top: 0;
 }
 
 #searchstax-indexing-report-table,
