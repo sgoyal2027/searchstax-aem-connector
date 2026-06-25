@@ -178,6 +178,7 @@
 #searchstax-indexing-report-action-filter,
 #searchstax-indexing-report-status-filter,
 #searchstax-full-reindex-status-filter,
+#searchstax-full-reindex-action-filter,
 #searchstax-full-reindex-failure-kind-filter {
     min-width: 220px;
 }

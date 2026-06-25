@@ -1,0 +1,24 @@
+{
+  "servletresolver.servletRoot": "-1",
+  "servletresolver.paths": [
+    "/bin/searchstaxconnector/wizard/initial-setup-load",
+    "/bin/searchstaxconnector/wizard/initial-setup-config",
+    "/bin/searchstaxconnector/wizard/api-config-load",
+    "/bin/searchstaxconnector/wizard/api-config-save",
+    "/bin/searchstaxconnector/wizard/email-config-load",
+    "/bin/searchstaxconnector/wizard/email-config-save",
+    "/bin/searchstaxconnector/wizard/email-config-test",
+    "/bin/searchstaxconnector/wizard/metadata-field-mappings-load",
+    "/bin/searchstaxconnector/wizard/metadata-field-mappings",
+    "/bin/searchstaxconnector/wizard/language-mappings-load",
+    "/bin/searchstaxconnector/wizard/language-mappings",
+    "/bin/searchstaxconnector/wizard/site-application-mappings-load",
+    "/bin/searchstaxconnector/wizard/site-application-mappings",
+    "/bin/searchstaxconnector/wizard/full-index-load",
+    "/bin/searchstaxconnector/wizard/fullindex-config-save",
+    "/bin/searchstaxconnector/wizard/fullindex-run",
+    "/bin/searchstaxconnector/wizard/fullindex-status",
+    "/bin/searchstaxconnector/wizard/indexing-report",
+    "/bin/searchstaxconnector/wizard/indexing-report-reprocess"
+  ]
+}

@@ -158,6 +158,7 @@
                                     jcr:primaryType="nt:unstructured"
                                     jcr:title="Full Reindex"
                                     sling:resourceType="granite/ui/components/coral/foundation/container"
+                                    granite:id="searchstax-full-reindex-tab"
                                     margin="{Boolean}false">
                                     <items jcr:primaryType="nt:unstructured">
                                         <descriptionPanel
@@ -172,7 +173,7 @@
                                                 <filterNote
                                                     jcr:primaryType="nt:unstructured"
                                                     sling:resourceType="granite/ui/components/coral/foundation/text"
-                                                    text="* Use the Status filter below to narrow success and failure results."/>
+                                                    text="* Use the Action and Status filters below to narrow the results."/>
                                                 <retentionNote
                                                     jcr:primaryType="nt:unstructured"
                                                     sling:resourceType="granite/ui/components/coral/foundation/text"
@@ -189,6 +190,32 @@
                                             sling:resourceType="granite/ui/components/coral/foundation/container"
                                             class="searchstax-indexing-report-filters">
                                             <items jcr:primaryType="nt:unstructured">
+                                                <actionFilter
+                                                    jcr:primaryType="nt:unstructured"
+                                                    sling:resourceType="granite/ui/components/coral/foundation/form/select"
+                                                    emptyText="All actions"
+                                                    granite:id="searchstax-full-reindex-action-filter"
+                                                    name="./fullReindexActionFilter">
+                                                    <items jcr:primaryType="nt:unstructured">
+                                                        <all
+                                                            jcr:primaryType="nt:unstructured"
+                                                            selected="{Boolean}true"
+                                                            text="All actions"
+                                                            value="ALL"/>
+                                                        <fullReindex
+                                                            jcr:primaryType="nt:unstructured"
+                                                            text="Full Reindex"
+                                                            value="FULL_REINDEX"/>
+                                                        <batch
+                                                            jcr:primaryType="nt:unstructured"
+                                                            text="Batch failure"
+                                                            value="BATCH"/>
+                                                        <path
+                                                            jcr:primaryType="nt:unstructured"
+                                                            text="Path failure"
+                                                            value="PATH"/>
+                                                    </items>
+                                                </actionFilter>
                                                 <statusFilter
                                                     jcr:primaryType="nt:unstructured"
                                                     sling:resourceType="granite/ui/components/coral/foundation/form/select"
@@ -211,28 +238,6 @@
                                                             value="FAILURE"/>
                                                     </items>
                                                 </statusFilter>
-                                                <failureKindFilter
-                                                    jcr:primaryType="nt:unstructured"
-                                                    sling:resourceType="granite/ui/components/coral/foundation/form/select"
-                                                    emptyText="All failure types"
-                                                    granite:id="searchstax-full-reindex-failure-kind-filter"
-                                                    name="./failureKindFilter">
-                                                    <items jcr:primaryType="nt:unstructured">
-                                                        <all
-                                                            jcr:primaryType="nt:unstructured"
-                                                            selected="{Boolean}true"
-                                                            text="All failure types"
-                                                            value="ALL"/>
-                                                        <batch
-                                                            jcr:primaryType="nt:unstructured"
-                                                            text="Batch failures"
-                                                            value="BATCH"/>
-                                                        <path
-                                                            jcr:primaryType="nt:unstructured"
-                                                            text="Path failures"
-                                                            value="PATH"/>
-                                                    </items>
-                                                </failureKindFilter>
                                             </items>
                                         </filters>
                                         <reportTable
@@ -253,7 +258,7 @@
                                                     name="path"/>
                                                 <action
                                                     jcr:primaryType="nt:unstructured"
-                                                    jcr:title="Type"
+                                                    jcr:title="Action"
                                                     name="action"/>
                                                 <status
                                                     jcr:primaryType="nt:unstructured"
