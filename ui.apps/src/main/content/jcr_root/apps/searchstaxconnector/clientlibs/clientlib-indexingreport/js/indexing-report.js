@@ -680,7 +680,7 @@
             el.classList.add("searchstax-indexing-report-has-spacing");
         });
 
-        ["#searchstax-indexing-report-action-filter"].forEach(function (selector) {
+        ["#searchstax-indexing-report-action-filter", "#searchstax-full-reindex-status-filter"].forEach(function (selector) {
             var filter = document.querySelector(selector);
             if (filter) {
                 var filtersRow = filter.closest(".searchstax-indexing-report-filters")
