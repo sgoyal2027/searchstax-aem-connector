@@ -136,7 +136,13 @@ public class MetadataMappingSaveServlet extends SlingAllMethodsServlet {
         ModifiableValueMap properties =
                 resource.adaptTo(ModifiableValueMap.class);
 
-        properties.put("metadataMappings", json);
+        if (mappings.isEmpty()) {
+            properties.remove(PROPERTY_NAME);
+            LOG.debug("No metadata mappings found. Removing property.");
+        } else {
+            properties.put(PROPERTY_NAME, json);
+            LOG.debug("Saving {} metadata mappings", mappings.size());
+        }
 
         request.getResourceResolver().commit();
 

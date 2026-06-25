@@ -32,6 +32,12 @@ public class FailedRequestServiceImpl implements FailedRequestService {
 
     @Override
     public void saveFailedRequest(IndexRequest request, String reason,ApiResponse response) {
+        
+        if (response != null) {
+
+            request.setStatusCode(response.getStatusCode());
+            request.setResponseMessage(response.getResponseBody());
+        }
 
         try (ResourceResolver resourceResolver =
                      resolverUtil.getServiceResolver()) {

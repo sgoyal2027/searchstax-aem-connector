@@ -16,6 +16,10 @@ public class IndexRequest {
 
     private String correlationId;
 
+    private int statusCode;
+
+    private String responseMessage;
+
     public IndexRequest() {
     }
 
@@ -75,6 +79,22 @@ public class IndexRequest {
 
     public void setCorrelationId(final String correlationId) {
         this.correlationId = correlationId;
+    }
+
+    public int getStatusCode() {
+        return statusCode;
+    }
+
+    public void setStatusCode(final int statusCode) {
+        this.statusCode = statusCode;
+    }
+
+    public String getResponseMessage() {
+        return responseMessage;
+    }
+
+    public void setResponseMessage(final String responseMessage) {
+        this.responseMessage = responseMessage;
     }
     
 }

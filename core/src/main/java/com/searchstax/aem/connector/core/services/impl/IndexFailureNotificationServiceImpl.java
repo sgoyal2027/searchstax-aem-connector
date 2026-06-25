@@ -1,5 +1,7 @@
 package com.searchstax.aem.connector.core.services.impl;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.searchstax.aem.connector.core.config.EmailConfigService;
 import com.searchstax.aem.connector.core.dto.request.EmailRequest;
 import com.searchstax.aem.connector.core.dto.request.IndexRequest;
@@ -19,6 +21,9 @@ public class IndexFailureNotificationServiceImpl
     private static final Logger LOG =
             LoggerFactory.getLogger(
                     IndexFailureNotificationServiceImpl.class);
+
+    private static final ObjectMapper OBJECT_MAPPER =
+            new ObjectMapper();
 
     @Reference
     private EmailService emailService;
@@ -56,16 +61,14 @@ public class IndexFailureNotificationServiceImpl
             }
 
             String subject =
-                    String.format(
-                            "SearchStax Indexing Failure - Batch %s",
-                            batchId);
+                    "SearchStax Incremental Indexing Failure Notification";
 
             StringBuilder body =
                     new StringBuilder();
 
             body.append("<html><body>");
 
-            body.append("<h2>SearchStax Index Failure Notification</h2>");
+            body.append("<h2>SearchStax Incremental Index Failure Notification</h2>");
 
             body.append("<p><b>Batch ID:</b> ")
                     .append(batchId)
@@ -81,9 +84,22 @@ public class IndexFailureNotificationServiceImpl
 
             for (IndexRequest request : failedRequests) {
 
-                body.append("<li>")
+                body.append("<div style='margin-bottom:20px;'>");
+
+                body.append("<b>Path:</b> ")
                         .append(request.getPath())
-                        .append("</li>");
+                        .append("<br/>");
+
+                body.append("<b>Status Code:</b> ")
+                        .append(request.getStatusCode())
+                        .append("<br/>");
+
+                body.append("<b>Response Message:</b> ")
+                        .append(formatResponseMessage(
+                                request.getResponseMessage()))
+                        .append("<br/>");
+
+                body.append("</div>");
             }
 
             body.append("</ul>");
@@ -125,5 +141,26 @@ public class IndexFailureNotificationServiceImpl
                     batchId,
                     e);
         }
+    }
+
+    private String formatResponseMessage(
+            String responseMessage) {
+
+        if (responseMessage == null
+                || responseMessage.isBlank()) {
+            return "N/A";
+        }
+        try {
+            JsonNode jsonNode =
+                    OBJECT_MAPPER.readTree(responseMessage);
+            if (jsonNode.has("message")) {
+                return jsonNode.get("message").asText();
+            }
+        } catch (Exception e) {
+            LOG.debug(
+                    "Unable to parse response message as JSON. Returning original response.");
+            return responseMessage;
+        }
+        return responseMessage;
     }
 }
