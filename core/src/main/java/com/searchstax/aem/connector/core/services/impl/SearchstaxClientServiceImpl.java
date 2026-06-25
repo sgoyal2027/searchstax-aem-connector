@@ -5,7 +5,6 @@ import com.searchstax.aem.connector.core.config.model.SiteRoutingResult;
 import com.searchstax.aem.connector.core.dto.SearchStaxUpdateOptions;
 import com.searchstax.aem.connector.core.dto.response.ApiResponse;
 import com.searchstax.aem.connector.core.services.SearchstaxClientService;
-import com.searchstax.aem.connector.core.services.MaintenanceModeService;
 import com.searchstax.aem.connector.core.services.SiteRoutingService;
 import com.searchstax.aem.connector.core.utils.ProtectedValueCodec;
 import org.osgi.service.component.annotations.Component;
@@ -39,9 +38,6 @@ public class SearchstaxClientServiceImpl implements SearchstaxClientService {
 
     @Reference
     private ProtectedValueCodec protectedValueCodec;
-
-    @Reference
-    private MaintenanceModeService maintenanceModeService;
 
     @Override
     public ApiResponse indexDocument(final String requestJson) {
@@ -101,12 +97,9 @@ public class SearchstaxClientServiceImpl implements SearchstaxClientService {
             LOG.info("SearchStax response code: {}", responseCode);
             LOG.debug("SearchStax response body: {}", responseBody);
 
-            maintenanceModeService.recordHttpStatus(responseCode);
-
             return new ApiResponse(responseCode, responseBody);
         } catch (Exception e) {
             LOG.error("Error while calling SearchStax update API", e);
-            maintenanceModeService.recordHttpStatus(TRANSPORT_ERROR_STATUS);
             return new ApiResponse(TRANSPORT_ERROR_STATUS, e.getMessage());
         } finally {
             if (connection != null) {

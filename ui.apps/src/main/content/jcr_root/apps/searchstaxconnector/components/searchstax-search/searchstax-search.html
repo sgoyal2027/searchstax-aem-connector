@@ -14,11 +14,7 @@
      data-search-profile="${model.searchProfile @ context='attribute'}"
      data-results-per-page="${model.resultsPerPage @ context='attribute'}">
 
-    <div data-sly-test="${model.maintenanceActive}" class="searchstax-search__maintenance">
-        ${model.maintenanceMessage @ context='text'}
-    </div>
-
-    <div data-sly-test="${!model.maintenanceActive}" class="searchstax-search__active">
+    <div class="searchstax-search__active">
         <form class="searchstax-search__form" role="search">
             <input type="search"
                    class="searchstax-search__input"

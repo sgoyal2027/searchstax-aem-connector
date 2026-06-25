@@ -4,7 +4,6 @@ import com.searchstax.aem.connector.core.config.model.IncrementalIndexSchedulerC
 import com.searchstax.aem.connector.core.dto.request.IndexRequest;
 import com.searchstax.aem.connector.core.services.IncrementalIndexingService;
 import com.searchstax.aem.connector.core.services.IncrementalQueueService;
-import com.searchstax.aem.connector.core.services.MaintenanceModeService;
 import com.searchstax.aem.connector.core.utils.ResolverUtil;
 import org.apache.sling.api.resource.ResourceResolver;
 import org.apache.sling.commons.scheduler.ScheduleOptions;
@@ -44,9 +43,6 @@ public class IncrementalIndexScheduler implements Runnable {
     private ResolverUtil resolverUtil;
 
     @Reference
-    private MaintenanceModeService maintenanceModeService;
-
-    @Reference
     private Scheduler scheduler;
 
     @Activate
@@ -79,11 +75,6 @@ public class IncrementalIndexScheduler implements Runnable {
     }
 
     private void processQueue() {
-        if (maintenanceModeService.isActive()) {
-            LOG.info("Incremental indexing paused — maintenance mode active");
-            return;
-        }
-
         final int queueSize = queueService.size();
         if (queueSize == 0) {
             LOG.debug("Incremental queue is empty");

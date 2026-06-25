@@ -14,7 +14,6 @@ Traceability index for BV-SS-AEM-2026. Place the approved SRS PDF in project doc
 | 5.7.2 | Unified API configuration | Implemented |
 | 5.8.1 | Incremental indexing service + backoff | Implemented |
 | 5.8.3 / 5.11.1 | Indexing report + reprocess | Implemented |
-| 5.9 | Maintenance mode | Implemented |
 | 5.10 | UX Toolkit search component | Minimal component (select API) |
 | 3.3 | Language mapping (AEM → SearchStax suffix) | Implemented |
 | 5.11.1 | Correlation IDs in indexing audit | Implemented |
@@ -32,7 +31,7 @@ Failures → dead-letter JCR + IndexingAuditService → Indexing Report UI
 
 | Path | Purpose |
 |------|---------|
-| `/conf/searchstaxconnector/settings/initialsetup` | Connector enable, paths, maintenance |
+| `/conf/searchstaxconnector/settings/initialsetup` | Connector enable, paths |
 | `/conf/searchstaxconnector/settings/apiconfig` | Endpoints and tokens |
 | `/conf/searchstaxconnector/settings/metadatafieldmapping` | Field mappings |
 | `/var/searchstaxconnector/incremental-index/pending` | Incremental queue |

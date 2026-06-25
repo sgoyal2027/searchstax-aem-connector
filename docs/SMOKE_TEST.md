@@ -81,7 +81,7 @@ Or install via script:
 | 4 | Activate a page under configured root path | Sling job `searchstaxconnector/incremental-index` created |
 | 5 | Indexing Report | QUEUED event appears with correlation ID |
 | 6 | Full Index → Run (author only) | Status servlet returns progress JSON |
-| 7 | SearchStax Search component | Renders on publish; respects maintenance mode |
+| 7 | SearchStax Search component | Renders on publish |
 | 8 | OSGi console | `searchstax-aem-connector.core` **Active** |
 
 ## Platform matrix
@@ -99,7 +99,7 @@ Or install via script:
 | Symptom | Likely cause |
 |---------|----------------|
 | Wizard save 404 on Cloud | Servlet not in `SlingServletResolver.cfg.json` — re-run `ConnectorCrossPlatformSmokeTest` |
-| Queue empty after publish | Connector disabled in Initial Setup, path excluded, or maintenance mode active |
+| Queue empty after publish | Connector disabled in Initial Setup or path excluded |
 | Bundle not active | Check `/system/console/bundles` for unresolved imports; verify AEM version ≥ 6.5 |
 | Analyser failure | Review `all/target/cp-conversion` logs; remove non-Cloud APIs from bundle |
 

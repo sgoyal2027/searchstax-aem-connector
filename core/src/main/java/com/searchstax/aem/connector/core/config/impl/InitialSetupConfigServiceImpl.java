@@ -61,10 +61,6 @@ public class InitialSetupConfigServiceImpl
              config.setAllowedFiles(
                     vm.get("allowedFiles", new String[0]));
 
-            config.setMaintenanceModeManual(vm.get("maintenanceModeManual", false));
-            config.setMaintenanceMessage(vm.get("maintenanceMessage", ""));
-            config.setMaintenanceFailureThreshold(vm.get("maintenanceFailureThreshold", 3));
-
             LOG.debug(
                     "Initial setup configuration loaded successfully");
 

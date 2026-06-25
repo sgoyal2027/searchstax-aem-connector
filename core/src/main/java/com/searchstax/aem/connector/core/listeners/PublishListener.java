@@ -3,7 +3,6 @@ package com.searchstax.aem.connector.core.listeners;
 import com.day.cq.replication.ReplicationAction;
 import com.day.cq.replication.ReplicationActionType;
 
-import com.searchstax.aem.connector.core.services.MaintenanceModeService;
 import com.searchstax.aem.connector.core.config.InitialSetupConfigService;
 import com.searchstax.aem.connector.core.config.model.InitialSetupConfig;
 import org.apache.sling.event.jobs.Job;
@@ -42,9 +41,6 @@ public class PublishListener implements EventHandler {
 
     @Reference
     private InitialSetupConfigService initialSetupConfigService;
-
-    @Reference
-    private MaintenanceModeService maintenanceModeService;
 
     @Activate
     protected void activate() {
@@ -110,14 +106,6 @@ public class PublishListener implements EventHandler {
                     "SearchStax connector is disabled via Initial Setup configuration. Skipping indexing job for path: {}",
                     path);
 
-            return;
-        }
-
-        if (maintenanceModeService.isActive()) {
-            LOG.info(
-                    "SearchStax maintenance mode active ({}). Skipping indexing job for path: {}",
-                    maintenanceModeService.getMessage(),
-                    path);
             return;
         }
 

@@ -48,7 +48,7 @@ Configure `filevault-package-maven-plugin` embeddeds to install under your proje
 
 | Wizard | Purpose |
 |--------|---------|
-| **Initial Setup** | Enable connector, root/exclude paths, asset file types, maintenance mode |
+| **Initial Setup** | Enable connector, root/exclude paths, asset file types |
 | **API Configuration** | Update, select, discovery, and analytics endpoints + tokens |
 | **Metadata Field Mapping** | AEM → Solr field mappings; mark fields as mandatory |
 | **Full Index** | Run or monitor a full reindex job |
@@ -73,14 +73,6 @@ Replication → Sling Job → JCR pending queue → scheduler → SearchStax upd
 - Triggered from **Tools → SearchStax → Full Index** or programmatically via the full-index job topic.
 - Traverses configured include paths, respects exclude paths and per-document size limits (10 KB default).
 - Batch size, commit window, and traversal mode are tunable via OSGi (`SearchStaxFullIndexRuntimeConfiguration`).
-
-### Maintenance mode (SRS 5.9)
-
-Maintenance mode pauses incremental indexing and shows a message on the search component.
-
-- **Manual:** Enable in **Initial Setup → Maintenance** tab.
-- **Automatic:** Activates after N consecutive SearchStax 5xx responses (default threshold: 3).
-- Successful 2xx responses reset the failure counter.
 
 ### Site search component (SRS 5.10)
 

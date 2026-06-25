@@ -96,10 +96,6 @@ public class InitialSetupLoadServlet extends SlingSafeMethodsServlet {
                     "allowedFiles",
                     allowedFiles);
 
-            json.put("maintenanceModeManual", config.isMaintenanceModeManual());
-            json.put("maintenanceMessage", config.getMaintenanceMessage() != null ? config.getMaintenanceMessage() : "");
-            json.put("maintenanceFailureThreshold", config.getMaintenanceFailureThreshold());
-
             response.setContentType(
                     "application/json");
 

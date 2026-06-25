@@ -6,7 +6,6 @@ import com.searchstax.aem.connector.core.constants.SearchStaxFullIndexDefaults;
 import com.searchstax.aem.connector.core.services.FullIndexPathConfig;
 import com.searchstax.aem.connector.core.services.FullIndexProgress;
 import com.searchstax.aem.connector.core.services.FullIndexTriggerResult;
-import com.searchstax.aem.connector.core.services.MaintenanceModeService;
 import com.searchstax.aem.connector.core.services.SearchStaxFullIndexExecutionService;
 import com.searchstax.aem.connector.core.services.SearchStaxFullIndexOrchestratorService;
 import com.searchstax.aem.connector.core.services.SearchStaxFullIndexPathConfigurationService;
@@ -50,9 +49,6 @@ public class SearchStaxFullIndexOrchestratorServiceImpl
     @Reference
     private SearchStaxFullIndexPathConfigurationService pathConfigurationService;
 
-    @Reference
-    private MaintenanceModeService maintenanceModeService;
-
     @Override
     public FullIndexTriggerResult triggerFullIndex(final FullIndexPathConfig config) {
 
@@ -69,12 +65,6 @@ public class SearchStaxFullIndexOrchestratorServiceImpl
             LOG.info("SearchStax connector is disabled via Initial Setup configuration. Skipping full index.");
             return new FullIndexTriggerResult(
                     false, "", "SearchStax connector is disabled.", HTTP_BAD_REQUEST);
-        }
-
-        if (maintenanceModeService.isActive()) {
-            LOG.info("SearchStax maintenance mode active. Skipping full index.");
-            return new FullIndexTriggerResult(
-                    false, "", maintenanceModeService.getMessage(), HTTP_BAD_REQUEST);
         }
 
         if (hasActiveOrQueuedJob()) {
