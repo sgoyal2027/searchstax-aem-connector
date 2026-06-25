@@ -136,11 +136,6 @@
     }
 
     function loadFullReindexSummary() {
-        var summary = document.querySelector("#searchstax-full-reindex-run-summary");
-        if (!summary) {
-            return;
-        }
-
         $.ajax({ url: FULL_INDEX_STATUS_URL, method: "GET", dataType: "json" })
             .done(function (data) {
                 if (activeTab !== "full") {
@@ -148,7 +143,6 @@
                 }
                 fullReindexRunning = !!(data && data.running);
                 scheduleRefreshInterval();
-                renderFullReindexSummary(summary, data || {});
             })
             .fail(function () {
                 if (activeTab !== "full") {
@@ -156,7 +150,6 @@
                 }
                 fullReindexRunning = false;
                 scheduleRefreshInterval();
-                summary.innerHTML = "";
             });
     }
 
@@ -166,68 +159,6 @@
         }
         clearInterval(refreshTimer);
         refreshTimer = setInterval(refreshReport, fullReindexRunning ? REFRESH_MS_RUNNING : REFRESH_MS);
-    }
-
-    function formatElapsed(ms) {
-        if (!ms || ms < 0) {
-            return "0s";
-        }
-        var totalSeconds = Math.floor(ms / 1000);
-        var minutes = Math.floor(totalSeconds / 60);
-        var seconds = totalSeconds % 60;
-        if (minutes > 0) {
-            return minutes + "m " + seconds + "s";
-        }
-        return seconds + "s";
-    }
-
-    function renderFullReindexSummary(container, data) {
-        var state = data.state || "IDLE";
-        var running = !!data.running;
-        var successCount = data.successCount != null ? data.successCount : 0;
-        var failureCount = data.failureCount != null ? data.failureCount : 0;
-        var totalAttempted = data.totalAttempted != null ? data.totalAttempted : 0;
-        var pagesIndexed = data.pagesIndexed != null ? data.pagesIndexed : 0;
-        var assetsIndexed = data.assetsIndexed != null ? data.assetsIndexed : 0;
-        var currentBatchNumber = data.currentBatchNumber != null ? data.currentBatchNumber : 0;
-        var lastIndexedPath = data.lastIndexedPath || "";
-        var elapsedMs = data.elapsedMs != null ? data.elapsedMs : 0;
-        var message = data.message || "";
-
-        if (state === "IDLE" && !running && totalAttempted === 0 && pagesIndexed === 0 && assetsIndexed === 0) {
-            container.innerHTML = "";
-            return;
-        }
-
-        var stats =
-            "<span><strong>State:</strong> " + escapeHtml(state) + "</span>" +
-            "<span><strong>Posted:</strong> " + escapeHtml(String(successCount)) + "</span>" +
-            "<span><strong>Failed paths:</strong> " + escapeHtml(String(failureCount)) + "</span>" +
-            "<span><strong>Prepared:</strong> " + escapeHtml(String(pagesIndexed + assetsIndexed)) + "</span>";
-
-        if (currentBatchNumber > 0) {
-            stats += "<span><strong>Last batch:</strong> " + escapeHtml(String(currentBatchNumber)) + "</span>";
-        }
-
-        stats += "<span><strong>Elapsed:</strong> " + escapeHtml(formatElapsed(elapsedMs)) + "</span>";
-
-        container.innerHTML =
-            "<div class='searchstax-full-reindex-summary-panel'>" +
-                "<div class='searchstax-full-reindex-summary-title'>" +
-                    (running ? "Full reindex in progress" : "Last full reindex run") +
-                "</div>" +
-                "<div class='searchstax-full-reindex-summary-stats'>" + stats + "</div>" +
-                (lastIndexedPath ?
-                    "<div class='searchstax-full-reindex-summary-message'><strong>Last path:</strong> " +
-                        escapeHtml(lastIndexedPath) + "</div>" : "") +
-                (message ?
-                    "<div class='searchstax-full-reindex-summary-message'>" + escapeHtml(message) + "</div>" : "") +
-                (running && successCount === 0 ?
-                    "<div class='searchstax-full-reindex-summary-hint'>" +
-                        "Report rows appear after the first batch is posted to SearchStax. " +
-                        "Large sites may take several minutes before the first batch completes." +
-                    "</div>" : "") +
-            "</div>";
     }
 
     function renderIncrementalRows(events) {
