@@ -391,9 +391,40 @@
         }
     }
 
+    function stripReportMessageTiming(message) {
+        return String(message || "").replace(/\s*\(\d+\s*ms\)/gi, "").trim();
+    }
+
+    function formatMissingMandatoryFieldMessage(message) {
+        if (!message || message.indexOf("MISSING_MANDATORY_FIELD:") !== 0) {
+            return null;
+        }
+
+        var fieldMatch = message.match(/MISSING_MANDATORY_FIELD:\s*\S+\s*(\([^)]+\))/i);
+        if (fieldMatch) {
+            return "Missing mandatory field: " + fieldMatch[1];
+        }
+
+        var detailMatch = message.match(/MISSING_MANDATORY_FIELD:\s*(.+)/i);
+        if (detailMatch) {
+            return "Missing mandatory field: " + detailMatch[1].trim();
+        }
+
+        return "Missing mandatory field";
+    }
+
     function formatIncrementalMessage(message) {
-        if (!message || message.indexOf("HTTP ") >= 0) {
-            return message || "";
+        if (!message) {
+            return "";
+        }
+
+        var mandatoryFieldMessage = formatMissingMandatoryFieldMessage(message);
+        if (mandatoryFieldMessage) {
+            return mandatoryFieldMessage;
+        }
+
+        if (message.indexOf("HTTP ") >= 0) {
+            return message;
         }
 
         var legacyMessages = {
@@ -442,29 +473,31 @@
         if (!message) {
             return "";
         }
-        if (message.indexOf("Successfully ") === 0
-                || message.indexOf("Full reindex") === 0
-                || message.indexOf("Could not") === 0
-                || message.indexOf("Document exceeds") === 0
-                || message.indexOf("Path failed") === 0) {
-            return message;
+
+        var mandatoryFieldMessage = formatMissingMandatoryFieldMessage(message);
+        if (mandatoryFieldMessage) {
+            return mandatoryFieldMessage;
         }
 
-        if (message.indexOf("HTTP ") === 0) {
-            return "Full reindex request failed (" + message + ")";
+        var formatted = message;
+        if (formatted.indexOf("Successfully ") !== 0
+                && formatted.indexOf("Full reindex") !== 0
+                && formatted.indexOf("Could not") !== 0
+                && formatted.indexOf("Document exceeds") !== 0
+                && formatted.indexOf("Path failed") !== 0) {
+
+            if (formatted.indexOf("HTTP ") === 0) {
+                formatted = "Full reindex request failed (" + formatted + ")";
+            } else if (formatted.indexOf("Indexed in batch ") === 0) {
+                formatted = formatted.replace(
+                    "Indexed in batch ",
+                    "Successfully posted to SearchStax in full reindex batch ");
+            } else if (formatted.indexOf("(retries:") >= 0) {
+                formatted = "Full reindex batch failed to post to SearchStax " + formatted;
+            }
         }
 
-        if (message.indexOf("Indexed in batch ") === 0) {
-            return message.replace(
-                "Indexed in batch ",
-                "Successfully posted to SearchStax in full reindex batch ");
-        }
-
-        if (message.indexOf("(retries:") >= 0) {
-            return "Full reindex batch failed to post to SearchStax " + message;
-        }
-
-        return message;
+        return stripReportMessageTiming(formatted);
     }
 
     function formatFullReindexAction(event) {
