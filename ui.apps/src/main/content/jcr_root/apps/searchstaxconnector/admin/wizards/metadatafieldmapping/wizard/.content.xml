@@ -98,7 +98,7 @@
                                                                                         fieldDescription="Select the AEM metadata field to map."
                                                                                         name="./mappingType"
                                                                                         emptyText="Select AEM Metadata Field"
-                                                                                        required="{Boolean}true">
+                                                                                        required="{Boolean}true"
                                                                                         granite:class="cq-dialog-dropdown-showhide">
                                                                                         <granite:data
                                                                                             jcr:primaryType="nt:unstructured"

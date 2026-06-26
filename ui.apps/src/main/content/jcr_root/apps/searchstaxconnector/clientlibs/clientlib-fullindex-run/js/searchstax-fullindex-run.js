@@ -177,11 +177,13 @@
             title = "Failure";
         }
         var details = "State: " + (state || "N/A")
-            + " | Indexed: " + (status.totalProcessed || 0)
             + " | Attempted: " + (status.totalAttempted != null ? status.totalAttempted : (status.totalProcessed || 0) + (status.failureCount || 0))
-            + " | Path failures: " + (status.failureCount || 0)
-            + (status.completedAt ? (" | Completed: " + formatTimestamp(status.completedAt)) : "")
-            + (status.jobId ? (" | jobId: " + status.jobId) : "");
+            + " | Indexed: " + (status.totalProcessed || 0)
+            + " | Failures: " + (status.failureCount || 0)
+            + " | Pages: " + (status.pagesIndexed || 0)
+            + " | Assets: " + (status.assetsIndexed || 0)
+            + (status.completedAt ? (" | Completed At: " + formatTimestamp(status.completedAt)) : "")
+            + " | Duration: " + formatElapsed(status.elapsedMs);
         renderResult(anchor, variant, status.message || "Full index finished.", details, title);
     }
 

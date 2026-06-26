@@ -9,6 +9,9 @@ import com.searchstax.aem.connector.core.services.FullIndexTriggerResult;
 import com.searchstax.aem.connector.core.services.SearchStaxFullIndexExecutionService;
 import com.searchstax.aem.connector.core.services.SearchStaxFullIndexOrchestratorService;
 import com.searchstax.aem.connector.core.services.SearchStaxFullIndexPathConfigurationService;
+import com.searchstax.aem.connector.core.utils.ResolverUtil;
+import org.apache.sling.api.resource.LoginException;
+import org.apache.sling.api.resource.ResourceResolver;
 import org.apache.sling.event.jobs.Job;
 import org.apache.sling.event.jobs.JobManager;
 import org.apache.sling.settings.SlingSettingsService;
@@ -48,6 +51,9 @@ public class SearchStaxFullIndexOrchestratorServiceImpl
 
     @Reference
     private SearchStaxFullIndexPathConfigurationService pathConfigurationService;
+
+    @Reference
+    private ResolverUtil resolverUtil;
 
     @Override
     public FullIndexTriggerResult triggerFullIndex(final FullIndexPathConfig config) {
@@ -90,14 +96,16 @@ public class SearchStaxFullIndexOrchestratorServiceImpl
         final String[] includes = config.getIncludePaths();
         final String[] excludes = config.getExcludePaths();
         if (root == null || root.trim().isEmpty()) {
-    LOG.warn("Root path is missing");
+            LOG.warn("Root path is missing");
+            return new FullIndexTriggerResult(
+                    false, "", "Root Path is required to start full indexing.", HTTP_BAD_REQUEST);
+        }
 
-    return new FullIndexTriggerResult(
-            false,
-            "",
-            "Root Path is required to start full indexing.",
-            HTTP_BAD_REQUEST);
-}
+        if (!pathExists(root)) {
+            LOG.warn("Root path does not exist in JCR: {}", root);
+            return new FullIndexTriggerResult(
+                    false, "", "Root path does not exist: " + root, HTTP_BAD_REQUEST);
+        }
 
         /*
          * ==============================
@@ -105,26 +113,20 @@ public class SearchStaxFullIndexOrchestratorServiceImpl
          * ==============================
          */
         if (includes != null && includes.length > 0) {
-
             for (String include : includes) {
-
                 if (include == null || include.trim().isEmpty()) {
                     continue;
                 }
-
-                boolean underRoot =
-                        root != null &&
-                        (include.equals(root) || include.startsWith(root + "/"));
-
+                boolean underRoot = include.equals(root) || include.startsWith(root + "/");
                 if (!underRoot) {
-
                     LOG.warn("Invalid include path {} not under root {}", include, root);
-
                     return new FullIndexTriggerResult(
-                            false,
-                            "",
-                            "All include paths must be under root path.",
-                            HTTP_BAD_REQUEST);
+                            false, "", "All include paths must be under root path.", HTTP_BAD_REQUEST);
+                }
+                if (!pathExists(include)) {
+                    LOG.warn("Include path does not exist in JCR: {}", include);
+                    return new FullIndexTriggerResult(
+                            false, "", "Include path does not exist: " + include, HTTP_BAD_REQUEST);
                 }
             }
         }
@@ -228,6 +230,15 @@ public class SearchStaxFullIndexOrchestratorServiceImpl
 
     private boolean isAuthor() {
         return slingSettings.getRunModes().contains("author");
+    }
+
+    private boolean pathExists(final String path) {
+        try (ResourceResolver resolver = resolverUtil.getServiceResolver()) {
+            return resolver.getResource(path) != null;
+        } catch (final LoginException e) {
+            LOG.warn("Could not verify path existence for {}", path, e);
+            return false;
+        }
     }
 
     private boolean hasActiveOrQueuedJob() {
