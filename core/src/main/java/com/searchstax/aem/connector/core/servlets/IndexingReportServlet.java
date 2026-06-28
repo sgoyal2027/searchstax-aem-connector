@@ -1,6 +1,7 @@
 package com.searchstax.aem.connector.core.servlets;
 
 import com.google.gson.Gson;
+import com.searchstax.aem.connector.core.dto.IndexingReportPage;
 import com.searchstax.aem.connector.core.services.FullIndexAuditService;
 import com.searchstax.aem.connector.core.services.IndexingAuditService;
 import com.searchstax.aem.connector.core.services.SearchStaxFullIndexFailureStore;
@@ -35,6 +36,10 @@ public class IndexingReportServlet extends SlingSafeMethodsServlet {
     private static final Gson GSON = new Gson();
     private static final String TYPE_FULL = "full";
     private static final int DEFAULT_RETENTION_HOURS = 24;
+    private static final int DEFAULT_PAGE = 1;
+    private static final int DEFAULT_PAGE_SIZE = 100;
+    private static final int MAX_PAGE_SIZE = 100;
+    private static final int FULL_REPORT_FETCH_CAP = 10_000;
 
     @Reference
     private IndexingAuditService indexingAuditService;
@@ -50,15 +55,17 @@ public class IndexingReportServlet extends SlingSafeMethodsServlet {
             throws IOException {
 
         final String type = request.getParameter("type");
-        final int limit = parseInt(request.getParameter("limit"), 500);
+        final int page = Math.max(parseInt(request.getParameter("page"), DEFAULT_PAGE), DEFAULT_PAGE);
+        final int pageSize = resolvePageSize(request);
+        final int offset = (page - 1) * pageSize;
         final int retentionHours = parseInt(request.getParameter("retentionHours"), DEFAULT_RETENTION_HOURS);
 
-        final List<Map<String, Object>> events;
+        final IndexingReportPage reportPage;
         try {
             if (TYPE_FULL.equalsIgnoreCase(type)) {
-                events = listFullIndexEvents(request, limit, retentionHours);
+                reportPage = listFullIndexEvents(request, offset, pageSize, retentionHours);
             } else {
-                events = listIncrementalEvents(request, limit);
+                reportPage = listIncrementalEvents(request, offset, pageSize);
             }
         } catch (IOException e) {
             LOG.error("Unable to load indexing report events. type={}", type, e);
@@ -69,32 +76,42 @@ public class IndexingReportServlet extends SlingSafeMethodsServlet {
             return;
         }
 
+        final int totalCount = reportPage.getTotalCount();
+        final int totalPages = totalCount == 0 ? 0 : (int) Math.ceil((double) totalCount / pageSize);
+
         final Map<String, Object> payload = new HashMap<>();
         payload.put("success", true);
         payload.put("type", TYPE_FULL.equalsIgnoreCase(type) ? TYPE_FULL : "incremental");
-        payload.put("events", events);
+        payload.put("events", reportPage.getEvents());
+        payload.put("page", page);
+        payload.put("pageSize", pageSize);
+        payload.put("totalCount", totalCount);
+        payload.put("totalPages", totalPages);
 
         response.setContentType("application/json");
         response.setCharacterEncoding("UTF-8");
         response.getWriter().write(GSON.toJson(payload));
     }
 
-    private List<Map<String, Object>> listIncrementalEvents(
-            final SlingHttpServletRequest request, final int limit) {
+    private IndexingReportPage listIncrementalEvents(
+            final SlingHttpServletRequest request, final int offset, final int pageSize) {
         final String status = request.getParameter("status");
         final String action = request.getParameter("action");
         final boolean excludeQueued = parseBoolean(request.getParameter("excludeQueued"), true);
-        return indexingAuditService.listEvents(status, action, excludeQueued, limit);
+        return indexingAuditService.listEventsPaged(status, action, excludeQueued, offset, pageSize);
     }
 
-    private List<Map<String, Object>> listFullIndexEvents(
-            final SlingHttpServletRequest request, final int limit, final int retentionHours) throws IOException {
+    private IndexingReportPage listFullIndexEvents(
+            final SlingHttpServletRequest request,
+            final int offset,
+            final int pageSize,
+            final int retentionHours) throws IOException {
         final String status = request.getParameter("status");
         final String failureKind = request.getParameter("failureKind");
 
         final List<Map<String, Object>> events = new ArrayList<>();
-        events.addAll(fullIndexAuditService.listEventsForReport(status, limit, retentionHours));
-        events.addAll(fullIndexFailureStore.listFailureEventsForReport(status, limit, retentionHours));
+        events.addAll(fullIndexAuditService.listEventsForReport(status, FULL_REPORT_FETCH_CAP, retentionHours));
+        events.addAll(fullIndexFailureStore.listFailureEventsForReport(status, FULL_REPORT_FETCH_CAP, retentionHours));
 
         List<Map<String, Object>> filtered = events;
         if (failureKind != null
@@ -108,10 +125,14 @@ public class IndexingReportServlet extends SlingSafeMethodsServlet {
         filtered.sort(Comparator.comparing(
                 event -> String.valueOf(event.getOrDefault("timestamp", "")),
                 Comparator.reverseOrder()));
-        if (filtered.size() <= limit) {
-            return filtered;
+
+        final int totalCount = filtered.size();
+        if (offset >= totalCount || pageSize <= 0) {
+            return new IndexingReportPage(List.of(), totalCount);
         }
-        return new ArrayList<>(filtered.subList(0, limit));
+
+        final int endIndex = Math.min(offset + pageSize, totalCount);
+        return new IndexingReportPage(new ArrayList<>(filtered.subList(offset, endIndex)), totalCount);
     }
 
     private static boolean matchesFailureKindFilter(final String failureKind, final Map<String, Object> event) {
@@ -119,6 +140,17 @@ public class IndexingReportServlet extends SlingSafeMethodsServlet {
             return "BATCH".equalsIgnoreCase(failureKind);
         }
         return failureKind.equalsIgnoreCase(String.valueOf(event.get("failureKind")));
+    }
+
+    private static int resolvePageSize(final SlingHttpServletRequest request) {
+        int pageSize = parseInt(request.getParameter("pageSize"), -1);
+        if (pageSize <= 0) {
+            pageSize = parseInt(request.getParameter("limit"), DEFAULT_PAGE_SIZE);
+        }
+        if (pageSize <= 0) {
+            pageSize = DEFAULT_PAGE_SIZE;
+        }
+        return Math.min(pageSize, MAX_PAGE_SIZE);
     }
 
     private static int parseInt(final String value, final int defaultValue) {
