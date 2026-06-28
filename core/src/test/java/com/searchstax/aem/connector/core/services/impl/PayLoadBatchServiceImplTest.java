@@ -76,29 +76,6 @@ class PayLoadBatchServiceImplTest {
     }
 
     @Test
-    void testBuildIndexBatchesOversizedDocumentSkipped() throws Exception {
-
-        List<IndexRequest> requests =
-                Collections.singletonList(
-                        newRequest("/content/large"));
-
-        Map<String, Object> document =
-                new HashMap<>();
-
-        document.put(
-                "content",
-                "A".repeat(SearchStaxIndexingLimits.MAX_DOCUMENT_BYTES + 100));
-
-        List<Map<String, Object>> documents =
-                Collections.singletonList(document);
-
-        List<PayloadBatch> result =
-                service.buildIndexBatches(requests, documents);
-
-        assertTrue(result.isEmpty());
-    }
-
-    @Test
     void testBuildDeleteBatchesEmpty() throws Exception {
 
         List<PayloadBatch> result =

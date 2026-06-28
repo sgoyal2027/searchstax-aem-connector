@@ -48,14 +48,6 @@ public class PayLoadBatchServiceImpl implements PayLoadBatchService {
             final Map<String, Object> document = documents.get(i);
             final long documentSize = getDocumentSize(document);
 
-            if (documentSize > SearchStaxIndexingLimits.MAX_DOCUMENT_BYTES) {
-                LOG.warn(
-                        "Skipping document exceeding SRS 10 KB limit. Path={} Size={} bytes",
-                        request.getPath(),
-                        documentSize);
-                continue;
-            }
-
             if (documentSize > SearchStaxIndexingLimits.MAX_BATCH_PAYLOAD_BYTES) {
                 LOG.warn(
                         "Single document exceeds maximum batch payload size. Path={} Size={} KB",

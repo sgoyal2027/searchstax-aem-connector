@@ -11,13 +11,13 @@ import com.searchstax.aem.connector.core.dto.response.ApiResponse;
 import com.searchstax.aem.connector.core.services.IndexingHelperService;
 import com.searchstax.aem.connector.core.services.SearchStaxFullIndexRetryPolicy;
 import org.apache.sling.api.resource.ValueMap;
+import org.apache.tika.Tika;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 @Component(service = IndexingHelperService.class)
@@ -30,10 +30,15 @@ public class IndexingHelperServiceImpl
     private static final long BASE_DELAY_MS =
             700L;
 
-    private static final int MAX_CONTENT_LENGTH = 100000;
-
     private static final Set<String> TEXT_EXTRACTABLE_MIME_TYPES =
             Set.of(
+                    "application/pdf",
+                    "application/msword",
+                    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                    "application/vnd.ms-excel",
+                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    "application/vnd.ms-powerpoint",
+                    "application/vnd.openxmlformats-officedocument.presentationml.presentation",
                     "text/plain",
                     "text/csv",
                     "text/tab-separated-values",
@@ -150,12 +155,12 @@ public class IndexingHelperServiceImpl
 
             try (InputStream inputStream = original.getStream()) {
 
-                final byte[] bytes = inputStream.readAllBytes();
-                String extractedText = new String(bytes, StandardCharsets.UTF_8);
+                final Tika tika = new Tika();
 
-                if (extractedText.length() > MAX_CONTENT_LENGTH) {
-                    extractedText = extractedText.substring(0, MAX_CONTENT_LENGTH);
-                }
+                LOG.info("Before parse");
+
+                String extractedText =
+                        tika.parseToString(inputStream);
 
                 LOG.info(
                         "Extracted {} characters from asset {} in {} ms",

@@ -96,34 +96,6 @@ class IncrementalIndexingServiceImplTest {
     }
 
     @Test
-    void processBatch_skipsOversizedDocumentsAndRemovesFromQueue() throws Exception {
-        final IndexRequest request = new IndexRequest(
-                "/content/wknd/en/large-page", ReplicationActionType.ACTIVATE, System.currentTimeMillis());
-        request.setCorrelationId("job-oversize");
-
-        final char[] padding = new char[SearchStaxIndexingLimits.MAX_DOCUMENT_BYTES];
-        java.util.Arrays.fill(padding, 'x');
-        final String largeTitle = new String(padding) + "overflow";
-
-        when(pageDocumentBuilderService.buildDocument(resourceResolver, request.getPath()))
-                .thenReturn(Map.of("language_s", "en", "id", request.getPath(), "title_txt_en", largeTitle));
-        when(documentValidationService.validateMandatoryFields(any(), eq("en")))
-                .thenReturn(Optional.empty());
-
-        incrementalIndexingService.processBatch(resourceResolver, List.of(request));
-
-        verify(queueService).removeProcessed(List.of(request));
-        verify(indexingAuditService).recordEvent(
-                eq(request.getPath()),
-                eq("ACTIVATE"),
-                eq(IndexingAuditService.STATUS_SKIPPED),
-                any(),
-                eq("job-oversize"),
-                eq(0L),
-                eq(null));
-    }
-
-    @Test
     void processBatch_doesNotRemoveWhenBuildThrowsBeforeSuccess() throws Exception {
         final IndexRequest request = new IndexRequest(
                 "/content/wknd/en/page", ReplicationActionType.ACTIVATE, System.currentTimeMillis());

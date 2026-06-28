@@ -3,7 +3,6 @@ package com.searchstax.aem.connector.core.services.impl;
 import com.day.cq.replication.ReplicationActionType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.searchstax.aem.connector.core.constants.SearchStaxIndexingLimits;
-import com.searchstax.aem.connector.core.constants.SearchStaxIndexingLimits;
 import com.searchstax.aem.connector.core.dto.request.IndexRequest;
 import com.searchstax.aem.connector.core.dto.response.ApiResponse;
 import com.searchstax.aem.connector.core.models.PayloadBatch;
@@ -142,20 +141,6 @@ public class IncrementalIndexingServiceImpl implements IncrementalIndexingServic
                         successfulRequests.add(request);
                         continue;
                     }
-
-                    final long documentSize = OBJECT_MAPPER.writeValueAsBytes(document).length;
-                    if (documentSize > SearchStaxIndexingLimits.MAX_DOCUMENT_BYTES) {
-                        final String reason = String.format(
-                                "Document payload %d bytes exceeds SRS %d byte limit",
-                                documentSize,
-                                SearchStaxIndexingLimits.MAX_DOCUMENT_BYTES);
-                        LOG.warn("Skipping document exceeding SRS 10 KB limit. Path={} Size={} bytes",
-                                request.getPath(), documentSize);
-                        auditEvent(request, IndexingAuditService.STATUS_SKIPPED, reason, 0);
-                        successfulRequests.add(request);
-                        continue;
-                    }
-
                     documents.add(document);
                     validRequests.add(request);
                 } else {

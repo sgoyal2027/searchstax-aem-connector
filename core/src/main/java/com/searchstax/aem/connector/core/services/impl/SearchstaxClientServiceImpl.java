@@ -74,6 +74,8 @@ public class SearchstaxClientServiceImpl implements SearchstaxClientService {
 
             final String requestUrl = buildRequestUrl(endpoint, options);
             LOG.info("Sending SearchStax update request to {}", sanitizeUrlForLog(requestUrl));
+            LOG.info("SearchStax Request Payload:\n{}", requestJson);
+            LOG.info("SearchStax Payload Size={} bytes", requestJson.getBytes(StandardCharsets.UTF_8).length);
 
             final URL url = new URL(requestUrl);
             connection = (HttpURLConnection) url.openConnection();
