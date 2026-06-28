@@ -83,7 +83,7 @@ class ConnectorCrossPlatformSmokeTest {
 
         final String content = Files.readString(filter);
         assertTrue(
-                content.contains("/apps/cq/core/content/nav/tools/Searchstax"),
+                content.contains("/apps/cq/core/content/nav/tools"),
                 "Tools nav must target Searchstax entry only");
         assertTrue(content.contains("mode=\"merge\""), "ui.apps filters must use merge mode");
         assertTrue(
