@@ -1,5 +1,7 @@
 package com.searchstax.aem.connector.core.services;
 
+import com.searchstax.aem.connector.core.dto.IndexingReportPage;
+
 import java.util.List;
 import java.util.Map;
 
@@ -24,7 +26,21 @@ public interface IndexingAuditService {
 
     List<Map<String, Object>> listEvents(String statusFilter, String actionFilter, boolean excludeQueued, int maxResults);
 
+    IndexingReportPage listEventsPaged(
+            String statusFilter,
+            String actionFilter,
+            boolean excludeQueued,
+            int offset,
+            int pageSize);
+
     void purgeOlderThanHours(int hours);
+
+    /**
+     * Removes all incremental indexing audit events shown in the report.
+     *
+     * @return number of events removed
+     */
+    int clearAllEvents();
 
     void reprocessFailedPath(String path);
 }

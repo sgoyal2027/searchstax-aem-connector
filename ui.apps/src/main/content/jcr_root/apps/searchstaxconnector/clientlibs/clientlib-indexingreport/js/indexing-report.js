@@ -3,8 +3,10 @@
 
     var REPORT_URL = "/bin/searchstaxconnector/wizard/indexing-report";
     var REPROCESS_URL = "/bin/searchstaxconnector/wizard/indexing-report-reprocess";
+    var CLEAR_URL = "/bin/searchstaxconnector/wizard/indexing-report-clear";
     var FULL_INDEX_STATUS_URL = "/bin/searchstaxconnector/wizard/fullindex-status";
     var REFRESH_MS = 60000;
+    var PAGE_SIZE = 100;
 
     var refreshTimer = null;
     var filtersInitialized = false;
@@ -12,6 +14,8 @@
     var activeTab = "incremental";
     var fullReindexRunning = false;
     var REFRESH_MS_RUNNING = 10000;
+    var incrementalPage = 1;
+    var fullReindexPage = 1;
 
     function getReportTbody(tableId) {
         var root = document.querySelector(tableId);
@@ -84,9 +88,14 @@
         thead.appendChild(headerRow);
     }
 
-    function loadIncrementalReport(statusFilter, actionFilter) {
+    function loadIncrementalReport(statusFilter, actionFilter, page) {
         var requestId = ++activeRequestId;
-        var url = REPORT_URL + "?limit=500&type=incremental";
+        var currentPage = page || incrementalPage || 1;
+        incrementalPage = currentPage;
+        var url = REPORT_URL
+            + "?type=incremental"
+            + "&page=" + encodeURIComponent(currentPage)
+            + "&pageSize=" + PAGE_SIZE;
         if (statusFilter && statusFilter !== "ALL") {
             url += "&status=" + encodeURIComponent(statusFilter);
         }
@@ -100,19 +109,27 @@
                 if (requestId !== activeRequestId || activeTab !== "incremental") {
                     return;
                 }
-                renderIncrementalRows(data && data.events ? data.events : []);
+                if (data && data.page) {
+                    incrementalPage = data.page;
+                }
+                renderIncrementalRows(data && data.events ? data.events : [], data || {});
             })
             .fail(function () {
                 if (requestId !== activeRequestId || activeTab !== "incremental") {
                     return;
                 }
-                renderIncrementalRows([]);
+                renderIncrementalRows([], {});
             });
     }
 
-    function loadFullReindexReport(statusFilter) {
+    function loadFullReindexReport(statusFilter, page) {
         var requestId = ++activeRequestId;
-        var url = REPORT_URL + "?limit=500&type=full";
+        var currentPage = page || fullReindexPage || 1;
+        fullReindexPage = currentPage;
+        var url = REPORT_URL
+            + "?type=full"
+            + "&page=" + encodeURIComponent(currentPage)
+            + "&pageSize=" + PAGE_SIZE;
 
         if (statusFilter && statusFilter !== "ALL") {
             url += "&status=" + encodeURIComponent(statusFilter);
@@ -123,13 +140,16 @@
                 if (requestId !== activeRequestId || activeTab !== "full") {
                     return;
                 }
-                renderFullReindexRows(data && data.events ? data.events : []);
+                if (data && data.page) {
+                    fullReindexPage = data.page;
+                }
+                renderFullReindexRows(data && data.events ? data.events : [], data || {});
             })
             .fail(function () {
                 if (requestId !== activeRequestId || activeTab !== "full") {
                     return;
                 }
-                renderFullReindexRows([]);
+                renderFullReindexRows([], {});
             });
 
         loadFullReindexSummary();
@@ -161,7 +181,7 @@
         refreshTimer = setInterval(refreshReport, fullReindexRunning ? REFRESH_MS_RUNNING : REFRESH_MS);
     }
 
-    function renderIncrementalRows(events) {
+    function renderIncrementalRows(events, pageMeta) {
         var tbody = getReportTbody("#searchstax-indexing-report-table");
         if (!tbody) {
             return;
@@ -171,6 +191,15 @@
 
         if (!events.length) {
             appendEmptyRow(tbody, "No incremental indexing events found for the selected filters.");
+            renderPagination(
+                "#searchstax-indexing-report-pagination",
+                pageMeta,
+                function (nextPage) {
+                    loadIncrementalReport(
+                        getSelectedValue("#searchstax-indexing-report-status-filter"),
+                        getSelectedValue("#searchstax-indexing-report-action-filter"),
+                        nextPage);
+                });
             return;
         }
 
@@ -192,9 +221,19 @@
                 });
             }
         });
+
+        renderPagination(
+            "#searchstax-indexing-report-pagination",
+            pageMeta,
+            function (nextPage) {
+                loadIncrementalReport(
+                    getSelectedValue("#searchstax-indexing-report-status-filter"),
+                    getSelectedValue("#searchstax-indexing-report-action-filter"),
+                    nextPage);
+            });
     }
 
-    function renderFullReindexRows(events) {
+    function renderFullReindexRows(events, pageMeta) {
         var tbody = getReportTbody("#searchstax-full-reindex-report-table");
         if (!tbody) {
             return;
@@ -209,6 +248,14 @@
                     "Full reindex is running. Success and failure rows appear here after the first batch is posted to SearchStax.";
             }
             appendEmptyRow(tbody, emptyMessage);
+            renderPagination(
+                "#searchstax-full-reindex-report-pagination",
+                pageMeta,
+                function (nextPage) {
+                    loadFullReindexReport(
+                        getSelectedValue("#searchstax-full-reindex-status-filter"),
+                        nextPage);
+                });
             return;
         }
 
@@ -222,6 +269,88 @@
                 "<td>" + escapeHtml(formatFullReindexMessage(event)) + "</td>";
             tbody.appendChild(row);
         });
+
+        renderPagination(
+            "#searchstax-full-reindex-report-pagination",
+            pageMeta,
+            function (nextPage) {
+                loadFullReindexReport(
+                    getSelectedValue("#searchstax-full-reindex-status-filter"),
+                    nextPage);
+            });
+    }
+
+    function ensurePaginationContainer(selector, tableSelector) {
+        var container = document.querySelector(selector);
+        if (container) {
+            return container;
+        }
+
+        var table = document.querySelector(tableSelector);
+        if (!table || !table.parentNode) {
+            return null;
+        }
+
+        container = document.createElement("div");
+        container.id = selector.replace("#", "");
+        container.className = "searchstax-indexing-report-pagination";
+        table.parentNode.insertBefore(container, table.nextSibling);
+        return container;
+    }
+
+    function renderPagination(selector, pageMeta, onPageChange) {
+        var container = ensurePaginationContainer(selector, selector.replace("-pagination", "-table"));
+        if (!container) {
+            return;
+        }
+
+        var page = Number(pageMeta.page) || 1;
+        var pageSize = Number(pageMeta.pageSize) || PAGE_SIZE;
+        var totalCount = Number(pageMeta.totalCount) || 0;
+        var totalPages = Number(pageMeta.totalPages) || 0;
+
+        if (totalCount <= 0) {
+            container.innerHTML = "";
+            container.style.display = "none";
+            return;
+        }
+
+        container.style.display = "";
+        var rangeStart = ((page - 1) * pageSize) + 1;
+        var rangeEnd = Math.min(page * pageSize, totalCount);
+        var prevDisabled = page <= 1 ? " disabled" : "";
+        var nextDisabled = page >= totalPages ? " disabled" : "";
+
+        container.innerHTML =
+            "<div class=\"searchstax-indexing-report-pagination-summary\">" +
+            "Showing " + rangeStart + "-" + rangeEnd + " of " + totalCount +
+            " (page " + page + " of " + totalPages + ")" +
+            "</div>" +
+            "<div class=\"searchstax-indexing-report-pagination-actions\">" +
+            "<button type=\"button\" class=\"coral-Button coral-Button--secondary searchstax-indexing-report-page-btn\" data-page-action=\"prev\"" +
+            prevDisabled + ">Previous</button>" +
+            "<button type=\"button\" class=\"coral-Button coral-Button--secondary searchstax-indexing-report-page-btn\" data-page-action=\"next\"" +
+            nextDisabled + ">Next</button>" +
+            "</div>";
+
+        container.querySelectorAll(".searchstax-indexing-report-page-btn").forEach(function (button) {
+            if (button.hasAttribute("disabled")) {
+                return;
+            }
+            button.addEventListener("click", function () {
+                var action = button.getAttribute("data-page-action");
+                if (action === "prev" && page > 1) {
+                    onPageChange(page - 1);
+                } else if (action === "next" && page < totalPages) {
+                    onPageChange(page + 1);
+                }
+            });
+        });
+    }
+
+    function resetPagination() {
+        incrementalPage = 1;
+        fullReindexPage = 1;
     }
 
     function appendEmptyRow(tbody, message) {
@@ -240,6 +369,24 @@
             method: "POST",
             data: { path: path }
         }).always(function () {
+            refreshReport();
+        });
+    }
+
+    function clearReport() {
+        activeTab = resolveActiveTab();
+        var reportLabel = activeTab === "full" ? "full reindex" : "incremental";
+        if (!window.confirm(
+                "Clear all " + reportLabel + " report events?\n\nThis removes stored report entries and cannot be undone.")) {
+            return;
+        }
+
+        $.ajax({
+            url: CLEAR_URL,
+            method: "POST",
+            data: { type: activeTab }
+        }).always(function () {
+            resetPagination();
             refreshReport();
         });
     }
@@ -293,9 +440,9 @@
 
         var attachChangeHandler = function (select) {
             if (typeof select.on === "function") {
-                select.on("change", refreshReport);
+                select.on("change", refreshReportFromFilters);
             } else {
-                select.addEventListener("change", refreshReport);
+                select.addEventListener("change", refreshReportFromFilters);
             }
         };
 
@@ -432,12 +579,18 @@
     function refreshReport() {
         activeTab = resolveActiveTab();
         if (activeTab === "full") {
-            loadFullReindexReport(getSelectedValue("#searchstax-full-reindex-status-filter"));
+            loadFullReindexReport(getSelectedValue("#searchstax-full-reindex-status-filter"), fullReindexPage);
             return;
         }
         loadIncrementalReport(
             getSelectedValue("#searchstax-indexing-report-status-filter"),
-            getSelectedValue("#searchstax-indexing-report-action-filter"));
+            getSelectedValue("#searchstax-indexing-report-action-filter"),
+            incrementalPage);
+    }
+
+    function refreshReportFromFilters() {
+        resetPagination();
+        refreshReport();
     }
 
     function bindTabIdentifiers(tabView) {
@@ -529,6 +682,27 @@
         button.className = "coral-Button coral-Button--secondary searchstax-indexing-report-close-btn";
     }
 
+    function createWizardClearButton() {
+        var clearBtn = document.createElement("a");
+        clearBtn.id = "searchstax-indexing-report-clear";
+        clearBtn.href = "#";
+        styleWizardCloseButton(clearBtn);
+        clearBtn.textContent = "Clear";
+
+        clearBtn.addEventListener("click", function (event) {
+            event.preventDefault();
+            clearReport();
+        });
+
+        if (window.Coral && Coral.commons && typeof Coral.commons.ready === "function") {
+            Coral.commons.ready(clearBtn, function () {
+                setWizardButtonLabel(clearBtn, "Clear");
+            });
+        }
+
+        return clearBtn;
+    }
+
     function createWizardCloseButton() {
         var closeBtn = document.createElement("a");
         closeBtn.id = "searchstax-indexing-report-close";
@@ -563,6 +737,12 @@
                     setWizardButtonLabel(existingBtn, "Close");
                 }
             }
+            if (!existingRow.querySelector("#searchstax-indexing-report-clear")) {
+                var actions = existingRow.querySelector(".searchstax-indexing-report-header-actions");
+                if (actions) {
+                    actions.insertBefore(createWizardClearButton(), actions.firstChild);
+                }
+            }
             return;
         }
 
@@ -586,8 +766,10 @@
         var actions = document.createElement("div");
         actions.className = "searchstax-indexing-report-header-actions";
 
+        var clearBtn = createWizardClearButton();
         var closeBtn = createWizardCloseButton();
 
+        actions.appendChild(clearBtn);
         actions.appendChild(closeBtn);
         row.appendChild(title);
         row.appendChild(actions);
@@ -628,6 +810,9 @@
             if (table) {
                 table.classList.add("searchstax-indexing-report-table-spaced");
             }
+            ensurePaginationContainer(
+                selector.replace("-table", "-pagination"),
+                selector);
         });
     }
 
@@ -706,7 +891,7 @@
             $(document).on(
                 "foundation-field-change",
                 "#searchstax-indexing-report-action-filter, #searchstax-indexing-report-status-filter, #searchstax-full-reindex-status-filter",
-                refreshReport);
+                refreshReportFromFilters);
             refreshTimer = setInterval(refreshReport, REFRESH_MS);
         }
 

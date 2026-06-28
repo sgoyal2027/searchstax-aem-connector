@@ -110,6 +110,63 @@ public class SearchStaxFullIndexFailureStore {
         return new ArrayList<>(events.subList(0, maxResults));
     }
 
+    /**
+     * Removes all persisted full-index failure records shown in the report.
+     *
+     * @return number of failure records removed
+     */
+    public int clearAllFailures() throws IOException {
+        if (filesystemBaseDir != null) {
+            return clearAllFailuresFilesystem();
+        }
+        return clearAllFailuresJcr();
+    }
+
+    private int clearAllFailuresJcr() throws IOException {
+        if (resolverUtil == null) {
+            throw new IOException("ResolverUtil not available for JCR failure persistence");
+        }
+
+        try (ResourceResolver resolver = resolverUtil.getServiceResolver()) {
+            final Resource runsRoot = resolver.getResource(JCR_RUNS_PATH);
+            if (runsRoot == null) {
+                return 0;
+            }
+
+            int removed = 0;
+            for (final Resource child : runsRoot.getChildren()) {
+                resolver.delete(child);
+                removed++;
+            }
+
+            if (removed > 0) {
+                resolver.commit();
+                LOG.info("Cleared {} full index failure records from report", removed);
+            }
+            return removed;
+        } catch (final LoginException | PersistenceException e) {
+            throw new IOException("Failed to clear full index failures from " + JCR_RUNS_PATH, e);
+        }
+    }
+
+    private int clearAllFailuresFilesystem() throws IOException {
+        if (!Files.isDirectory(filesystemBaseDir)) {
+            return 0;
+        }
+
+        int removed = 0;
+        try (Stream<Path> files = Files.list(filesystemBaseDir)) {
+            for (final Path file : files.collect(Collectors.toList())) {
+                Files.deleteIfExists(file);
+                removed++;
+            }
+        }
+        if (removed > 0) {
+            LOG.info("Cleared {} full index failure records from filesystem report store", removed);
+        }
+        return removed;
+    }
+
     private static Map<String, Object> toReportEvent(final FailureRecord record, final String path) {
         final Map<String, Object> row = new LinkedHashMap<>();
         row.put("timestamp", formatInstantTimestamp(record.getTimestamp()));

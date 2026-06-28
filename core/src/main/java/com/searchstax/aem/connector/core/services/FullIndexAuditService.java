@@ -16,4 +16,11 @@ public interface FullIndexAuditService {
     List<Map<String, Object>> listEventsForReport(String statusFilter, int maxResults, int retentionHours);
 
     void purgeOlderThanHours(int hours);
+
+    /**
+     * Removes all full reindex success audit events shown in the report.
+     *
+     * @return number of events removed
+     */
+    int clearAllEvents();
 }

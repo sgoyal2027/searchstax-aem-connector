@@ -79,6 +79,26 @@ class IndexingAuditServiceImplTest {
         assertEquals(1, events.size());
     }
 
+    @Test
+    void listEventsPaged_returnsRequestedSliceAndTotalCount() throws Exception {
+        when(resolverUtil.getServiceResolver()).thenReturn(resourceResolver);
+        when(resourceResolver.getResource(IndexingAuditServiceImpl.AUDIT_ROOT)).thenReturn(auditRoot);
+
+        final List<Resource> auditEvents = List.of(
+                auditEvent("ACTIVATE", IndexingAuditService.STATUS_SUCCESS, "One"),
+                auditEvent("ACTIVATE", IndexingAuditService.STATUS_SUCCESS, "Two"),
+                auditEvent("ACTIVATE", IndexingAuditService.STATUS_SUCCESS, "Three"));
+        when(auditRoot.getChildren()).thenReturn(auditEvents);
+
+        final var page = indexingAuditService.listEventsPaged("ALL", "ALL", true, 0, 2);
+        assertEquals(3, page.getTotalCount());
+        assertEquals(2, page.getEvents().size());
+
+        final var lastPage = indexingAuditService.listEventsPaged("ALL", "ALL", true, 2, 2);
+        assertEquals(3, lastPage.getTotalCount());
+        assertEquals(1, lastPage.getEvents().size());
+    }
+
     private static Resource auditEvent(final String action, final String status, final String message) {
         final Resource resource = mock(Resource.class);
         final ValueMap valueMap = mock(ValueMap.class);

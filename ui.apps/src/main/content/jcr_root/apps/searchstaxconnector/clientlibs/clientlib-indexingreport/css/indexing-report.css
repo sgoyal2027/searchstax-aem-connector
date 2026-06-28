@@ -11,6 +11,7 @@
 .searchstax-indexing-report-body {
     padding-left: 24px;
     padding-right: 24px;
+    padding-bottom: 32px;
     box-sizing: border-box;
 }
 
@@ -37,6 +38,9 @@
 .searchstax-indexing-report-header-actions {
     flex: 0 0 auto;
     margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 12px;
 }
 
 .searchstax-indexing-report-close-btn,
@@ -104,6 +108,7 @@
 #searchstax-indexing-report-tabs .coral-Panel,
 #searchstax-indexing-report-tabs .coral-TabPanel {
     padding-top: 24px;
+    padding-bottom: 24px;
     box-sizing: border-box;
 }
 
@@ -259,4 +264,30 @@
     border-color: #b6b6ff;
     color: #2e2e9b;
     background: #efefff;
+}
+
+.searchstax-indexing-report-pagination {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin: 16px 0 0;
+    padding: 8px 4px 24px;
+}
+
+.searchstax-indexing-report-pagination-summary {
+    color: #505050;
+    font-size: 13px;
+    padding-bottom: 4px;
+}
+
+.searchstax-indexing-report-pagination-actions {
+    display: flex;
+    gap: 8px;
+    padding-bottom: 4px;
+}
+
+.searchstax-indexing-report-page-btn[disabled] {
+    opacity: 0.5;
+    cursor: not-allowed;
 }

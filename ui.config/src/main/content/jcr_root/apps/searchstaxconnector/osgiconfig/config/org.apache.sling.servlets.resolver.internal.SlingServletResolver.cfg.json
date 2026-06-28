@@ -19,6 +19,7 @@
     "/bin/searchstaxconnector/wizard/fullindex-run",
     "/bin/searchstaxconnector/wizard/fullindex-status",
     "/bin/searchstaxconnector/wizard/indexing-report",
-    "/bin/searchstaxconnector/wizard/indexing-report-reprocess"
+    "/bin/searchstaxconnector/wizard/indexing-report-reprocess",
+    "/bin/searchstaxconnector/wizard/indexing-report-clear"
   ]
 }

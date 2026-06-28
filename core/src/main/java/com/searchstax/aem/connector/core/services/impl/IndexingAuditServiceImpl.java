@@ -1,6 +1,7 @@
 package com.searchstax.aem.connector.core.services.impl;
 
 import com.day.cq.replication.ReplicationActionType;
+import com.searchstax.aem.connector.core.dto.IndexingReportPage;
 import com.searchstax.aem.connector.core.services.IndexingAuditService;
 import com.searchstax.aem.connector.core.services.IncrementalQueueService;
 import com.searchstax.aem.connector.core.utils.ResolverUtil;
@@ -80,6 +81,33 @@ public class IndexingAuditServiceImpl implements IndexingAuditService {
             final String actionFilter,
             final boolean excludeQueued,
             final int maxResults) {
+        return listEventsPaged(statusFilter, actionFilter, excludeQueued, 0, maxResults).getEvents();
+    }
+
+    @Override
+    public IndexingReportPage listEventsPaged(
+            final String statusFilter,
+            final String actionFilter,
+            final boolean excludeQueued,
+            final int offset,
+            final int pageSize) {
+        final List<Map<String, Object>> events = loadFilteredEvents(statusFilter, actionFilter, excludeQueued);
+        final int safeOffset = Math.max(offset, 0);
+        final int safePageSize = Math.max(pageSize, 0);
+        final int totalCount = events.size();
+
+        if (safePageSize == 0 || safeOffset >= totalCount) {
+            return new IndexingReportPage(List.of(), totalCount);
+        }
+
+        final int endIndex = Math.min(safeOffset + safePageSize, totalCount);
+        return new IndexingReportPage(new ArrayList<>(events.subList(safeOffset, endIndex)), totalCount);
+    }
+
+    private List<Map<String, Object>> loadFilteredEvents(
+            final String statusFilter,
+            final String actionFilter,
+            final boolean excludeQueued) {
         final List<Map<String, Object>> events = new ArrayList<>();
         final Calendar cutoff = Calendar.getInstance();
         cutoff.add(Calendar.HOUR, -24);
@@ -128,9 +156,6 @@ public class IndexingAuditServiceImpl implements IndexingAuditService {
 
             deduplicateEvents(events);
             events.sort(Comparator.comparing(m -> (String) m.get("timestamp"), Comparator.reverseOrder()));
-            if (events.size() > maxResults) {
-                return new ArrayList<>(events.subList(0, maxResults));
-            }
         } catch (Exception e) {
             LOG.error("Unable to list indexing audit events", e);
         }
@@ -180,6 +205,31 @@ public class IndexingAuditServiceImpl implements IndexingAuditService {
             }
         } catch (Exception e) {
             LOG.error("Unable to purge indexing audit events", e);
+        }
+    }
+
+    @Override
+    public int clearAllEvents() {
+        try (ResourceResolver resolver = resolverUtil.getServiceResolver()) {
+            final Resource auditRoot = resolver.getResource(AUDIT_ROOT);
+            if (auditRoot == null) {
+                return 0;
+            }
+
+            int removed = 0;
+            for (final Resource child : auditRoot.getChildren()) {
+                resolver.delete(child);
+                removed++;
+            }
+
+            if (removed > 0) {
+                resolver.commit();
+                LOG.info("Cleared {} incremental indexing audit events from report", removed);
+            }
+            return removed;
+        } catch (Exception e) {
+            LOG.error("Unable to clear indexing audit events", e);
+            return 0;
         }
     }
 

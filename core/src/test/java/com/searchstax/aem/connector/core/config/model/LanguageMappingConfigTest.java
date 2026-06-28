@@ -72,4 +72,13 @@ class LanguageMappingConfigTest {
                 UnsupportedOperationException.class,
                 () -> mappings.add(new LanguageMappingConfig()));
     }
+
+    @Test
+    void testIsEmptyMappingsJson() {
+        assertTrue(LanguageMappingConfig.isEmptyMappingsJson(null));
+        assertTrue(LanguageMappingConfig.isEmptyMappingsJson(""));
+        assertTrue(LanguageMappingConfig.isEmptyMappingsJson("   "));
+        assertTrue(LanguageMappingConfig.isEmptyMappingsJson("[]"));
+        assertFalse(LanguageMappingConfig.isEmptyMappingsJson("[{\"aemLanguage\":\"en\"}]"));
+    }
 }

@@ -149,6 +149,31 @@ public class FullIndexAuditServiceImpl implements FullIndexAuditService {
         }
     }
 
+    @Override
+    public int clearAllEvents() {
+        try (ResourceResolver resolver = resolverUtil.getServiceResolver()) {
+            final Resource auditRoot = resolver.getResource(AUDIT_ROOT);
+            if (auditRoot == null) {
+                return 0;
+            }
+
+            int removed = 0;
+            for (final Resource child : auditRoot.getChildren()) {
+                resolver.delete(child);
+                removed++;
+            }
+
+            if (removed > 0) {
+                resolver.commit();
+                LOG.info("Cleared {} full index audit events from report", removed);
+            }
+            return removed;
+        } catch (Exception e) {
+            LOG.error("Unable to clear full index audit events", e);
+            return 0;
+        }
+    }
+
     private static String buildEventNodeName() {
         return "event-" + UUID.randomUUID().toString().replace("-", "");
     }

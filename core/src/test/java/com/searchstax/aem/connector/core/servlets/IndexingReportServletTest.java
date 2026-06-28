@@ -2,6 +2,7 @@ package com.searchstax.aem.connector.core.servlets;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
+import com.searchstax.aem.connector.core.dto.IndexingReportPage;
 import com.searchstax.aem.connector.core.services.FullIndexAuditService;
 import com.searchstax.aem.connector.core.services.IndexingAuditService;
 import com.searchstax.aem.connector.core.services.SearchStaxFullIndexFailureStore;
@@ -72,26 +73,33 @@ class IndexingReportServletTest {
         when(request.getParameter("status")).thenReturn("SUCCESS");
         when(request.getParameter("action")).thenReturn("ACTIVATE");
         when(request.getParameter("excludeQueued")).thenReturn("true");
-        when(request.getParameter("limit")).thenReturn("100");
-        when(indexingAuditService.listEvents("SUCCESS", "ACTIVATE", true, 100)).thenReturn(events);
+        when(request.getParameter("page")).thenReturn("2");
+        when(request.getParameter("pageSize")).thenReturn("100");
+        when(indexingAuditService.listEventsPaged("SUCCESS", "ACTIVATE", true, 100, 100))
+                .thenReturn(new IndexingReportPage(events, 250));
 
         servlet.doGet(request, response);
 
-        verify(indexingAuditService).listEvents("SUCCESS", "ACTIVATE", true, 100);
+        verify(indexingAuditService).listEventsPaged("SUCCESS", "ACTIVATE", true, 100, 100);
         final Map<String, Object> payload = GSON.fromJson(responseBody.toString(), PAYLOAD_TYPE);
         assertEquals(true, payload.get("success"));
         assertEquals("incremental", payload.get("type"));
         assertEquals(1, ((List<?>) payload.get("events")).size());
+        assertEquals(2, ((Number) payload.get("page")).intValue());
+        assertEquals(100, ((Number) payload.get("pageSize")).intValue());
+        assertEquals(250, ((Number) payload.get("totalCount")).intValue());
+        assertEquals(3, ((Number) payload.get("totalPages")).intValue());
     }
 
     @Test
     void doGet_fullReport_mergesSuccessAndFailureEvents() throws Exception {
         when(request.getParameter("type")).thenReturn("full");
-        when(request.getParameter("limit")).thenReturn("50");
+        when(request.getParameter("page")).thenReturn("1");
+        when(request.getParameter("pageSize")).thenReturn("100");
         when(request.getParameter("retentionHours")).thenReturn("24");
-        when(fullIndexAuditService.listEventsForReport(null, 50, 24))
+        when(fullIndexAuditService.listEventsForReport(null, 10000, 24))
                 .thenReturn(List.of(eventRow("SUCCESS", "Successfully posted")));
-        when(fullIndexFailureStore.listFailureEventsForReport(null, 50, 24))
+        when(fullIndexFailureStore.listFailureEventsForReport(null, 10000, 24))
                 .thenReturn(List.of(failureRow("2026-06-18 10:00:00", "PATH")));
 
         servlet.doGet(request, response);
@@ -99,17 +107,20 @@ class IndexingReportServletTest {
         final Map<String, Object> payload = GSON.fromJson(responseBody.toString(), PAYLOAD_TYPE);
         assertEquals("full", payload.get("type"));
         assertEquals(2, ((List<?>) payload.get("events")).size());
+        assertEquals(2, ((Number) payload.get("totalCount")).intValue());
+        assertEquals(1, ((Number) payload.get("totalPages")).intValue());
     }
 
     @Test
     void doGet_fullReport_filtersBatchFailuresIncludingSuccessRows() throws Exception {
         when(request.getParameter("type")).thenReturn("full");
         when(request.getParameter("failureKind")).thenReturn("BATCH");
-        when(request.getParameter("limit")).thenReturn("50");
+        when(request.getParameter("page")).thenReturn("1");
+        when(request.getParameter("pageSize")).thenReturn("100");
         when(request.getParameter("retentionHours")).thenReturn("24");
-        when(fullIndexAuditService.listEventsForReport(null, 50, 24))
+        when(fullIndexAuditService.listEventsForReport(null, 10000, 24))
                 .thenReturn(List.of(eventRow("SUCCESS", "ok")));
-        when(fullIndexFailureStore.listFailureEventsForReport(null, 50, 24))
+        when(fullIndexFailureStore.listFailureEventsForReport(null, 10000, 24))
                 .thenReturn(List.of(
                         failureRow("2026-06-18 11:00:00", "PATH"),
                         failureRow("2026-06-18 10:00:00", "BATCH")));
@@ -127,11 +138,12 @@ class IndexingReportServletTest {
     void doGet_fullReport_filtersPathFailuresOnly() throws Exception {
         when(request.getParameter("type")).thenReturn("full");
         when(request.getParameter("failureKind")).thenReturn("PATH");
-        when(request.getParameter("limit")).thenReturn("50");
+        when(request.getParameter("page")).thenReturn("1");
+        when(request.getParameter("pageSize")).thenReturn("100");
         when(request.getParameter("retentionHours")).thenReturn("24");
-        when(fullIndexAuditService.listEventsForReport(null, 50, 24))
+        when(fullIndexAuditService.listEventsForReport(null, 10000, 24))
                 .thenReturn(List.of(eventRow("SUCCESS", "ok")));
-        when(fullIndexFailureStore.listFailureEventsForReport(null, 50, 24))
+        when(fullIndexFailureStore.listFailureEventsForReport(null, 10000, 24))
                 .thenReturn(List.of(
                         failureRow("2026-06-18 11:00:00", "PATH"),
                         failureRow("2026-06-18 10:00:00", "BATCH")));
