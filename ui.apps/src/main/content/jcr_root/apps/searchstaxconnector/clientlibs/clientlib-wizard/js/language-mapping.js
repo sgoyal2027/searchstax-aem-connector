@@ -77,13 +77,12 @@
 
     function validateLanguageMappingsForm() {
         var items = document.querySelectorAll("coral-multifield-item");
-        var firstError = null;
+        var isValid = true;
         var firstInvalidField = null;
         var rowNumber;
 
         for (rowNumber = 0; rowNumber < items.length; rowNumber++) {
             var item = items[rowNumber];
-            var rowLabel = rowNumber + 1;
             var aemLanguageType = findCoralField(item, "aemLanguageType");
             var customAemLanguage = findCoralField(item, "customAemLanguage");
             var searchStaxLanguage = findCoralField(item, "searchStaxLanguage");
@@ -93,17 +92,21 @@
 
             var aemValid = Boolean(languageValue);
             SearchStaxConfigUtil.triggerFieldValidation(aemLanguageType, aemValid);
-            if (!aemValid && !firstError) {
-                firstError = "Please select an AEM language for mapping row " + rowLabel + ".";
-                firstInvalidField = aemLanguageType;
+            if (!aemValid) {
+                isValid = false;
+                if (!firstInvalidField) {
+                    firstInvalidField = aemLanguageType;
+                }
             }
 
             if (languageValue === "custom") {
                 var customValid = Boolean(readTextFieldValue(item, "customAemLanguage"));
                 SearchStaxConfigUtil.triggerFieldValidation(customAemLanguage, customValid);
-                if (!customValid && !firstError) {
-                    firstError = "Please enter a custom AEM language for mapping row " + rowLabel + ".";
-                    firstInvalidField = customAemLanguage;
+                if (!customValid) {
+                    isValid = false;
+                    if (!firstInvalidField) {
+                        firstInvalidField = customAemLanguage;
+                    }
                 }
             } else {
                 SearchStaxConfigUtil.triggerFieldValidation(customAemLanguage, true);
@@ -111,9 +114,11 @@
 
             var searchStaxValid = Boolean(readTextFieldValue(item, "searchStaxLanguage"));
             SearchStaxConfigUtil.triggerFieldValidation(searchStaxLanguage, searchStaxValid);
-            if (!searchStaxValid && !firstError) {
-                firstError = "Please enter a SearchStax language for mapping row " + rowLabel + ".";
-                firstInvalidField = searchStaxLanguage;
+            if (!searchStaxValid) {
+                isValid = false;
+                if (!firstInvalidField) {
+                    firstInvalidField = searchStaxLanguage;
+                }
             }
         }
 
@@ -121,7 +126,7 @@
             firstInvalidField.scrollIntoView({ behavior: "smooth", block: "center" });
         }
 
-        return firstError;
+        return isValid;
     }
 
 

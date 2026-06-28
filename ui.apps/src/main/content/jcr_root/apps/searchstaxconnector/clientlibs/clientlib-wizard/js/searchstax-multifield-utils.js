@@ -356,11 +356,9 @@
         }
         form.dataset.searchstaxValidationBound = "true";
         form.addEventListener("submit", function (event) {
-            var message = validateFn();
-            if (message) {
+            if (!validateFn()) {
                 event.preventDefault();
                 event.stopImmediatePropagation();
-                window.alert(message);
             }
         }, true);
     }
