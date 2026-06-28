@@ -57,7 +57,7 @@
                     <validatorsSettings>
                         <jackrabbit-filter>
                             <options>
-                                <validRoots>/apps/searchstaxconnector,/apps/cq/core/content/nav/tools</validRoots>
+                                <validRoots>/apps/searchstaxconnector,/apps/cq,/apps/cq/core,/apps/cq/core/content,/apps/cq/core/content/nav,/apps/cq/core/content/nav/tools</validRoots>
                             </options>
                         </jackrabbit-filter>
                     </validatorsSettings>

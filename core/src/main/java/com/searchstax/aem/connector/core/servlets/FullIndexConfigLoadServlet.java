@@ -131,14 +131,17 @@ public class FullIndexConfigLoadServlet
 
             ObjectNode errorJson =
                     OBJECT_MAPPER.createObjectNode();
+            try {
+                errorJson.put(
+                        "error",
+                        "Unable to load configuration");
 
-            errorJson.put(
-                    "error",
-                    "Unable to load configuration");
-
-            response.getWriter()
-                    .print(
-                            errorJson.toString());
+                response.getWriter()
+                        .print(
+                                errorJson.toString());
+            } catch (IOException ignored) {
+                LOG.error("Unable to write error response", ignored);
+            }
         }
     }
 }
