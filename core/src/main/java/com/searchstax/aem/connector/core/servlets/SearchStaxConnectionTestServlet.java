@@ -2,6 +2,8 @@ package com.searchstax.aem.connector.core.servlets;
 
 import com.adobe.granite.crypto.CryptoException;
 import com.adobe.granite.crypto.CryptoSupport;
+import com.searchstax.aem.connector.core.config.ApiConfigService;
+import com.searchstax.aem.connector.core.config.model.ApiConfig;
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.SlingHttpServletResponse;
 import org.apache.sling.api.servlets.HttpConstants;
@@ -39,6 +41,9 @@ public class SearchStaxConnectionTestServlet extends SlingAllMethodsServlet {
     @Reference
     private CryptoSupport cryptoSupport;
 
+    @Reference
+    private transient ApiConfigService apiConfigService;
+
     @Override
     protected void doPost(final SlingHttpServletRequest request, final SlingHttpServletResponse response)
             throws ServletException, IOException {
@@ -47,7 +52,22 @@ public class SearchStaxConnectionTestServlet extends SlingAllMethodsServlet {
 
         final String endpointUrl = trimToEmpty(request.getParameter("endpointUrl"));
         final String endpointType = trimToEmpty(request.getParameter("endpointType"));
-        final String incomingToken = trimToEmpty(request.getParameter("apiToken"));
+        String incomingToken = trimToEmpty(request.getParameter("apiToken"));
+
+        if (isBlank(incomingToken) && apiConfigService != null) {
+            final ApiConfig savedConfig = apiConfigService.getConfiguration();
+            if (savedConfig != null) {
+                if ("general".equals(endpointType)) {
+                    incomingToken = savedConfig.getApiToken();
+                } else if ("searchSelect".equals(endpointType)) {
+                    incomingToken = savedConfig.getSelectToken();
+                } else if ("searchUpdate".equals(endpointType)) {
+                    incomingToken = savedConfig.getUpdateToken();
+                } else {
+                    incomingToken = savedConfig.getDiscoveryApiKey();
+                }
+            }
+        }
 
         log.debug("[SearchStax] Processing connection test: endpointUrl={}, endpointType={}", endpointUrl, endpointType);
 

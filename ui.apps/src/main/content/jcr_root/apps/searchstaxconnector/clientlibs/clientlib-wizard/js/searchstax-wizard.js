@@ -131,6 +131,25 @@
         }
     }
 
+    function triggerFieldValidation(el, isValid) {
+        if (!el) { return; }
+        var validationApi = $(el).adaptTo("foundation-validation");
+        if (validationApi) {
+            if (isValid) {
+                if (typeof validationApi.clear === "function") {
+                    validationApi.clear();
+                }
+            } else {
+                if (typeof validationApi.checkValidity === "function") {
+                    validationApi.checkValidity();
+                }
+                if (typeof validationApi.updateUI === "function") {
+                    validationApi.updateUI();
+                }
+            }
+        }
+    }
+
    function handleGeneralConfigurationTest(button) {
     var endpointEl = findField("endpointUrl");
     var tokenEl = findField("apiToken");
@@ -148,14 +167,33 @@
     var endpointUrl = getFieldValue(endpointEl);
     var token = getFieldValue(tokenEl);
 
+    var hasSavedToken = false;
+    if (tokenEl) {
+        var innerToken = tokenEl.querySelector("input:not([type='hidden']), textarea");
+        var placeholder = tokenEl.getAttribute("placeholder") || (innerToken && innerToken.getAttribute("placeholder"));
+        if (placeholder && placeholder.indexOf("Value saved") !== -1) {
+            hasSavedToken = true;
+        }
+    }
+
+    triggerFieldValidation(endpointEl, Boolean(endpointUrl));
+    triggerFieldValidation(tokenEl, Boolean(token) || hasSavedToken);
+
     urlLabel.textContent = endpointUrl ? ("Test URL: " + endpointUrl) : "";
 
-    if (!endpointUrl || !token) {
+    if (!endpointUrl && (!token && !hasSavedToken)) {
         renderResult(button, resultId, false, "Endpoint and token are required.");
+        return;
+    } else if (!endpointUrl) {
+        renderResult(button, resultId, false, "Endpoint URL is required.");
+        return;
+    } else if (!token && !hasSavedToken) {
+        renderResult(button, resultId, false, "API Token is required.");
         return;
     }
 
     if (!isValidHttpUrl(endpointUrl)) {
+        triggerFieldValidation(endpointEl, false);
         renderResult(button, resultId, false, "Endpoint must be a valid http(s) URL.");
         return;
     }

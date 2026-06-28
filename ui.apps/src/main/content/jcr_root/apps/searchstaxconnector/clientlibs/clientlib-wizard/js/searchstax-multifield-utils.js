@@ -83,12 +83,21 @@
         }
 
         Coral.commons.ready(field, function (el) {
+            var currentValue = el.value !== undefined ? el.value : "";
+            var inner = el.querySelector(
+                "input[is='coral-textfield'], input[type='text'], input:not([type='hidden']), textarea");
+            if (inner && inner.value !== undefined) {
+                currentValue = inner.value;
+            }
+
+            if (currentValue === normalized) {
+                return;
+            }
+
             if (el.value !== undefined) {
                 el.value = normalized;
             }
 
-            var inner = el.querySelector(
-                "input[is='coral-textfield'], input[type='text'], input:not([type='hidden']), textarea");
             if (inner) {
                 inner.value = normalized;
             }
@@ -106,8 +115,13 @@
         }
 
         Coral.commons.ready(field, function (el) {
+            var normalizedChecked = Boolean(checked);
+            if (el.checked !== undefined && el.checked === normalizedChecked) {
+                return;
+            }
+
             if (el.checked !== undefined) {
-                el.checked = Boolean(checked);
+                el.checked = normalizedChecked;
             }
             dispatchChange(el);
         });
