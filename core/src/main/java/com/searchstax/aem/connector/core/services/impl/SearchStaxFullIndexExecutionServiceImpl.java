@@ -114,7 +114,6 @@ public class SearchStaxFullIndexExecutionServiceImpl implements SearchStaxFullIn
     private String lastIndexedPath = "";
     private long startedAt;
     private String progressMessage = "";
-    private long completedAt;
 
     private int batchesSinceHardCommit;
     private boolean lastBatchWasHardCommit;
@@ -237,13 +236,7 @@ public class SearchStaxFullIndexExecutionServiceImpl implements SearchStaxFullIn
     @Override
     public FullIndexProgress getProgressSnapshot() {
         synchronized (progressLock) {
-            final long endTime = completedAt > 0
-                    ? completedAt
-                    : System.currentTimeMillis();
-
-            final long elapsed = startedAt > 0
-                    ? endTime - startedAt
-                    : 0;
+            final long elapsed = startedAt > 0 ? System.currentTimeMillis() - startedAt : 0;
             return new FullIndexProgress(
                     state,
                     totalProcessed,
@@ -961,14 +954,12 @@ public class SearchStaxFullIndexExecutionServiceImpl implements SearchStaxFullIn
             currentBatchNumber = 0;
             lastIndexedPath = "";
             startedAt = System.currentTimeMillis();
-            completedAt = 0;
             progressMessage = message;
         }
     }
 
     private void finishProgress() {
         synchronized (progressLock) {
-            completedAt = System.currentTimeMillis();
             if (failedBatchCount == 0 && failureCount == 0) {
                 state = State.SUCCESS;
                 progressMessage = "Full index completed successfully";
@@ -994,7 +985,6 @@ public class SearchStaxFullIndexExecutionServiceImpl implements SearchStaxFullIn
 
     private void failProgress(final String message) {
         synchronized (progressLock) {
-            completedAt = System.currentTimeMillis();
             state = State.FAILED;
             progressMessage = message;
         }
