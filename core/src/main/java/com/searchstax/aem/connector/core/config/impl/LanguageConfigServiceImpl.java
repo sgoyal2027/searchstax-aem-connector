@@ -4,9 +4,9 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.searchstax.aem.connector.core.config.LanguageConfigService;
 import com.searchstax.aem.connector.core.config.model.LanguageMappingConfig;
-import com.searchstax.aem.connector.core.config.model.LanguageMappingConfig;
+import com.searchstax.aem.connector.core.utils.LanguageMappingConfigUtil;
 import com.searchstax.aem.connector.core.utils.ResolverUtil;
-import org.apache.sling.api.resource.Resource;
+import org.apache.sling.api.resource.PersistenceException;
 import org.apache.sling.api.resource.ResourceResolver;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
@@ -22,9 +22,6 @@ import java.util.Locale;
 public class LanguageConfigServiceImpl implements LanguageConfigService {
 
     private static final Logger LOG = LoggerFactory.getLogger(MetadataFieldConfigServiceImpl.class);
-
-    private static final String CONFIG_PATH =
-            "/conf/searchstaxconnector/settings/languagemapping";
 
     private final ObjectMapper objectMapper =
             new ObjectMapper();
@@ -107,48 +104,12 @@ public class LanguageConfigServiceImpl implements LanguageConfigService {
         try (ResourceResolver resourceResolver =
                      resolverUtil.getServiceResolver()) {
 
-            Resource configResource =
-                    resourceResolver.getResource(CONFIG_PATH);
-
-            LOG.debug(
-                    "Config path: {}",
-                    CONFIG_PATH);
-
-            LOG.debug(
-                    "Config resource found: {}",
-                    configResource != null);
-
-            if (configResource == null) {
-
-                LOG.warn(
-                        "Configuration resource not found at path: {}",
-                        CONFIG_PATH);
-
-                cachedMappings = LanguageMappingConfig.defaultMappings();
-
-                return;
-            }
-
-            String mappingsJson =
-                    configResource.getValueMap().get(
-                            "languageMappings",
-                            String.class);
+            final String mappingsJson =
+                    LanguageMappingConfigUtil.loadOrPersistDefaultMappingsJson(resourceResolver);
 
             LOG.debug(
                     "Language mappings JSON: {}",
                     mappingsJson);
-
-            if (mappingsJson == null
-                    || mappingsJson.trim().isEmpty()
-                    || "[]".equals(mappingsJson.trim())) {
-
-                LOG.info(
-                        "No language field mappings found in configuration; using default en mapping");
-
-                cachedMappings = LanguageMappingConfig.defaultMappings();
-
-                return;
-            }
 
             cachedMappings =
                     objectMapper.readValue(
@@ -159,6 +120,14 @@ public class LanguageConfigServiceImpl implements LanguageConfigService {
             LOG.info(
                     "Successfully loaded {} language field mappings",
                     cachedMappings.size());
+
+        } catch (PersistenceException e) {
+
+            LOG.error(
+                    "Failed to persist default language field mappings",
+                    e);
+
+            cachedMappings = LanguageMappingConfig.defaultMappings();
 
         } catch (Exception e) {
 

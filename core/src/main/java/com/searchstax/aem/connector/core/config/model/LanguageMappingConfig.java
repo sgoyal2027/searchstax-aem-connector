@@ -17,6 +17,12 @@ public class LanguageMappingConfig {
         return List.of(english);
     }
 
+    public static boolean isEmptyMappingsJson(final String mappingsJson) {
+        return mappingsJson == null
+                || mappingsJson.trim().isEmpty()
+                || "[]".equals(mappingsJson.trim());
+    }
+
     public String getAemLanguage() {
         return aemLanguage;
     }

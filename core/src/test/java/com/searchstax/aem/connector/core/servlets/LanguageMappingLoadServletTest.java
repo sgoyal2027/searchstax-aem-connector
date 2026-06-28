@@ -2,8 +2,10 @@ package com.searchstax.aem.connector.core.servlets;
 
 import com.google.gson.Gson;
 import com.searchstax.aem.connector.core.config.model.LanguageMappingConfig;
+import com.searchstax.aem.connector.core.utils.LanguageMappingConfigUtil;
 import org.apache.sling.api.SlingHttpServletRequest;
 import org.apache.sling.api.SlingHttpServletResponse;
+import org.apache.sling.api.resource.ModifiableValueMap;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
 import org.apache.sling.api.resource.ValueMap;
@@ -41,6 +43,9 @@ class LanguageMappingLoadServletTest {
     @Mock
     private ValueMap valueMap;
 
+    @Mock
+    private ModifiableValueMap modifiableValueMap;
+
     private StringWriter stringWriter;
     private PrintWriter writer;
 
@@ -63,13 +68,13 @@ class LanguageMappingLoadServletTest {
         String storedJson =
                 "[{\"aemLanguage\":\"en\",\"searchStaxLanguage\":\"english\"}]";
 
-        when(resolver.getResource(anyString()))
+        when(resolver.getResource(LanguageMappingConfigUtil.CONFIG_PATH))
                 .thenReturn(resource);
 
         when(resource.getValueMap())
                 .thenReturn(valueMap);
 
-        when(valueMap.get(eq("languageMappings"), eq("[]")))
+        when(valueMap.get(eq(LanguageMappingConfigUtil.PROPERTY_NAME), eq("[]")))
                 .thenReturn(storedJson);
 
         servlet.doGet(request, response);
@@ -81,9 +86,37 @@ class LanguageMappingLoadServletTest {
     }
 
     @Test
+    void testPersistDefaultMappingsWhenEmpty() throws Exception {
+
+        when(resolver.getResource(LanguageMappingConfigUtil.CONFIG_PATH))
+                .thenReturn(resource);
+
+        when(resource.getValueMap())
+                .thenReturn(valueMap);
+
+        when(valueMap.get(eq(LanguageMappingConfigUtil.PROPERTY_NAME), eq("[]")))
+                .thenReturn("[]");
+
+        when(resource.adaptTo(ModifiableValueMap.class))
+                .thenReturn(modifiableValueMap);
+
+        servlet.doGet(request, response);
+
+        verify(modifiableValueMap)
+                .put(eq(LanguageMappingConfigUtil.PROPERTY_NAME), anyString());
+
+        verify(resolver).commit();
+
+        String expected =
+                new Gson().toJson(LanguageMappingConfig.defaultMappings());
+
+        assertEquals(expected, stringWriter.toString());
+    }
+
+    @Test
     void testDefaultMappingsWhenResourceMissing() throws Exception {
 
-        when(resolver.getResource(anyString()))
+        when(resolver.getResource(LanguageMappingConfigUtil.CONFIG_PATH))
                 .thenReturn(null);
 
         servlet.doGet(request, response);
@@ -92,5 +125,7 @@ class LanguageMappingLoadServletTest {
                 new Gson().toJson(LanguageMappingConfig.defaultMappings());
 
         assertEquals(expected, stringWriter.toString());
+
+        verify(resolver, never()).commit();
     }
 }
