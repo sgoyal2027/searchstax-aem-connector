@@ -374,6 +374,7 @@ class SearchStaxFullIndexOrchestratorServiceImplTest {
                 .addJob(
                         eq(SearchStaxFullIndexDefaults.JOB_TOPIC),
                         anyMap());
+        verify(executionService).prepareForQueuedJob();
     }
 
     @Test

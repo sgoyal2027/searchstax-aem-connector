@@ -216,6 +216,8 @@ public class SearchStaxFullIndexOrchestratorServiceImpl
                     HTTP_BAD_REQUEST);
         }
 
+        executionService.prepareForQueuedJob();
+
         return new FullIndexTriggerResult(
                 true,
                 job.getId(),

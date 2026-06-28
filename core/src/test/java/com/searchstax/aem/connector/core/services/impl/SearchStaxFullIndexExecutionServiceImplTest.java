@@ -702,6 +702,37 @@ class SearchStaxFullIndexExecutionServiceImplTest {
         assertEquals(1L, getField(service, "failureCount"));
     }
 
+    @Test
+    void prepareForQueuedJob_clearsPriorRunMetrics() throws Exception {
+        final TestableExecutionService service = new TestableExecutionService(failureDir);
+        setField(service, "state", FullIndexProgress.State.SUCCESS);
+        setField(service, "totalProcessed", 500L);
+        setField(service, "pagesIndexed", 100L);
+        setField(service, "currentBatchNumber", 10);
+        setField(service, "progressMessage", "Full index completed successfully");
+        setField(service, "startedAt", System.currentTimeMillis() - 3_600_000L);
+        setField(service, "completedElapsedMs", 3_600_000L);
+
+        service.prepareForQueuedJob();
+
+        final FullIndexProgress snapshot = service.getProgressSnapshot();
+        assertEquals(FullIndexProgress.State.RUNNING, snapshot.getState());
+        assertEquals(0, snapshot.getTotalProcessed());
+        assertEquals(0, snapshot.getPagesIndexed());
+        assertEquals(0, snapshot.getCurrentBatchNumber());
+        assertTrue(snapshot.getMessage().contains("queued"));
+    }
+
+    @Test
+    void getProgressSnapshot_freezesElapsedForCompletedRun() throws Exception {
+        final TestableExecutionService service = new TestableExecutionService(failureDir);
+        setField(service, "state", FullIndexProgress.State.SUCCESS);
+        setField(service, "startedAt", System.currentTimeMillis() - 60_000L);
+        setField(service, "completedElapsedMs", 120_000L);
+
+        assertEquals(120_000L, service.getProgressSnapshot().getElapsedMs());
+    }
+
     private void invokeSendConsolidatedFailureEmailIfNeeded(final TestableExecutionService service)
             throws Exception {
         final Method method =
