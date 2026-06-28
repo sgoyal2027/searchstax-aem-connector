@@ -68,29 +68,60 @@
         loadLanguageMappings(0);
     });
 
+    function findCoralField(item, nameFragment) {
+        return item.querySelector(
+            "coral-select[name*='" + nameFragment + "'], " +
+            "coral-textfield[name*='" + nameFragment + "']"
+        ) || item.querySelector("input[name*='" + nameFragment + "']");
+    }
+
     function validateLanguageMappingsForm() {
         var items = document.querySelectorAll("coral-multifield-item");
+        var firstError = null;
+        var firstInvalidField = null;
         var rowNumber;
 
         for (rowNumber = 0; rowNumber < items.length; rowNumber++) {
             var item = items[rowNumber];
-            var aemLanguageType = item.querySelector("coral-select[name*='aemLanguageType']");
-            var languageValue = aemLanguageType ? (aemLanguageType.value || "").trim() : "";
+            var rowLabel = rowNumber + 1;
+            var aemLanguageType = findCoralField(item, "aemLanguageType");
+            var customAemLanguage = findCoralField(item, "customAemLanguage");
+            var searchStaxLanguage = findCoralField(item, "searchStaxLanguage");
+            var languageValue = aemLanguageType && aemLanguageType.value
+                ? String(aemLanguageType.value).trim()
+                : "";
 
-            if (!languageValue) {
-                return "Please select an AEM language for mapping row " + (rowNumber + 1) + ".";
+            var aemValid = Boolean(languageValue);
+            SearchStaxConfigUtil.triggerFieldValidation(aemLanguageType, aemValid);
+            if (!aemValid && !firstError) {
+                firstError = "Please select an AEM language for mapping row " + rowLabel + ".";
+                firstInvalidField = aemLanguageType;
             }
 
-            if (languageValue === "custom" && !readTextFieldValue(item, "customAemLanguage")) {
-                return "Please enter a custom AEM language for mapping row " + (rowNumber + 1) + ".";
+            if (languageValue === "custom") {
+                var customValid = Boolean(readTextFieldValue(item, "customAemLanguage"));
+                SearchStaxConfigUtil.triggerFieldValidation(customAemLanguage, customValid);
+                if (!customValid && !firstError) {
+                    firstError = "Please enter a custom AEM language for mapping row " + rowLabel + ".";
+                    firstInvalidField = customAemLanguage;
+                }
+            } else {
+                SearchStaxConfigUtil.triggerFieldValidation(customAemLanguage, true);
             }
 
-            if (!readTextFieldValue(item, "searchStaxLanguage")) {
-                return "Please enter a SearchStax language for mapping row " + (rowNumber + 1) + ".";
+            var searchStaxValid = Boolean(readTextFieldValue(item, "searchStaxLanguage"));
+            SearchStaxConfigUtil.triggerFieldValidation(searchStaxLanguage, searchStaxValid);
+            if (!searchStaxValid && !firstError) {
+                firstError = "Please enter a SearchStax language for mapping row " + rowLabel + ".";
+                firstInvalidField = searchStaxLanguage;
             }
         }
 
-        return null;
+        if (firstInvalidField && typeof firstInvalidField.scrollIntoView === "function") {
+            firstInvalidField.scrollIntoView({ behavior: "smooth", block: "center" });
+        }
+
+        return firstError;
     }
 
 

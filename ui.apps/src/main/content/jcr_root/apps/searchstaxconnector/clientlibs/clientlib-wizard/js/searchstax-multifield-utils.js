@@ -320,6 +320,32 @@
         });
     }
 
+    function triggerFieldValidation(el, isValid) {
+        if (!el) {
+            return;
+        }
+        var $ = window.Granite && window.Granite.$ ? window.Granite.$ : window.jQuery;
+        if (!$) {
+            return;
+        }
+        var validationApi = $(el).adaptTo("foundation-validation");
+        if (!validationApi) {
+            return;
+        }
+        if (isValid) {
+            if (typeof validationApi.clear === "function") {
+                validationApi.clear();
+            }
+        } else {
+            if (typeof validationApi.checkValidity === "function") {
+                validationApi.checkValidity();
+            }
+            if (typeof validationApi.updateUI === "function") {
+                validationApi.updateUI();
+            }
+        }
+    }
+
     function attachSaveHandlers(savePath, successMessage, validateFn) {
         if (!validateFn) {
             return;
@@ -349,6 +375,7 @@
         setSelectOptionsDisabled: setSelectOptionsDisabled,
         showDuplicateWarning: function (message) {
             window.alert(message);
-        }
+        },
+        triggerFieldValidation: triggerFieldValidation
     };
 })(window, document);
