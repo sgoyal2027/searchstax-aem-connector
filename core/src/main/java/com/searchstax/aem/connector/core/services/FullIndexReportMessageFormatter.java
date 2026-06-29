@@ -192,7 +192,10 @@ public final class FullIndexReportMessageFormatter {
             case 599:
                 return "HTTP 599 Network or transport error";
             default:
-                return statusCode > 0 ? "HTTP " + statusCode : "Unknown HTTP status";
+                if (statusCode > 0) {
+                    return "HTTP " + statusCode;
+                }
+                return "Unknown HTTP status";
         }
     }
 }

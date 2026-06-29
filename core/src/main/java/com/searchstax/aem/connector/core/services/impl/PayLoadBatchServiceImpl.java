@@ -1,5 +1,6 @@
 package com.searchstax.aem.connector.core.services.impl;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.searchstax.aem.connector.core.constants.SearchStaxIndexingLimits;
 import com.searchstax.aem.connector.core.dto.request.IndexRequest;
@@ -26,7 +27,7 @@ public class PayLoadBatchServiceImpl implements PayLoadBatchService {
     @Override
     public List<PayloadBatch> buildIndexBatches(
             final List<IndexRequest> requests,
-            final List<Map<String, Object>> documents) throws Exception {
+            final List<Map<String, Object>> documents) throws JsonProcessingException  {
 
         if (requests.size() != documents.size()) {
             throw new IllegalArgumentException(
@@ -83,7 +84,7 @@ public class PayLoadBatchServiceImpl implements PayLoadBatchService {
 
     @Override
     public List<PayloadBatch> buildDeleteBatches(final List<IndexRequest> requests, final List<String> ids)
-            throws Exception {
+            throws JsonProcessingException  {
 
         LOG.info("Building delete batches. Requests={}", requests.size());
 
@@ -123,7 +124,7 @@ public class PayLoadBatchServiceImpl implements PayLoadBatchService {
     }
 
     private PayloadBatch createBatch(
-            final List<IndexRequest> requests, final List<Map<String, Object>> documents) throws Exception {
+            final List<IndexRequest> requests, final List<Map<String, Object>> documents) throws JsonProcessingException {
 
         final String batchId = UUID.randomUUID().toString();
         for (final IndexRequest request : requests) {
@@ -142,12 +143,12 @@ public class PayLoadBatchServiceImpl implements PayLoadBatchService {
         return new PayloadBatch(new ArrayList<>(requests), payload, payloadSize, batchId);
     }
 
-    private long getDocumentSize(final Map<String, Object> document) throws Exception {
+    private long getDocumentSize(final Map<String, Object> document) throws JsonProcessingException  {
         return OBJECT_MAPPER.writeValueAsBytes(document).length;
     }
 
     private PayloadBatch createDeleteBatch(final List<IndexRequest> requests, final List<String> ids)
-            throws Exception {
+            throws JsonProcessingException  {
 
         final List<Map<String, String>> deleteEntries = new ArrayList<>();
         for (final String id : ids) {
@@ -176,7 +177,7 @@ public class PayLoadBatchServiceImpl implements PayLoadBatchService {
         return new PayloadBatch(new ArrayList<>(requests), payload, payloadSize, batchId);
     }
 
-    private long getDeleteDocumentSize(final String id) throws Exception {
+    private long getDeleteDocumentSize(final String id) throws JsonProcessingException  {
         final Map<String, String> deleteEntry = new HashMap<>();
         deleteEntry.put("id", id);
         return OBJECT_MAPPER.writeValueAsBytes(deleteEntry).length;

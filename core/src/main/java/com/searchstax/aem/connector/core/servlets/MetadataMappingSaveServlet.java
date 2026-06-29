@@ -41,7 +41,7 @@ public class MetadataMappingSaveServlet extends SlingAllMethodsServlet {
             "metadataMappings";
 
     @Reference
-    private MetadataFieldConfigService metadataFieldConfigService;
+    private transient MetadataFieldConfigService metadataFieldConfigService;
 
     private static final Gson GSON = new Gson();
 

@@ -33,7 +33,7 @@ public class AssetDocumentBuilderServiceImpl implements
     private LanguageConfigService languageConfigService;
 
     @Override
-    public Map<String, Object> buildDocument(ResourceResolver resourceResolver, String path) throws Exception {
+    public Map<String, Object> buildDocument(ResourceResolver resourceResolver, String path) {
 
         LOG.debug(
                 "Building SearchStax document for asset: {}",
@@ -87,7 +87,7 @@ public class AssetDocumentBuilderServiceImpl implements
                 "mimeType",
                 asset.getMimeType());
 
-        String language = "en";
+        String language;
 
         Resource metadataResource =
                 assetResource.getChild(

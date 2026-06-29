@@ -42,7 +42,7 @@ public class PageDocumentBuilderServiceImpl
     private ContentExtractionService contentExtractionService;
 
     @Override
-    public Map<String, Object> buildDocument(ResourceResolver resolver, String path) throws Exception {
+    public Map<String, Object> buildDocument(ResourceResolver resolver, String path) {
 
         LOG.debug(
                 "Building SearchStax document for page: {}",

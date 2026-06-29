@@ -1,5 +1,6 @@
 package com.searchstax.aem.connector.core.services;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.searchstax.aem.connector.core.dto.request.IndexRequest;
 import com.searchstax.aem.connector.core.models.PayloadBatch;
 
@@ -10,9 +11,9 @@ public interface PayLoadBatchService {
 
     List<PayloadBatch> buildIndexBatches(
             List<IndexRequest> requests,
-            List<Map<String,Object>> documents) throws Exception;
+            List<Map<String,Object>> documents) throws JsonProcessingException;
 
     List<PayloadBatch> buildDeleteBatches(
             List<IndexRequest> requests,
-            List<String> ids) throws Exception;
+            List<String> ids) throws JsonProcessingException;
 }

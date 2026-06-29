@@ -8,5 +8,5 @@ public interface AssetDocumentBuilderService {
 
     Map<String, Object> buildDocument(
             ResourceResolver resourceResolver,
-            String path) throws Exception;
+            String path);
 }

@@ -8,6 +8,6 @@ public interface PageDocumentBuilderService {
 
         Map<String, Object> buildDocument(
             ResourceResolver resolver,
-            String path) throws Exception;
+            String path);
     
 }

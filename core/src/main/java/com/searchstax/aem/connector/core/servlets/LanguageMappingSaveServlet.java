@@ -37,7 +37,7 @@ public class LanguageMappingSaveServlet extends SlingAllMethodsServlet {
     private static final Gson GSON = new Gson();
 
     @Reference
-    private LanguageConfigService languageConfigService;
+    private transient LanguageConfigService languageConfigService;
 
     @Override
     protected void doPost(final SlingHttpServletRequest request, final SlingHttpServletResponse response)

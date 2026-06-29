@@ -32,13 +32,13 @@ public class IndexingReportClearServlet extends SlingAllMethodsServlet {
     private static final String TYPE_FULL = "full";
 
     @Reference
-    private IndexingAuditService indexingAuditService;
+    private transient IndexingAuditService indexingAuditService;
 
     @Reference
-    private FullIndexAuditService fullIndexAuditService;
+    private transient FullIndexAuditService fullIndexAuditService;
 
     @Reference
-    private SearchStaxFullIndexFailureStore fullIndexFailureStore;
+    private transient SearchStaxFullIndexFailureStore fullIndexFailureStore;
 
     @Override
     protected void doPost(final SlingHttpServletRequest request, final SlingHttpServletResponse response)

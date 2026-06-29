@@ -90,10 +90,10 @@ public class SearchStaxFullIndexStatusServlet extends SlingAllMethodsServlet {
         body.put("startedAt", startedAt);
         body.put("elapsedMs", complete ? progress.getElapsedMs() : elapsedMs);
         body.put(
-                "completedAt",
-                complete && progress.getStartedAt() > 0
-                        ? progress.getStartedAt() + progress.getElapsedMs()
-                        : 0L);
+            "completedAt",
+                    (complete && progress.getStartedAt() > 0)
+                            ? (progress.getStartedAt() + progress.getElapsedMs())
+                            : 0L);
         body.put("running", running);
         body.put("complete", complete);
 

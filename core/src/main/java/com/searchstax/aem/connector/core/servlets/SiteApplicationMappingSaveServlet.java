@@ -36,7 +36,7 @@ public class SiteApplicationMappingSaveServlet extends SlingAllMethodsServlet {
     private static final Gson GSON = new Gson();
 
     @Reference
-    private SiteApplicationConfigService siteApplicationConfigService;
+    private transient SiteApplicationConfigService siteApplicationConfigService;
 
     @Override
     protected void doPost(final SlingHttpServletRequest request, final SlingHttpServletResponse response)

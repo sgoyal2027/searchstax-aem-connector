@@ -26,7 +26,7 @@ public class IndexingReportReprocessServlet extends SlingAllMethodsServlet {
     private static final Gson GSON = new Gson();
 
     @Reference
-    private IndexingAuditService indexingAuditService;
+    private transient IndexingAuditService indexingAuditService;
 
     @Override
     protected void doPost(final SlingHttpServletRequest request, final SlingHttpServletResponse response)
