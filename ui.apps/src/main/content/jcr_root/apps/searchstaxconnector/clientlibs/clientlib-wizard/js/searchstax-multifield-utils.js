@@ -346,19 +346,57 @@
         }
     }
 
+    function redirectAfterSave() {
+        var href = "/aem/start.html";
+        if (document.referrer && document.referrer.indexOf(window.location.host) !== -1) {
+            href = document.referrer;
+        }
+
+        setTimeout(function () {
+            window.location.href = href;
+        }, 1500);
+    }
+
     function attachSaveHandlers(savePath, successMessage, validateFn) {
         if (!validateFn) {
             return;
         }
         var form = document.querySelector("form[action*='" + savePath + "']");
-        if (!form || form.dataset.searchstaxValidationBound === "true") {
+        if (!form || form.dataset.searchstaxSaveBound === "true") {
             return;
         }
-        form.dataset.searchstaxValidationBound = "true";
+        form.dataset.searchstaxSaveBound = "true";
         form.addEventListener("submit", function (event) {
-            if (!validateFn()) {
-                event.preventDefault();
-                event.stopImmediatePropagation();
+            event.preventDefault();
+            event.stopImmediatePropagation();
+
+            if (validateFn()) {
+                var $ = window.Granite && window.Granite.$ ? window.Granite.$ : window.jQuery;
+                if (!$) {
+                    return;
+                }
+                var $form = $(form);
+                var url = $form.attr("action");
+                var data = $form.serialize();
+
+                $.post(url, data)
+                    .done(function () {
+                        $(window).adaptTo("foundation-ui")
+                            .notify("Success", successMessage || "Configuration saved successfully.", "success");
+                        redirectAfterSave();
+                    })
+                    .fail(function (xhr) {
+                        var message = "Unable to save configuration.";
+                        try {
+                            var response = JSON.parse(xhr.responseText);
+                            if (response.message) {
+                                message = response.message;
+                            }
+                        } catch (e) {
+                            console.error(LOG, "Failed parsing error response", e);
+                        }
+                        $(window).adaptTo("foundation-ui").alert("Validation Error", message, "error");
+                    });
             }
         }, true);
     }

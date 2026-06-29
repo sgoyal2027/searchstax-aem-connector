@@ -6,9 +6,15 @@
   ("use strict");
 
   var __MF_INITIAL_LOAD = true;
+  var SAVE_PATH = "/bin/searchstaxconnector/wizard/metadata-field-mappings";
 
   $(document).ready(function () {
     Coral.commons.ready(document, function () {
+      SearchStaxConfigUtil.attachSaveHandlers(
+        SAVE_PATH,
+        "Metadata field mapping configuration saved successfully.",
+        validateMetadataMappingsForm
+      );
       $.getJSON(
         "/bin/searchstaxconnector/wizard/metadata-field-mappings-load",
         function (data) {
@@ -23,6 +29,14 @@
         },
       );
     });
+  });
+
+  document.addEventListener("foundation-contentloaded", function () {
+    SearchStaxConfigUtil.attachSaveHandlers(
+      SAVE_PATH,
+      "Metadata field mapping configuration saved successfully.",
+      validateMetadataMappingsForm
+    );
   });
 
   // ======================================================
@@ -55,12 +69,12 @@
         );
 
         var customProperty = item.querySelector(
-          "input[name*='customProperty']",
-        );
+          "coral-textfield[name*='customProperty']",
+        ) || item.querySelector("[name*='customProperty']");
 
         var indexFieldName = item.querySelector(
-          "input[name*='indexFieldName']",
-        );
+          "coral-textfield[name*='indexFieldName']",
+        ) || item.querySelector("[name*='indexFieldName']");
 
         var enabled = item.querySelector("input[name*='enabled']");
         var mandatory = item.querySelector("input[name*='mandatory']");
@@ -110,8 +124,8 @@
   // ======================================================
   function handleMappingTypeChange(item, isInitial) {
     var mappingType = item.querySelector("coral-select");
-    var customProperty = item.querySelector("input[name*='customProperty']");
-    var indexFieldName = item.querySelector("input[name*='indexFieldName']");
+    var customProperty = item.querySelector("coral-textfield[name*='customProperty']") || item.querySelector("[name*='customProperty']");
+    var indexFieldName = item.querySelector("coral-textfield[name*='indexFieldName']") || item.querySelector("[name*='indexFieldName']");
 
     if (!mappingType) {
       return;
@@ -126,7 +140,16 @@
         container.style.display = "block";
       }
 
-      // DO NOT CLEAR EXISTING VALUES
+      if (customProperty) {
+        customProperty.value = "";
+        triggerFieldValidation(customProperty, true);
+      }
+
+      if (indexFieldName) {
+        indexFieldName.value = "";
+        triggerFieldValidation(indexFieldName, true);
+      }
+
       return;
     }
 
@@ -240,4 +263,153 @@
       updateMappingTypeOptions();
     }, 200);
   });
+
+  // ======================================================
+  // VALIDATION & SAVE HANDLER
+  // ======================================================
+  $(window).adaptTo("foundation-registry").register("foundation.validation.validator", {
+    selector: "coral-select[name*='mappingType']",
+    validate: function (el) {
+      var val = (el.value || "").trim();
+      if (!val) {
+        return "Error: AEM metadata field is required";
+      }
+    }
+  });
+
+  $(window).adaptTo("foundation-registry").register("foundation.validation.validator", {
+    selector: "coral-textfield[name*='customProperty']",
+    validate: function (el) {
+      var item = el.closest("coral-multifield-item");
+      if (item) {
+        var mappingTypeSelect = item.querySelector("coral-select[name*='mappingType']");
+        var mappingTypeValue = mappingTypeSelect ? (mappingTypeSelect.value || "").trim() : "";
+        if (mappingTypeValue === "custom") {
+          var val = (el.value || "").trim();
+          if (!val) {
+            return "Error: AEM metadata field is required";
+          }
+        }
+      }
+    }
+  });
+
+  function triggerFieldValidation(el, isValid) {
+    if (!el) {
+      return;
+    }
+    var validationApi = $(el).adaptTo("foundation-validation");
+    if (validationApi) {
+      if (isValid) {
+        if (typeof validationApi.clear === "function") {
+          validationApi.clear();
+        }
+      } else {
+        if (typeof validationApi.checkValidity === "function") {
+          validationApi.checkValidity();
+        }
+        if (typeof validationApi.updateUI === "function") {
+          validationApi.updateUI();
+        }
+      }
+    }
+  }
+
+  function validateMetadataMappingsForm() {
+    var items = document.querySelectorAll("coral-multifield-item");
+    var isValid = true;
+    var firstInvalidField = null;
+
+    var seenCustomProperties = {};
+    var seenIndexFieldNames = {};
+
+    for (var i = 0; i < items.length; i++) {
+      var item = items[i];
+
+      var mappingTypeSelect = item.querySelector("coral-select[name*='mappingType']");
+      var customPropertyInput = item.querySelector("coral-textfield[name*='customProperty']") || item.querySelector("[name*='customProperty']");
+      var indexFieldNameInput = item.querySelector("coral-textfield[name*='indexFieldName']") || item.querySelector("[name*='indexFieldName']");
+
+      var mappingTypeValue = mappingTypeSelect ? (mappingTypeSelect.value || "").trim() : "";
+      var mappingTypeValid = Boolean(mappingTypeValue);
+      triggerFieldValidation(mappingTypeSelect, mappingTypeValid);
+      if (!mappingTypeValid) {
+        isValid = false;
+        if (!firstInvalidField) {
+          firstInvalidField = mappingTypeSelect;
+        }
+      }
+
+      if (mappingTypeValue === "custom") {
+        var customPropValue = customPropertyInput ? (customPropertyInput.value || "").trim() : "";
+        var customPropValid = Boolean(customPropValue);
+
+        if (customPropValid) {
+          var lowerCustomProp = customPropValue.toLowerCase();
+          if (seenCustomProperties[lowerCustomProp]) {
+            customPropValid = false;
+            $(window).adaptTo("foundation-ui").alert(
+              "Validation Error",
+              "AEM Metadata Field '" + customPropValue + "' is mapped more than once.",
+              "error"
+            );
+          } else {
+            seenCustomProperties[lowerCustomProp] = true;
+          }
+        }
+
+        triggerFieldValidation(customPropertyInput, customPropValid);
+        if (!customPropValid) {
+          isValid = false;
+          if (!firstInvalidField) {
+            firstInvalidField = customPropertyInput;
+          }
+        }
+      } else {
+        triggerFieldValidation(customPropertyInput, true);
+      }
+
+      var indexFieldNameValue = indexFieldNameInput ? (indexFieldNameInput.value || "").trim() : "";
+      var indexFieldNameValid = Boolean(indexFieldNameValue);
+
+      if (indexFieldNameValid) {
+        var formatRegex = /^[a-zA-Z_][a-zA-Z0-9_]*$/;
+        if (!formatRegex.test(indexFieldNameValue)) {
+          indexFieldNameValid = false;
+          $(window).adaptTo("foundation-ui").alert(
+            "Validation Error",
+            "SearchStax Index Field Name '" + indexFieldNameValue + "' is invalid. It must start with a letter or underscore, and contain only letters, numbers, and underscores.",
+            "error"
+          );
+        } else {
+          var lowerIndexFieldName = indexFieldNameValue.toLowerCase();
+          if (seenIndexFieldNames[lowerIndexFieldName]) {
+            indexFieldNameValid = false;
+            $(window).adaptTo("foundation-ui").alert(
+              "Validation Error",
+              "SearchStax Index Field Name '" + indexFieldNameValue + "' is mapped more than once.",
+              "error"
+            );
+          } else {
+            seenIndexFieldNames[lowerIndexFieldName] = true;
+          }
+        }
+      }
+
+      triggerFieldValidation(indexFieldNameInput, indexFieldNameValid);
+      if (!indexFieldNameValid) {
+        isValid = false;
+        if (!firstInvalidField) {
+          firstInvalidField = indexFieldNameInput;
+        }
+      }
+    }
+
+    if (firstInvalidField && typeof firstInvalidField.scrollIntoView === "function") {
+      firstInvalidField.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+
+    return isValid;
+  }
+
 })(Granite.$, document);

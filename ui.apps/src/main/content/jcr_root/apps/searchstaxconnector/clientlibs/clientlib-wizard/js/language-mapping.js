@@ -66,6 +66,41 @@
 
     document.addEventListener("foundation-contentloaded", function () {
         loadLanguageMappings(0);
+        SearchStaxConfigUtil.attachSaveHandlers(
+            "/bin/searchstaxconnector/wizard/language-mappings",
+            "Language mappings saved successfully.",
+            validateLanguageMappingsForm
+        );
+    });
+
+    // Register custom validators for AEM Language fields
+    $(window).adaptTo("foundation-registry").register("foundation.validation.validator", {
+        selector: "coral-select[name*='aemLanguageType']",
+        validate: function (el) {
+            var val = (el.value || "").trim();
+            if (!val) {
+                return "Error: AEM Language field is required";
+            }
+        }
+    });
+
+    $(window).adaptTo("foundation-registry").register("foundation.validation.validator", {
+        selector: "coral-textfield[name*='customAemLanguage']",
+        validate: function (el) {
+            var item = el.closest("coral-multifield-item");
+            if (item) {
+                var aemLanguageType = item.querySelector("coral-select[name*='aemLanguageType']");
+                var languageValue = aemLanguageType && aemLanguageType.value
+                    ? String(aemLanguageType.value).trim()
+                    : "";
+                if (languageValue === "custom") {
+                    var val = (el.value || "").trim();
+                    if (!val) {
+                        return "Error: AEM Language field is required";
+                    }
+                }
+            }
+        }
     });
 
     function findCoralField(item, nameFragment) {
@@ -334,8 +369,7 @@
 
     function toggleCustomLanguageField(item, value) {
 
-        var customAemLanguage = item.querySelector("input[name*='customAemLanguage']");
-        var container = customAemLanguage ? customAemLanguage.closest("div") : null;
+        var container = item.querySelector(".custom-language-showhide-target");
 
         if (!container) {
             return;

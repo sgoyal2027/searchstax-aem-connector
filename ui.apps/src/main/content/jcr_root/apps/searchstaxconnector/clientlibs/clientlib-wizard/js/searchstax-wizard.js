@@ -287,13 +287,13 @@
 
    function toggleFields(multifieldItem) {
 
-       var select = multifieldItem.find("coral-select");
+        var select = multifieldItem.find("coral-select");
 
-       var wrapper = multifieldItem.find(".custom-field-showhide-target");
+        var wrapper = multifieldItem.find(".custom-field-showhide-target, .custom-language-showhide-target");
 
-       if (!select.length || !wrapper.length) {
-           return;
-       }
+        if (!select.length || !wrapper.length) {
+            return;
+        }
 
        var value = select.val();
 
