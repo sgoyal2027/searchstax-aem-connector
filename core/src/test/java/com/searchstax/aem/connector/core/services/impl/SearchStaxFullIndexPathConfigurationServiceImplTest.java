@@ -91,4 +91,43 @@ class SearchStaxFullIndexPathConfigurationServiceImplTest {
                 "/content/site/page10", "/content/site/page1"));
     }
 
+    @Test
+    void resolveEffectiveIncludes_nullConfig_returnsEmpty() {
+        assertEquals(0, service.resolveEffectiveIncludes(null).length);
+        assertEquals(0, service.resolveEffectiveExcludes(null).length);
+    }
+
+    @Test
+    void resolveEffectiveIncludes_emptyRoot_returnsEmpty() {
+        final FullIndexPathConfig config =
+                new FullIndexPathConfig("", new String[] {"/content/site"}, new boolean[] {true}, new String[0]);
+
+        assertEquals(0, service.resolveEffectiveIncludes(config).length);
+    }
+
+    @Test
+    void normalizePath_rejectsDoubleSlashAndAddsLeadingSlash() {
+        assertEquals("", SearchStaxFullIndexPathConfigurationServiceImpl.normalizePath("//bad", true));
+        assertEquals("/content/site", SearchStaxFullIndexPathConfigurationServiceImpl.normalizePath("content/site", true));
+        assertEquals(
+                "/content/site/us",
+                SearchStaxFullIndexPathConfigurationServiceImpl.normalizePath("/content/site/us/", false));
+    }
+
+    @Test
+    void isExcludedPath_returnsFalseForNullOrEmptyInputs() {
+        assertFalse(service.isExcludedPath(null, new String[] {"/content/site"}));
+        assertFalse(service.isExcludedPath("/content/site", null));
+        assertFalse(service.isExcludedPath("/content/site", new String[0]));
+    }
+
+    @Test
+    void normalizeAndDedupe_skipsBlankPaths() {
+        final String[] normalized =
+                SearchStaxFullIndexPathConfigurationServiceImpl.normalizeAndDedupe(
+                        new String[] {"  ", "/content/site", "/content/site"}, false);
+
+        assertArrayEquals(new String[] {"/content/site"}, normalized);
+    }
+
 }

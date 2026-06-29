@@ -5,7 +5,9 @@ import com.day.cq.wcm.api.Page;
 import com.day.cq.wcm.api.PageManager;
 import com.searchstax.aem.connector.core.config.LanguageConfigService;
 import com.searchstax.aem.connector.core.config.MetadataFieldConfigService;
+import com.searchstax.aem.connector.core.config.model.MetadataFieldMappingConfig;
 import com.searchstax.aem.connector.core.services.ContentExtractionService;
+import com.searchstax.aem.connector.core.services.IndexingHelperService;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
 import org.apache.sling.api.resource.ValueMap;
@@ -37,6 +39,9 @@ class PageDocumentBuilderServiceImplTest {
 
     @Mock
     private ContentExtractionService contentExtractionService;
+
+    @Mock
+    private IndexingHelperService indexingHelperService;
 
     @Mock
     private ResourceResolver resolver;
@@ -181,5 +186,79 @@ class PageDocumentBuilderServiceImplTest {
                         () -> service.buildDocument(resolver,"/content/site"));
 
         assertTrue(ex.getMessage().contains("Content resource not found"));
+    }
+
+    @Test
+    void buildDocument_appliesEnabledMetadataMappings() throws Exception {
+        mockHappyPath();
+
+        final MetadataFieldMappingConfig enabledMapping = new MetadataFieldMappingConfig();
+        enabledMapping.setEnabled(true);
+        enabledMapping.setAemField("jcr:title");
+        enabledMapping.setSearchStaxField("title");
+        enabledMapping.setSearchStaxFieldType("text");
+
+        final MetadataFieldMappingConfig disabledMapping = new MetadataFieldMappingConfig();
+        disabledMapping.setEnabled(false);
+        disabledMapping.setAemField("jcr:description");
+        disabledMapping.setSearchStaxField("description");
+        disabledMapping.setSearchStaxFieldType("text");
+
+        when(metadataFieldConfigService.getMetadataFieldMappings())
+                .thenReturn(List.of(enabledMapping, disabledMapping));
+        when(valueMap.get("jcr:title")).thenReturn("Page Title");
+        when(indexingHelperService.normalizeMetadataValue("Page Title")).thenReturn("Page Title");
+        when(indexingHelperService.resolveFieldName("title", "text", "Page Title", "en"))
+                .thenReturn("title_txt_en");
+
+        final Map<String, Object> document = service.buildDocument(resolver, "/content/site");
+
+        verify(indexingHelperService).addField(document, "title_txt_en", "Page Title");
+        verify(indexingHelperService, never()).addField(eq(document), eq("description_txt_en"), any());
+    }
+
+    @Test
+    void buildDocument_usesCustomPropertyWhenConfigured() throws Exception {
+        mockHappyPath();
+
+        final MetadataFieldMappingConfig mapping = new MetadataFieldMappingConfig();
+        mapping.setEnabled(true);
+        mapping.setAemField("jcr:title");
+        mapping.setCustomProperty("navTitle");
+        mapping.setSearchStaxField("nav");
+        mapping.setSearchStaxFieldType("text");
+
+        when(metadataFieldConfigService.getMetadataFieldMappings()).thenReturn(List.of(mapping));
+        when(valueMap.get("navTitle")).thenReturn("Nav Label");
+        when(indexingHelperService.normalizeMetadataValue("Nav Label")).thenReturn("Nav Label");
+        when(indexingHelperService.resolveFieldName("nav", "text", "Nav Label", "en"))
+                .thenReturn("nav_txt_en");
+
+        service.buildDocument(resolver, "/content/site");
+
+        verify(valueMap).get("navTitle");
+        verify(indexingHelperService).addField(any(), eq("nav_txt_en"), eq("Nav Label"));
+    }
+
+    @Test
+    void buildDocument_defaultsLanguageWhenLocaleMissing() throws Exception {
+        mockHappyPath();
+        when(page.getLanguage(false)).thenReturn(null);
+        when(languageConfigService.mapToSearchStaxLanguage("en")).thenReturn("en");
+
+        final Map<String, Object> document = service.buildDocument(resolver, "/content/site");
+
+        assertEquals("en", document.get("language_s"));
+        assertTrue(document.containsKey("content_txts_en"));
+    }
+
+    @Test
+    void buildDocument_handlesNullExtractedContent() throws Exception {
+        mockHappyPath();
+        when(contentExtractionService.extractContent(contentResource)).thenReturn(null);
+
+        final Map<String, Object> document = service.buildDocument(resolver, "/content/site");
+
+        assertEquals(List.of(), document.get("content_txts_en"));
     }
 }

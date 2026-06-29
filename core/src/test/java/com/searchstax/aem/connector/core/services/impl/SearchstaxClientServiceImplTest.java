@@ -148,5 +148,29 @@ class SearchstaxClientServiceImplTest {
 
         assertEquals(SearchstaxClientServiceImpl.TRANSPORT_ERROR_STATUS, response.getStatusCode());
     }
+
+    @Test
+    void indexDocument_withoutContentPath_usesDefaultApiConfiguration() {
+        apiConfig.setUpdateEndpoint("");
+        apiConfig.setUpdateToken("token");
+        when(protectedValueCodec.unprotectIfNeeded("token")).thenReturn("token");
+
+        final ApiResponse response = clientService.indexDocument("{}");
+
+        assertEquals(SearchstaxClientServiceImpl.TRANSPORT_ERROR_STATUS, response.getStatusCode());
+        assertTrue(response.getResponseBody().contains("update endpoint is not configured"));
+    }
+
+    @Test
+    void deleteDocument_withoutContentPath_usesDefaultApiConfiguration() {
+        apiConfig.setUpdateEndpoint("");
+        apiConfig.setUpdateToken("token");
+        when(protectedValueCodec.unprotectIfNeeded("token")).thenReturn("token");
+
+        final ApiResponse response = clientService.deleteDocument("{\"delete\":{}}");
+
+        assertEquals(SearchstaxClientServiceImpl.TRANSPORT_ERROR_STATUS, response.getStatusCode());
+        assertTrue(response.getResponseBody().contains("update endpoint is not configured"));
+    }
 }
 

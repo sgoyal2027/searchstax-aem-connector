@@ -827,6 +827,255 @@ class SearchStaxFullIndexExecutionServiceImplTest {
         assertTrue(snapshot.getElapsedMs() > 0L);
     }
 
+    @Test
+    void splitContentIncludes_filtersContentPathsOnly() throws Exception {
+        final String[] includes =
+                new String[] {
+                    "/content/wknd/us",
+                    "/content/dam/wknd",
+                    "",
+                    null,
+                    "/etc/config"
+                };
+
+        final String[] contentOnly = invokeStaticSplitContentIncludes(includes);
+
+        assertArrayEquals(new String[] {"/content/wknd/us"}, contentOnly);
+    }
+
+    @Test
+    void splitDamIncludes_filtersDamPathsOnly() throws Exception {
+        final String[] includes =
+                new String[] {"/content/wknd/us", "/content/dam/wknd/en", "/content/dam/other"};
+
+        final String[] damOnly = invokeStaticSplitDamIncludes(includes);
+
+        assertArrayEquals(new String[] {"/content/dam/wknd/en", "/content/dam/other"}, damOnly);
+    }
+
+    @Test
+    void splitIncludes_returnEmptyForNullOrEmptyInput() throws Exception {
+        assertEquals(0, invokeStaticSplitContentIncludes(null).length);
+        assertEquals(0, invokeStaticSplitDamIncludes(new String[0]).length);
+    }
+
+    @Test
+    void escapeSql_escapesSingleQuotesAndHandlesNull() throws Exception {
+        assertEquals("", invokeStaticEscapeSql(null));
+        assertEquals("O''Reilly", invokeStaticEscapeSql("O'Reilly"));
+    }
+
+    @Test
+    void buildSql2_buildsRecursivePageQueryWithEscapedRoot() throws Exception {
+        final String sql =
+                invokeStaticBuildSql2(false, "/content/site's", true, "/content/site/page1");
+
+        assertTrue(sql.contains("ISDESCENDANTNODE(page, '/content/site''s')"));
+        assertTrue(sql.contains("page.[jcr:path] > '/content/site/page1'"));
+        assertTrue(sql.contains("FROM [cq:Page]"));
+    }
+
+    @Test
+    void buildSql2_buildsNonRecursiveAssetQuery() throws Exception {
+        final String sql = invokeStaticBuildSql2(true, "/content/dam/wknd", false, "");
+
+        assertTrue(sql.contains("FROM [dam:Asset]"));
+        assertTrue(sql.contains("asset.[jcr:path] = '/content/dam/wknd'"));
+        assertFalse(sql.contains("ISDESCENDANTNODE"));
+    }
+
+    @Test
+    void sanitizePathForFailureId_handlesNullLongAndSpecialCharacters() throws Exception {
+        assertEquals("unknown", invokeStaticSanitizePathForFailureId(null));
+        assertEquals("unknown", invokeStaticSanitizePathForFailureId(""));
+
+        final String longPath = "/" + "a".repeat(200);
+        final String sanitized = invokeStaticSanitizePathForFailureId(longPath);
+        assertEquals(120, sanitized.length());
+        assertEquals("_content_page_with_spaces", invokeStaticSanitizePathForFailureId("/content/page with spaces"));
+    }
+
+    @Test
+    void buildFullIndexFailureEmailBody_escapesHtmlAndListsFailures() throws Exception {
+        final FullIndexProgress progress =
+                new FullIndexProgress(
+                        FullIndexProgress.State.PARTIAL_FAILURE,
+                        10,
+                        8,
+                        2,
+                        6,
+                        4,
+                        3,
+                        "/content/a",
+                        0,
+                        5000,
+                        "Done <with> \"issues\"");
+
+        final List<SearchStaxFullIndexFailureStore.FailureRecord> failures =
+                List.of(
+                        new SearchStaxFullIndexFailureStore.FailureRecord(
+                                "batch-1",
+                                List.of("/content/a"),
+                                503,
+                                "Service <down>",
+                                100,
+                                Instant.parse("2026-05-20T12:00:00Z"),
+                                6),
+                        new SearchStaxFullIndexFailureStore.FailureRecord(
+                                "path-payload-limit-_content_x",
+                                List.of("/content/x"),
+                                413,
+                                "too large",
+                                50,
+                                Instant.parse("2026-05-20T12:05:00Z"),
+                                0));
+
+        final String body = invokeStaticBuildFullIndexFailureEmailBody(progress, 1, failures);
+
+        assertTrue(body.contains("Done &lt;with&gt; &quot;issues&quot;"));
+        assertTrue(body.contains("Batch ID"));
+        assertTrue(body.contains("Failure ID"));
+        assertTrue(body.contains("Path (no retry)"));
+        assertTrue(body.contains("Service &lt;down&gt;"));
+        assertFalse(body.contains("Retry Attempts:</b> 0"));
+    }
+
+    @Test
+    void buildFullIndexFailureEmailBody_showsMessageWhenNoFailureRecords() throws Exception {
+        final FullIndexProgress progress =
+                new FullIndexProgress(
+                        FullIndexProgress.State.PARTIAL_FAILURE,
+                        0,
+                        0,
+                        1,
+                        0,
+                        0,
+                        0,
+                        "",
+                        0,
+                        0,
+                        "partial");
+
+        final String body = invokeStaticBuildFullIndexFailureEmailBody(progress, 0, List.of());
+
+        assertTrue(body.contains("No failure records found under var storage for this run."));
+    }
+
+    @Test
+    void collectAssetPathIfNotProcessed_ignoresNullAndEmptyPaths() throws Exception {
+        final AtomicInteger collectPathCalls = new AtomicInteger();
+        final TestableExecutionService service =
+                new TestableExecutionService(failureDir) {
+                    @Override
+                    void collectPath(
+                            final String path,
+                            final boolean page,
+                            final SearchStaxIndexBatchBuffer batch,
+                            final Set<String> referencedAssets,
+                            final Set<String> processedAssetPathsArg) {
+                        collectPathCalls.incrementAndGet();
+                    }
+                };
+
+        final Method method =
+                SearchStaxFullIndexExecutionServiceImpl.class.getDeclaredMethod(
+                        "collectAssetPathIfNotProcessed", String.class, SearchStaxIndexBatchBuffer.class, Set.class);
+        method.setAccessible(true);
+        final SearchStaxIndexBatchBuffer batch = new SearchStaxIndexBatchBuffer();
+        final Set<String> processed = ConcurrentHashMap.newKeySet();
+
+        method.invoke(service, null, batch, processed);
+        method.invoke(service, "", batch, processed);
+
+        assertEquals(0, collectPathCalls.get());
+    }
+
+    @Test
+    void runIndexingTraversalPhases_mixedContentAndDam_splitsTraversal() {
+        final List<String> traversalOrder = new ArrayList<>();
+        final TestableExecutionService service =
+                new TestableExecutionService(failureDir) {
+                    @Override
+                    void forEachPagePath(
+                            final String includeRoot,
+                            final boolean recursive,
+                            final Consumer<String> consumer) {
+                        traversalOrder.add("page:" + includeRoot);
+                    }
+
+                    @Override
+                    void forEachAssetPath(
+                            final String includeRoot,
+                            final boolean recursive,
+                            final Consumer<String> consumer) {
+                        traversalOrder.add("asset:" + includeRoot);
+                    }
+                };
+
+        service.runIndexingTraversalPhases(
+                new String[] {"/content/wknd/us", "/content/dam/wknd"},
+                Map.of("/content/wknd/us", true, "/content/dam/wknd", false),
+                new SearchStaxIndexBatchBuffer());
+
+        assertEquals(List.of("page:/content/wknd/us", "asset:/content/dam/wknd"), traversalOrder);
+    }
+
+    private static String[] invokeStaticSplitContentIncludes(final String[] includes) throws Exception {
+        final Method method =
+                SearchStaxFullIndexExecutionServiceImpl.class.getDeclaredMethod(
+                        "splitContentIncludes", String[].class);
+        method.setAccessible(true);
+        return (String[]) method.invoke(null, (Object) includes);
+    }
+
+    private static String[] invokeStaticSplitDamIncludes(final String[] includes) throws Exception {
+        final Method method =
+                SearchStaxFullIndexExecutionServiceImpl.class.getDeclaredMethod(
+                        "splitDamIncludes", String[].class);
+        method.setAccessible(true);
+        return (String[]) method.invoke(null, (Object) includes);
+    }
+
+    private static String invokeStaticEscapeSql(final String value) throws Exception {
+        final Method method =
+                SearchStaxFullIndexExecutionServiceImpl.class.getDeclaredMethod("escapeSql", String.class);
+        method.setAccessible(true);
+        return (String) method.invoke(null, value);
+    }
+
+    private static String invokeStaticBuildSql2(
+            final boolean asset, final String includeRoot, final boolean recursive, final String lastPath)
+            throws Exception {
+        final Method method =
+                SearchStaxFullIndexExecutionServiceImpl.class.getDeclaredMethod(
+                        "buildSql2", boolean.class, String.class, boolean.class, String.class);
+        method.setAccessible(true);
+        return (String) method.invoke(null, asset, includeRoot, recursive, lastPath);
+    }
+
+    private static String invokeStaticSanitizePathForFailureId(final String path) throws Exception {
+        final Method method =
+                SearchStaxFullIndexExecutionServiceImpl.class.getDeclaredMethod(
+                        "sanitizePathForFailureId", String.class);
+        method.setAccessible(true);
+        return (String) method.invoke(null, path);
+    }
+
+    private static String invokeStaticBuildFullIndexFailureEmailBody(
+            final FullIndexProgress progress,
+            final int failedBatches,
+            final List<SearchStaxFullIndexFailureStore.FailureRecord> failures)
+            throws Exception {
+        final Method method =
+                SearchStaxFullIndexExecutionServiceImpl.class.getDeclaredMethod(
+                        "buildFullIndexFailureEmailBody",
+                        FullIndexProgress.class,
+                        int.class,
+                        List.class);
+        method.setAccessible(true);
+        return (String) method.invoke(null, progress, failedBatches, failures);
+    }
+
     private void invokeFinishProgress(final TestableExecutionService service) throws Exception {
         final Method method =
                 SearchStaxFullIndexExecutionServiceImpl.class.getDeclaredMethod("finishProgress");

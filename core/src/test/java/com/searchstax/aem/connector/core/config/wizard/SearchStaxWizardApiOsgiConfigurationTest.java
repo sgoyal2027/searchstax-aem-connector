@@ -211,6 +211,38 @@ class SearchStaxWizardApiOsgiConfigurationTest {
     }
 
     @Test
+    void getResource_apiPage_returnsPageResource() {
+        final ResolveContext<Void> resolveContext = mock(ResolveContext.class);
+        when(resolveContext.getResourceResolver()).thenReturn(context.resourceResolver());
+
+        final Resource resource = resourceProvider.getResource(
+                resolveContext,
+                SearchStaxWizardBindingPaths.API_PAGE,
+                mock(ResourceContext.class),
+                null);
+
+        assertNotNull(resource);
+        assertEquals(SearchStaxWizardBindingPaths.API_PAGE, resource.getPath());
+    }
+
+    @Test
+    void listChildren_apiPage_returnsJcrContentChild() {
+        final ResolveContext<Void> resolveContext = mock(ResolveContext.class);
+        when(resolveContext.getResourceResolver()).thenReturn(context.resourceResolver());
+
+        final Resource apiPage = resourceProvider.getResource(
+                resolveContext,
+                SearchStaxWizardBindingPaths.API_PAGE,
+                mock(ResourceContext.class),
+                null);
+        final Iterator<Resource> children = resourceProvider.listChildren(resolveContext, apiPage);
+
+        assertNotNull(children);
+        assertTrue(children.hasNext());
+        assertEquals(SearchStaxWizardBindingPaths.API_JCR_CONTENT, children.next().getPath());
+    }
+
+    @Test
     void buildApiValueMap_mergesLegacyConfWhenOsgiEmpty() throws Exception {
         context.create().resource(
                 SearchStaxLegacyWizardConfPaths.API_JCR_CONTENT,
