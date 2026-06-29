@@ -517,7 +517,7 @@
         }
         fetchStatus()
             .then(function (status) {
-                if (!status.running) {
+                if (!status.running || status.complete) {
                     return;
                 }
                 renderProgress(button, status);

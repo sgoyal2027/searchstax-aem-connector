@@ -56,24 +56,25 @@ public class SearchStaxFullIndexStatusServlet extends SlingAllMethodsServlet {
         final String currentJobId = !activeJobId.isEmpty() ? activeJobId : queuedJobId;
 
         final State snapshotState = progress.getState();
-        final State state = hasActiveOrQueuedJob ? State.RUNNING : snapshotState;
-        final boolean running = hasActiveOrQueuedJob || snapshotState == State.RUNNING;
-        final boolean complete =
-                !hasActiveOrQueuedJob
-                        && (snapshotState == State.SUCCESS
+        final boolean terminalSnapshot =
+                snapshotState == State.SUCCESS
                         || snapshotState == State.PARTIAL_FAILURE
-                        || snapshotState == State.FAILED);
+                        || snapshotState == State.FAILED;
+        // A new run resets progress to IDLE before the job starts; terminal snapshot + lingering
+        // JobManager entry means the run finished and the UI must not stay in "running" with zeros.
+        final boolean complete = terminalSnapshot;
+        final boolean running =
+                !complete && (hasActiveOrQueuedJob || snapshotState == State.RUNNING);
+        final State state = complete ? snapshotState : (running ? State.RUNNING : snapshotState);
         final boolean currentRunInProgress = snapshotState == State.RUNNING;
-        final boolean useLiveProgress = currentRunInProgress;
-        final boolean useCompletedProgress = complete;
-        final boolean exposeProgress = useLiveProgress || useCompletedProgress;
+        final boolean exposeProgress = currentRunInProgress || complete;
         final long startedAt = currentRunInProgress ? progress.getStartedAt() : 0L;
         final long elapsedMs = currentRunInProgress ? progress.getElapsedMs() : 0L;
 
         final Map<String, Object> body = new LinkedHashMap<>();
         body.put("jobId", currentJobId);
         body.put("state", state.name());
-        body.put("message", hasActiveOrQueuedJob ? "Full index job is running." : progress.getMessage());
+        body.put("message", running ? "Full index job is running." : progress.getMessage());
         body.put("totalProcessed", exposeProgress ? progress.getTotalProcessed() : 0L);
         body.put("successCount", exposeProgress ? progress.getSuccessCount() : 0L);
         body.put("failureCount", exposeProgress ? progress.getFailureCount() : 0L);

@@ -153,10 +153,7 @@ class SearchStaxFullIndexStatusServletTest {
                     return Collections.emptyList();
                 });
         when(searchStaxFullIndexRunService.getProgress()).thenReturn(
-                new FullIndexProgress(
-                        State.SUCCESS, 40, 40, 0, 9, 31, 1,
-                        "/content/dam/wknd-shared/en/magazine/western-australia/adobestock-156407519.jpeg",
-                        1_000L, 120_000L, "Previous run finished"));
+                new FullIndexProgress(State.IDLE, 0, 0, 0, 0, 0, 0, "", 0L, 0L, ""));
 
         servlet.doGet(request, response);
 
@@ -170,6 +167,38 @@ class SearchStaxFullIndexStatusServletTest {
         assertEquals(0, body.get("currentBatchNumber").asInt());
         assertEquals(0L, body.get("elapsedMs").asLong());
         assertEquals("", body.get("lastIndexedPath").asText());
+    }
+
+    @Test
+    void doGet_reportsCompleteDespiteStaleActiveJob() throws Exception {
+        final Job activeJob = org.mockito.Mockito.mock(Job.class);
+        when(activeJob.getId()).thenReturn("job-stale");
+        when(jobManager.findJobs(
+                        any(),
+                        eq(SearchStaxFullIndexDefaults.JOB_TOPIC),
+                        eq(-1L),
+                        Mockito.<Map<String, Object>[]>isNull()))
+                .thenAnswer(invocation -> {
+                    if (invocation.getArgument(0) == JobManager.QueryType.ACTIVE) {
+                        return List.of(activeJob);
+                    }
+                    return Collections.emptyList();
+                });
+        when(searchStaxFullIndexRunService.getProgress()).thenReturn(
+                new FullIndexProgress(
+                        State.SUCCESS, 40, 40, 0, 9, 31, 1,
+                        "/content/dam/wknd-shared/en/magazine/western-australia/adobestock-156407519.jpeg",
+                        1_000L, 120_000L, "Full index completed successfully"));
+
+        servlet.doGet(request, response);
+
+        final JsonNode body = MAPPER.readTree(stringWriter.toString());
+        assertEquals("SUCCESS", body.get("state").asText());
+        assertTrue(body.get("complete").asBoolean());
+        assertFalse(body.get("running").asBoolean());
+        assertEquals(40L, body.get("totalProcessed").asLong());
+        assertEquals(120_000L, body.get("elapsedMs").asLong());
+        assertEquals("Full index completed successfully", body.get("message").asText());
     }
 
     @Test
