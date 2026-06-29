@@ -237,6 +237,10 @@ public class SearchStaxFullIndexExecutionServiceImpl implements SearchStaxFullIn
     @Override
     public void prepareForQueuedJob() {
         resetProgress(State.RUNNING, "Full index queued, waiting to start...");
+        synchronized (progressLock) {
+            // Do not start the execution timer until the Sling job consumer calls execute().
+            startedAt = 0;
+        }
     }
 
     @Override

@@ -720,6 +720,8 @@ class SearchStaxFullIndexExecutionServiceImplTest {
         assertEquals(0, snapshot.getTotalProcessed());
         assertEquals(0, snapshot.getPagesIndexed());
         assertEquals(0, snapshot.getCurrentBatchNumber());
+        assertEquals(0L, snapshot.getStartedAt());
+        assertEquals(0L, snapshot.getElapsedMs());
         assertTrue(snapshot.getMessage().contains("queued"));
     }
 
