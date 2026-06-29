@@ -100,8 +100,7 @@
             return;
         }
         var lastPath = truncateText(status.lastIndexedPath || "", 120);
-        var isRunning = status.running !== false;
-        var completedAt = !isRunning ? formatTimestamp(status.completedAt) : "";
+        var completedAt = formatTimestamp(status.completedAt);
         var details = "Indexed: " + (status.totalProcessed || 0)
             + " | Attempted: " + (status.totalAttempted != null ? status.totalAttempted : (status.totalProcessed || 0) + (status.failureCount || 0))
             + " | Pages: " + (status.pagesIndexed || 0)
@@ -516,15 +515,10 @@
         fetchStatus()
             .then(function (status) {
                 if (!status.running) {
-                    clearProgress(button);
-                    clearResult(button);
-                    button.disabled = false;
-                    setButtonText(button, "Run full indexing");
                     return;
                 }
-                clearResult(button);
                 renderProgress(button, status);
-                startPolling(button, "Run full indexing", status.jobId || "");
+                startPolling(button, "Run full indexing", "");
             })
             .catch(function (err) {
                 console.warn(LOG, "Could not resume full index status polling:", err);

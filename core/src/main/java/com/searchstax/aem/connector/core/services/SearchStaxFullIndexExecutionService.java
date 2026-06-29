@@ -15,10 +15,5 @@ public interface SearchStaxFullIndexExecutionService {
      */
     void execute(FullIndexPathConfig pathConfig);
 
-    /**
-     * Clears prior run metrics when a new job is queued so status polling does not show stale data.
-     */
-    void prepareForQueuedJob();
-
     FullIndexProgress getProgressSnapshot();
 }
