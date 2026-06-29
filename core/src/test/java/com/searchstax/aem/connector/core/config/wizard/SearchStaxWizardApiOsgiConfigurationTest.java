@@ -1,7 +1,10 @@
 package com.searchstax.aem.connector.core.config.wizard;
 
+import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
 import org.apache.sling.api.resource.ValueMap;
+import org.apache.sling.spi.resource.provider.ResolveContext;
+import org.apache.sling.spi.resource.provider.ResourceContext;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -16,14 +19,20 @@ import io.wcm.testing.mock.aem.junit5.AemContextExtension;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.util.Arrays;
 import java.util.Dictionary;
 import java.util.Hashtable;
+import java.util.Iterator;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -38,6 +47,12 @@ class SearchStaxWizardApiOsgiConfigurationTest {
 
     @Mock
     private Configuration apiConfiguration;
+
+    @Mock
+    private Configuration environmentConfiguration;
+
+    @Mock
+    private Configuration fullIndexConfiguration;
 
     private SearchStaxWizardOsgiPersistServlet servlet;
     private SearchStaxWizardResourceProvider resourceProvider;
@@ -107,6 +122,135 @@ class SearchStaxWizardApiOsgiConfigurationTest {
 
         verify(configurationAdmin).getConfiguration(eq(SearchStaxOsgiConfigurationPids.API_CONFIGURATION_PID));
         verify(configurationAdmin, never()).getConfiguration(SearchStaxOsgiConfigurationPids.ENVIRONMENT_CONFIGURATION_PID);
+    }
+
+    @Test
+    void persistFullIndexConfiguration_updatesEnvironmentAndNamedPid() throws Exception {
+        final Hashtable<String, Object> envProps = new Hashtable<>();
+        envProps.put("activeEnvironment", "dev");
+        when(configurationAdmin.getConfiguration(SearchStaxOsgiConfigurationPids.ENVIRONMENT_CONFIGURATION_PID))
+                .thenReturn(environmentConfiguration);
+        when(environmentConfiguration.getProperties()).thenReturn(envProps);
+
+        final String fullIndexPid =
+                SearchStaxOsgiConfigPidResolver.namedConfigurationPid(
+                        SearchStaxOsgiConfigurationPids.FULL_INDEX_CONFIGURATION_PID, "prod");
+        when(configurationAdmin.getConfiguration(fullIndexPid)).thenReturn(fullIndexConfiguration);
+        when(fullIndexConfiguration.getProperties()).thenReturn(new Hashtable<>());
+
+        context.request().setServletPath(SearchStaxWizardBindingPaths.SERVLET_FULL_INDEX_SAVE);
+        context.request().setMethod("POST");
+        context.request().addRequestParameter("activeEnvironment", "prod");
+        context.request().addRequestParameter("includePaths", "/content/wknd");
+        context.request().addRequestParameter("excludePaths", "/content/wknd/private");
+
+        servlet.doPost(context.request(), context.response());
+
+        @SuppressWarnings("rawtypes")
+        final ArgumentCaptor<Dictionary> envCaptor = ArgumentCaptor.forClass(Dictionary.class);
+        verify(environmentConfiguration).update(envCaptor.capture());
+        assertEquals("prod", envCaptor.getValue().get("activeEnvironment"));
+
+        @SuppressWarnings("rawtypes")
+        final ArgumentCaptor<Dictionary> fullIndexCaptor = ArgumentCaptor.forClass(Dictionary.class);
+        verify(fullIndexConfiguration).update(fullIndexCaptor.capture());
+        assertEquals(
+                List.of("/content/wknd"),
+                Arrays.asList((String[]) fullIndexCaptor.getValue().get("includePaths")));
+        assertEquals(
+                List.of("/content/wknd/private"),
+                Arrays.asList((String[]) fullIndexCaptor.getValue().get("excludePaths")));
+    }
+
+    @Test
+    void getResource_apiJcrContent_exposesOsgiValues() throws Exception {
+        final Hashtable<String, Object> props = new Hashtable<>();
+        props.put("endpointUrl", "https://resource.example.com");
+        when(configurationAdmin.getConfiguration(SearchStaxOsgiConfigurationPids.API_CONFIGURATION_PID))
+                .thenReturn(apiConfiguration);
+        when(apiConfiguration.getProperties()).thenReturn(props);
+
+        final ResolveContext<Void> resolveContext = mock(ResolveContext.class);
+        when(resolveContext.getResourceResolver()).thenReturn(context.resourceResolver());
+
+        final Resource resource = resourceProvider.getResource(
+                resolveContext,
+                SearchStaxWizardBindingPaths.API_JCR_CONTENT,
+                mock(ResourceContext.class),
+                null);
+
+        assertNotNull(resource);
+        final ValueMap valueMap = resource.adaptTo(ValueMap.class);
+        assertEquals("https://resource.example.com", valueMap.get("endpointUrl", String.class));
+    }
+
+    @Test
+    void listChildren_root_returnsApiAndFullIndexPages() {
+        final ResolveContext<Void> resolveContext = mock(ResolveContext.class);
+        when(resolveContext.getResourceResolver()).thenReturn(context.resourceResolver());
+
+        final Resource root = resourceProvider.getResource(
+                resolveContext,
+                SearchStaxWizardBindingPaths.ROOT,
+                mock(ResourceContext.class),
+                null);
+        final Iterator<Resource> children = resourceProvider.listChildren(resolveContext, root);
+
+        assertNotNull(children);
+        final List<String> childPaths = Arrays.asList(
+                children.next().getPath(),
+                children.next().getPath());
+        assertTrue(childPaths.contains(SearchStaxWizardBindingPaths.API_PAGE));
+        assertTrue(childPaths.contains(SearchStaxWizardBindingPaths.FULL_INDEX_PAGE));
+    }
+
+    @Test
+    void buildApiValueMap_mergesLegacyConfWhenOsgiEmpty() throws Exception {
+        context.create().resource(
+                SearchStaxLegacyWizardConfPaths.API_JCR_CONTENT,
+                "endpointUrl",
+                "https://legacy.example.com",
+                "discoveryApiKey",
+                "legacy-discovery");
+
+        when(configurationAdmin.getConfiguration(SearchStaxOsgiConfigurationPids.API_CONFIGURATION_PID))
+                .thenReturn(apiConfiguration);
+        when(apiConfiguration.getProperties()).thenReturn(new Hashtable<>());
+
+        final ValueMap valueMap = invokeBuildApiValueMap(context.resourceResolver());
+
+        assertEquals("https://legacy.example.com", valueMap.get("endpointUrl", String.class));
+        assertEquals("legacy-discovery", valueMap.get("discoveryApiKey", String.class));
+    }
+
+    @Test
+    void buildFullIndexValueMap_readsEnvironmentSpecificPid() throws Exception {
+        final Hashtable<String, Object> envProps = new Hashtable<>();
+        envProps.put("activeEnvironment", "prod");
+        when(configurationAdmin.getConfiguration(SearchStaxOsgiConfigurationPids.ENVIRONMENT_CONFIGURATION_PID))
+                .thenReturn(environmentConfiguration);
+        when(environmentConfiguration.getProperties()).thenReturn(envProps);
+
+        final String fullIndexPid =
+                SearchStaxOsgiConfigPidResolver.namedConfigurationPid(
+                        SearchStaxOsgiConfigurationPids.FULL_INDEX_CONFIGURATION_PID, "prod");
+        final Hashtable<String, Object> fullIndexProps = new Hashtable<>();
+        fullIndexProps.put("includePaths", new String[]{"/content/prod"});
+        when(configurationAdmin.getConfiguration(fullIndexPid)).thenReturn(fullIndexConfiguration);
+        when(fullIndexConfiguration.getProperties()).thenReturn(fullIndexProps);
+
+        final ValueMap valueMap = invokeBuildFullIndexValueMap(null);
+
+        assertEquals("prod", valueMap.get("activeEnvironment", String.class));
+        assertEquals("/content/prod", valueMap.get("includePaths", String[].class)[0]);
+    }
+
+    private ValueMap invokeBuildFullIndexValueMap(final ResourceResolver resolver) throws Exception {
+        final Method method =
+                SearchStaxWizardResourceProvider.class.getDeclaredMethod(
+                        "buildFullIndexValueMap", ResourceResolver.class);
+        method.setAccessible(true);
+        return (ValueMap) method.invoke(resourceProvider, resolver);
     }
 
     private ValueMap invokeBuildApiValueMap(final ResourceResolver resolver) throws Exception {
