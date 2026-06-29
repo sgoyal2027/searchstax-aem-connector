@@ -469,6 +469,7 @@ class SearchStaxFullIndexOrchestratorServiceImplTest {
 
         assertTrue(result.isAccepted());
         assertEquals(202, result.getHttpStatus());
+        verify(executionService).clearProgressForNewRun();
     }
 
     @Test

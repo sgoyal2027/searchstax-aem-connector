@@ -448,6 +448,9 @@
                     if (status.complete && status.jobId && activeJobId && status.jobId !== activeJobId) {
                         renderProgress(button, {
                             message: "Waiting for full index job to start...",
+                            totalProcessed: 0,
+                            totalAttempted: 0,
+                            failureCount: 0,
                             pagesIndexed: 0,
                             assetsIndexed: 0,
                             currentBatchNumber: 0,
@@ -518,7 +521,7 @@
                     return;
                 }
                 renderProgress(button, status);
-                startPolling(button, "Run full indexing", "");
+                startPolling(button, "Run full indexing", status.jobId || "");
             })
             .catch(function (err) {
                 console.warn(LOG, "Could not resume full index status polling:", err);

@@ -258,6 +258,24 @@ public class SearchStaxFullIndexExecutionServiceImpl implements SearchStaxFullIn
         }
     }
 
+    @Override
+    public void clearProgressForNewRun() {
+        synchronized (progressLock) {
+            state = State.IDLE;
+            totalProcessed = 0;
+            successCount = 0;
+            failureCount = 0;
+            failedBatchCount = 0;
+            pagesIndexed = 0;
+            assetsIndexed = 0;
+            currentBatchNumber = 0;
+            lastIndexedPath = "";
+            startedAt = 0;
+            completedElapsedMs = 0;
+            progressMessage = "";
+        }
+    }
+
     /**
      * Phase 1: content includes (pages). Phase 2a: referenced DAM assets from indexed pages. Phase 2b: explicit DAM
      * includes. Package-visible for unit tests.

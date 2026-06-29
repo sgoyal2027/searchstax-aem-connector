@@ -64,6 +64,9 @@ public class SearchStaxFullIndexStatusServlet extends SlingAllMethodsServlet {
                         || snapshotState == State.PARTIAL_FAILURE
                         || snapshotState == State.FAILED);
         final boolean currentRunInProgress = snapshotState == State.RUNNING;
+        final boolean useLiveProgress = currentRunInProgress;
+        final boolean useCompletedProgress = complete;
+        final boolean exposeProgress = useLiveProgress || useCompletedProgress;
         final long startedAt = currentRunInProgress ? progress.getStartedAt() : 0L;
         final long elapsedMs = currentRunInProgress ? progress.getElapsedMs() : 0L;
 
@@ -71,14 +74,18 @@ public class SearchStaxFullIndexStatusServlet extends SlingAllMethodsServlet {
         body.put("jobId", currentJobId);
         body.put("state", state.name());
         body.put("message", hasActiveOrQueuedJob ? "Full index job is running." : progress.getMessage());
-        body.put("totalProcessed", progress.getTotalProcessed());
-        body.put("successCount", progress.getSuccessCount());
-        body.put("failureCount", progress.getFailureCount());
-        body.put("totalAttempted", progress.getTotalAttempted());
-        body.put("pagesIndexed", progress.getPagesIndexed());
-        body.put("assetsIndexed", progress.getAssetsIndexed());
-        body.put("currentBatchNumber", progress.getCurrentBatchNumber());
-        body.put("lastIndexedPath", abbreviateMiddle(progress.getLastIndexedPath(), ABBREVIATED_PATH_LENGTH));
+        body.put("totalProcessed", exposeProgress ? progress.getTotalProcessed() : 0L);
+        body.put("successCount", exposeProgress ? progress.getSuccessCount() : 0L);
+        body.put("failureCount", exposeProgress ? progress.getFailureCount() : 0L);
+        body.put("totalAttempted", exposeProgress ? progress.getTotalAttempted() : 0L);
+        body.put("pagesIndexed", exposeProgress ? progress.getPagesIndexed() : 0L);
+        body.put("assetsIndexed", exposeProgress ? progress.getAssetsIndexed() : 0L);
+        body.put("currentBatchNumber", exposeProgress ? progress.getCurrentBatchNumber() : 0);
+        body.put(
+                "lastIndexedPath",
+                exposeProgress
+                        ? abbreviateMiddle(progress.getLastIndexedPath(), ABBREVIATED_PATH_LENGTH)
+                        : "");
         body.put("startedAt", startedAt);
         body.put("elapsedMs", complete ? progress.getElapsedMs() : elapsedMs);
         body.put(

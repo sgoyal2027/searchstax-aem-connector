@@ -138,6 +138,41 @@ class SearchStaxFullIndexStatusServletTest {
     }
 
     @Test
+    void doGet_hidesStaleCountersWhileNewJobQueued() throws Exception {
+        final Job queuedJob = org.mockito.Mockito.mock(Job.class);
+        when(queuedJob.getId()).thenReturn("job-new");
+        when(jobManager.findJobs(
+                        any(),
+                        eq(SearchStaxFullIndexDefaults.JOB_TOPIC),
+                        eq(-1L),
+                        Mockito.<Map<String, Object>[]>isNull()))
+                .thenAnswer(invocation -> {
+                    if (invocation.getArgument(0) == JobManager.QueryType.QUEUED) {
+                        return List.of(queuedJob);
+                    }
+                    return Collections.emptyList();
+                });
+        when(searchStaxFullIndexRunService.getProgress()).thenReturn(
+                new FullIndexProgress(
+                        State.SUCCESS, 40, 40, 0, 9, 31, 1,
+                        "/content/dam/wknd-shared/en/magazine/western-australia/adobestock-156407519.jpeg",
+                        1_000L, 120_000L, "Previous run finished"));
+
+        servlet.doGet(request, response);
+
+        final JsonNode body = MAPPER.readTree(stringWriter.toString());
+        assertEquals("RUNNING", body.get("state").asText());
+        assertTrue(body.get("running").asBoolean());
+        assertFalse(body.get("complete").asBoolean());
+        assertEquals(0L, body.get("totalProcessed").asLong());
+        assertEquals(0L, body.get("pagesIndexed").asLong());
+        assertEquals(0L, body.get("assetsIndexed").asLong());
+        assertEquals(0, body.get("currentBatchNumber").asInt());
+        assertEquals(0L, body.get("elapsedMs").asLong());
+        assertEquals("", body.get("lastIndexedPath").asText());
+    }
+
+    @Test
     void doGet_hidesElapsedWhileIdle() throws Exception {
         when(searchStaxFullIndexRunService.getProgress()).thenReturn(
                 new FullIndexProgress(State.IDLE, 0, 0, 0, 0, 0, 0, "", 0L, 0L, ""));
