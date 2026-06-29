@@ -1,5 +1,6 @@
 package com.searchstax.aem.connector.core.services.impl;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.searchstax.aem.connector.core.config.EmailConfigService;
@@ -134,7 +135,7 @@ public class IndexFailureNotificationServiceImpl
                         batchId);
             }
 
-        } catch (Exception e) {
+        } catch (RuntimeException  e) {
 
             LOG.error(
                     "Error while sending failure notification. BatchId={}",
@@ -156,9 +157,9 @@ public class IndexFailureNotificationServiceImpl
             if (jsonNode.has("message")) {
                 return jsonNode.get("message").asText();
             }
-        } catch (Exception e) {
-            LOG.debug(
-                    "Unable to parse response message as JSON. Returning original response.");
+        } catch (JsonProcessingException e) {
+            LOG.warn(
+                    "Unable to parse response message as JSON. Returning original response.", e);
             return responseMessage;
         }
         return responseMessage;

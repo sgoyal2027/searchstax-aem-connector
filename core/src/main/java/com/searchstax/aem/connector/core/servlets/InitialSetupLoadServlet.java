@@ -105,7 +105,7 @@ public class InitialSetupLoadServlet extends SlingSafeMethodsServlet {
             response.getWriter()
                     .print(json.toString());
 
-        } catch (Exception e) {
+        } catch (RuntimeException e) {
 
             LOG.error(
                     "Error loading Initial Setup configuration",

@@ -15,7 +15,7 @@ public class IndexingReportPage {
     }
 
     public List<Map<String, Object>> getEvents() {
-        return events;
+        return Collections.unmodifiableList(events);
     }
 
     public int getTotalCount() {

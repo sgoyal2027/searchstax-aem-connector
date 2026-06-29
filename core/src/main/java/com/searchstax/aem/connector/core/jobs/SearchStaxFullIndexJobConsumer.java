@@ -49,7 +49,7 @@ public class SearchStaxFullIndexJobConsumer implements JobConsumer {
                     job.getId(),
                     outcome);
             return JobResult.OK;
-        } catch (final Exception e) {
+        } catch (final RuntimeException e) {
             LOG.error("Full index job failed: id={}", job.getId(), e);
             return JobResult.FAILED;
         }

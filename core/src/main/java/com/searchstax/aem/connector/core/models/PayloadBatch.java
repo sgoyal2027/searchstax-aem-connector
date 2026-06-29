@@ -2,6 +2,8 @@ package com.searchstax.aem.connector.core.models;
 
 import com.searchstax.aem.connector.core.dto.request.IndexRequest;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class PayloadBatch {
@@ -12,7 +14,9 @@ public class PayloadBatch {
             long payloadSize,
             String batchId) {
 
-        this.requests = requests;
+        this.requests = requests != null
+            ? new ArrayList<>(requests)
+            : new ArrayList<>();
         this.payload = payload;
         this.payloadSize = payloadSize;
         this.batchId = batchId;
@@ -27,11 +31,13 @@ public class PayloadBatch {
     private String batchId;
 
     public List<IndexRequest> getRequests() {
-        return requests;
+        return Collections.unmodifiableList(requests);
     }
 
     public void setRequests(List<IndexRequest> requests) {
-        this.requests = requests;
+        this.requests = requests != null
+        ? new ArrayList<>(requests)
+        : new ArrayList<>();
     }
 
     public String getPayload() {

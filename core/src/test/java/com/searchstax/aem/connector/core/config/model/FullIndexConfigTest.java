@@ -14,7 +14,7 @@ class FullIndexConfigTest {
         FullIndexConfig config = new FullIndexConfig();
 
         assertNull(config.getRootPath());
-        assertNull(config.getIncludePaths());
+        assertTrue(config.getIncludePaths().isEmpty());
 
         assertNotNull(config.getExcludePaths());
         assertEquals(0, config.getExcludePaths().length);

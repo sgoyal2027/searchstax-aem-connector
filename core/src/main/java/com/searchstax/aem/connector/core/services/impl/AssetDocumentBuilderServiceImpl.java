@@ -2,6 +2,7 @@ package com.searchstax.aem.connector.core.services.impl;
 
 import com.day.cq.commons.Externalizer;
 import com.day.cq.dam.api.Asset;
+import com.day.cq.dam.api.DamConstants;
 import com.searchstax.aem.connector.core.config.LanguageConfigService;
 import com.searchstax.aem.connector.core.services.AssetDocumentBuilderService;
 import com.searchstax.aem.connector.core.services.IndexingHelperService;
@@ -100,7 +101,7 @@ public class AssetDocumentBuilderServiceImpl implements
 
             String metadataLanguage =
                     metadata.get(
-                            "dc:language",
+                            DamConstants.DC_LANGUAGE,
                             String.class);
 
             if (metadataLanguage != null

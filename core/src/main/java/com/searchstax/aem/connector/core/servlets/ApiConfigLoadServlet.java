@@ -69,7 +69,7 @@ public class ApiConfigLoadServlet extends SlingSafeMethodsServlet {
             response.setContentType("application/json");
             response.setCharacterEncoding("UTF-8");
             response.getWriter().print(json.toString());
-        } catch (Exception e) {
+        } catch (RuntimeException e) {
             LOG.error("Error loading API configuration", e);
             response.setStatus(SlingHttpServletResponse.SC_INTERNAL_SERVER_ERROR);
             final ObjectNode errorJson = OBJECT_MAPPER.createObjectNode();

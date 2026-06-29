@@ -4,6 +4,9 @@ import org.apache.sling.api.resource.ModifiableValueMap;
 import org.apache.sling.api.resource.PersistenceException;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
+import org.apache.sling.jcr.resource.api.JcrResourceConstants;
+
+import com.day.cq.commons.jcr.JcrConstants;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -36,7 +39,7 @@ public final class ConfigResourceUtil {
         }
 
         final Map<String, Object> properties = new HashMap<>();
-        properties.put("jcr:primaryType", "sling:Folder");
+        properties.put(JcrConstants.JCR_PRIMARYTYPE, JcrResourceConstants.NT_SLING_FOLDER);
 
         return resolver.create(parent, nodeName, properties);
     }

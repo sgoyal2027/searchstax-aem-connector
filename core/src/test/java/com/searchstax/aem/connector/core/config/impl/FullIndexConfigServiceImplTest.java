@@ -17,6 +17,7 @@ import java.util.Collections;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -141,7 +142,8 @@ class FullIndexConfigServiceImplTest {
 
         assertNotNull(config);
         assertNull(config.getRootPath());
-        assertNull(config.getIncludePaths());
+        assertNotNull(config.getIncludePaths());
+        assertTrue(config.getIncludePaths().isEmpty());
 
         verify(resolver).close();
     }
@@ -156,6 +158,7 @@ class FullIndexConfigServiceImplTest {
 
         assertNotNull(config);
         assertNull(config.getRootPath());
-        assertNull(config.getIncludePaths());
+        assertNotNull(config.getIncludePaths());
+        assertTrue(config.getIncludePaths().isEmpty());
     }
 }

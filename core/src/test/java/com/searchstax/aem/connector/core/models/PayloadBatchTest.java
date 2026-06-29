@@ -21,7 +21,8 @@ class PayloadBatchTest {
                 123L,
                 "batch-1");
 
-        assertSame(requests, batch.getRequests());
+        assertEquals(requests, batch.getRequests());
+        assertNotSame(requests, batch.getRequests());
         assertEquals("{\"test\":true}", batch.getPayload());
         assertEquals(123L, batch.getPayloadSize());
         assertEquals("batch-1", batch.getBatchId());
@@ -43,7 +44,8 @@ class PayloadBatchTest {
         batch.setPayloadSize(999L);
         batch.setBatchId("batch-2");
 
-        assertSame(requests, batch.getRequests());
+        assertEquals(requests, batch.getRequests());
+        assertNotSame(requests, batch.getRequests());
         assertEquals("payload", batch.getPayload());
         assertEquals(999L, batch.getPayloadSize());
         assertEquals("batch-2", batch.getBatchId());

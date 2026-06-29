@@ -60,7 +60,7 @@ public class IndexingReportClearServlet extends SlingAllMethodsServlet {
                 final int removedCount = indexingAuditService.clearAllEvents();
                 payload.put("removedCount", removedCount);
             }
-        } catch (Exception e) {
+        } catch (IOException | RuntimeException e) {
             LOG.error("Unable to clear indexing report. type={}", type, e);
             response.setStatus(SlingHttpServletResponse.SC_INTERNAL_SERVER_ERROR);
             response.setContentType("application/json");

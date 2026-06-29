@@ -1,5 +1,6 @@
 package com.searchstax.aem.connector.core.config.model;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -20,13 +21,17 @@ public class FullIndexConfig {
     }
 
     public List<FullIndexIncludePathConfig> getIncludePaths() {
-        return includePaths;
+        return includePaths != null
+            ? new ArrayList<>(includePaths)
+            : new ArrayList<>();
     }
 
     public void setIncludePaths(
             List<FullIndexIncludePathConfig> includePaths) {
 
-        this.includePaths = includePaths;
+        this.includePaths = includePaths != null
+            ? new ArrayList<>(includePaths)
+            : new ArrayList<>();
     }
 
     public String[] getExcludePaths() {
