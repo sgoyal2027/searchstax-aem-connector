@@ -420,9 +420,23 @@
                     startPolling(button, originalLabel, data.jobId || "");
                     return;
                 }
-                renderResult(button, "error", data.message || "Request completed.", details, "Failure");
-                button.disabled = false;
-                setButtonText(button, originalLabel);
+                return fetchStatus().then(function (status) {
+                    if (status.running) {
+                        clearResult(button);
+                        renderResult(
+                            button,
+                            "success",
+                            data.message || "Full index is already in progress.",
+                            details,
+                            "Success"
+                        );
+                        startPolling(button, originalLabel, status.jobId || "");
+                        return;
+                    }
+                    renderResult(button, "error", data.message || "Request completed.", details, "Failure");
+                    button.disabled = false;
+                    setButtonText(button, originalLabel);
+                });
             })
             .catch(function (err) {
                 console.error(LOG, "Full index run fetch error:", err);
@@ -520,6 +534,7 @@
                 if (!status.running || status.complete) {
                     return;
                 }
+                clearResult(button);
                 renderProgress(button, status);
                 startPolling(button, "Run full indexing", status.jobId || "");
             })

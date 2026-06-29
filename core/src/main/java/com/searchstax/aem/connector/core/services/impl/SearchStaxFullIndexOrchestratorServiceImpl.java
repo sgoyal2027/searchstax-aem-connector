@@ -5,6 +5,7 @@ import com.searchstax.aem.connector.core.config.model.InitialSetupConfig;
 import com.searchstax.aem.connector.core.constants.SearchStaxFullIndexDefaults;
 import com.searchstax.aem.connector.core.services.FullIndexPathConfig;
 import com.searchstax.aem.connector.core.services.FullIndexProgress;
+import com.searchstax.aem.connector.core.services.FullIndexProgress.State;
 import com.searchstax.aem.connector.core.services.FullIndexTriggerResult;
 import com.searchstax.aem.connector.core.services.SearchStaxFullIndexExecutionService;
 import com.searchstax.aem.connector.core.services.SearchStaxFullIndexOrchestratorService;
@@ -244,6 +245,17 @@ public class SearchStaxFullIndexOrchestratorServiceImpl
     }
 
     private boolean hasActiveOrQueuedJob() {
+        if (!hasJobsInActiveOrQueuedQueues()) {
+            return false;
+        }
+        final State progressState = executionService.getProgressSnapshot().getState();
+        // A new run resets progress to IDLE; terminal snapshot + lingering JobManager row is stale.
+        return progressState != State.SUCCESS
+                && progressState != State.PARTIAL_FAILURE
+                && progressState != State.FAILED;
+    }
+
+    private boolean hasJobsInActiveOrQueuedQueues() {
 
         final Collection<Job> active =
                 jobManager.findJobs(
