@@ -159,6 +159,9 @@ class SearchStaxFullIndexOrchestratorServiceImplTest {
 
         assertFalse(result.isAccepted());
         assertEquals(400, result.getHttpStatus());
+        assertEquals(
+                "Full index can only be started on author.",
+                result.getMessage());
     }
 
     @Test

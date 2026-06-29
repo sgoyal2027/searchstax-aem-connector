@@ -62,6 +62,35 @@ class SearchStaxFullIndexExecutionServiceImplTest {
     Path failureDir;
 
     @Test
+    void getProgressSnapshot_returnsCurrentCounters() throws Exception {
+        final TestableExecutionService service = new TestableExecutionService(failureDir);
+        setField(service, "state", FullIndexProgress.State.RUNNING);
+        setField(service, "totalProcessed", 12L);
+        setField(service, "successCount", 10L);
+        setField(service, "failureCount", 2L);
+        setField(service, "pagesIndexed", 8L);
+        setField(service, "assetsIndexed", 4L);
+        setField(service, "currentBatchNumber", 5);
+        setField(service, "lastIndexedPath", "/content/wknd/en/page");
+        setField(service, "startedAt", System.currentTimeMillis() - 250L);
+        setField(service, "progressMessage", "Indexing");
+
+        final FullIndexProgress snapshot = service.getProgressSnapshot();
+
+        assertEquals(FullIndexProgress.State.RUNNING, snapshot.getState());
+        assertEquals(12, snapshot.getTotalProcessed());
+        assertEquals(10, snapshot.getSuccessCount());
+        assertEquals(2, snapshot.getFailureCount());
+        assertEquals(12, snapshot.getTotalAttempted());
+        assertEquals(8, snapshot.getPagesIndexed());
+        assertEquals(4, snapshot.getAssetsIndexed());
+        assertEquals(5, snapshot.getCurrentBatchNumber());
+        assertEquals("/content/wknd/en/page", snapshot.getLastIndexedPath());
+        assertEquals("Indexing", snapshot.getMessage());
+        assertTrue(snapshot.getElapsedMs() >= 0);
+    }
+
+    @Test
     void postBatchWithRetry_succeedsAfter503Retries() throws Exception {
         final AtomicInteger calls = new AtomicInteger();
         final TestableExecutionService service = new TestableExecutionService(failureDir) {

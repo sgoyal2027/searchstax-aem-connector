@@ -48,6 +48,26 @@ class FullIndexProgressTest {
     }
 
     @Test
+    void getTotalAttempted_includesPathFailuresOnly() {
+        final FullIndexProgress progress =
+                new FullIndexProgress(
+                        FullIndexProgress.State.FAILED,
+                        0,
+                        0,
+                        3,
+                        0,
+                        0,
+                        0,
+                        "",
+                        0,
+                        0,
+                        "failed");
+
+        assertEquals(3, progress.getTotalAttempted());
+        assertEquals(0, progress.getTotalProcessed());
+    }
+
+    @Test
     void gettersExposeStoredCounters() {
         final FullIndexProgress progress =
                 new FullIndexProgress(

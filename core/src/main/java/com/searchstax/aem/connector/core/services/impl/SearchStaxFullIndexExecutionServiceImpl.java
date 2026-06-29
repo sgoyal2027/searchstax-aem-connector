@@ -556,7 +556,7 @@ public class SearchStaxFullIndexExecutionServiceImpl implements SearchStaxFullIn
             if (!documentSerializer.isWithinDocumentLimit(documentBytes)) {
                 final String errorMessage =
                         String.format(
-                                "Document payload %d bytes exceeds SRS %d byte limit",
+                                "Document payload %d bytes exceeds %d byte limit",
                                 documentBytes,
                                 SearchStaxIndexingLimits.MAX_DOCUMENT_BYTES);
                 LOG.warn("Skipping path {}: {}", path, errorMessage);
