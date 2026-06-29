@@ -82,4 +82,50 @@ class SearchStaxConfigurationServiceImplTest {
     void getAutoSuggestApi_returnsConfiguredValue() {
         assertEquals("/suggest", configurationService.getAutoSuggestApi());
     }
+
+    @Test
+    void getSelectAndUpdateEndpoints_returnConfiguredValues() {
+        assertEquals("/select", configurationService.getSelectEndpoint());
+        assertEquals("/update", configurationService.getUpdateEndpoint());
+    }
+
+    @Test
+    void getRelatedAndPopularSearchEndpoints_returnConfiguredValues() {
+        apiConfig.setRelatedSearchesEndpoint("/related");
+        apiConfig.setPopularSearchesEndpoint("/popular");
+
+        assertEquals("/related", configurationService.getRelatedSearchesEndpoint());
+        assertEquals("/popular", configurationService.getPopularSearchesEndpoint());
+    }
+
+    @Test
+    void getAnalyticsUrls_returnConfiguredValues() {
+        apiConfig.setAnalyticsTrackingUrl("https://track.example.com");
+        apiConfig.setAnalyticsReportingUrl("https://report.example.com");
+
+        assertEquals("https://track.example.com", configurationService.getAnalyticsTrackingUrl());
+        assertEquals("https://report.example.com", configurationService.getAnalyticsReportingUrl());
+    }
+
+    @Test
+    void getAnalyticsKeys_decryptProtectedValues() throws Exception {
+        apiConfig.setAnalyticsTrackingKey("{protected-tracking}");
+        apiConfig.setAnalyticsReportingApiKey("{protected-reporting}");
+        when(cryptoSupport.isProtected("{protected-tracking}")).thenReturn(true);
+        when(cryptoSupport.unprotect("{protected-tracking}")).thenReturn("tracking-plain");
+        when(cryptoSupport.isProtected("{protected-reporting}")).thenReturn(true);
+        when(cryptoSupport.unprotect("{protected-reporting}")).thenReturn("reporting-plain");
+
+        assertEquals("tracking-plain", configurationService.getAnalyticsTrackingKey());
+        assertEquals("reporting-plain", configurationService.getAnalyticsReportingApiKey());
+    }
+
+    @Test
+    void getGeocodingEndpoints_returnConfiguredValues() {
+        apiConfig.setForwardGeocodingEndpoint("/geo/forward");
+        apiConfig.setReverseGeocodingEndpoint("/geo/reverse");
+
+        assertEquals("/geo/forward", configurationService.getForwardGeocodingEndpoint());
+        assertEquals("/geo/reverse", configurationService.getReverseGeocodingEndpoint());
+    }
 }

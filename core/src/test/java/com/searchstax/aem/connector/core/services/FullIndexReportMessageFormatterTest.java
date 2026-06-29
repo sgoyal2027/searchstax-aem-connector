@@ -3,6 +3,7 @@ package com.searchstax.aem.connector.core.services;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class FullIndexReportMessageFormatterTest {
@@ -61,5 +62,71 @@ class FullIndexReportMessageFormatterTest {
 
         assertTrue(message.contains("per-document size limit"));
         assertTrue(message.contains("12000 bytes"));
+    }
+
+    @Test
+    void formatSuccessMessage_withoutBatchNumber_usesGenericMessage() {
+        assertEquals("Successfully indexed during full reindex", FullIndexReportMessageFormatter.formatSuccessMessage(0, 100L));
+    }
+
+    @Test
+    void formatSuccessMessage_withoutDuration_omitsMilliseconds() {
+        final String message = FullIndexReportMessageFormatter.formatSuccessMessage(4, 0L);
+
+        assertTrue(message.contains("batch 4"));
+        assertTrue(message.contains("Successfully posted to SearchStax"));
+        assertFalse(message.contains("ms"));
+    }
+
+    @Test
+    void formatSuccessMessageFromStored_keepsAlreadyFormattedMessage() {
+        final String stored = "Successfully posted to SearchStax in full reindex batch 2 (90 ms)";
+
+        assertEquals(stored, FullIndexReportMessageFormatter.formatSuccessMessageFromStored(stored, "batch-2", 90L));
+    }
+
+    @Test
+    void formatFailureMessage_pathPayloadLimit_isReadable() {
+        final String message = FullIndexReportMessageFormatter.formatFailureMessage(
+                "path-payload-limit-_content_batch",
+                413,
+                "Batch payload exceeds limit",
+                0);
+
+        assertTrue(message.contains("batch payload size limit"));
+        assertTrue(message.contains("Batch payload exceeds limit"));
+    }
+
+    @Test
+    void formatFailureMessage_pathResolver_isReadable() {
+        final String message = FullIndexReportMessageFormatter.formatFailureMessage(
+                "path-resolver-_content_missing",
+                404,
+                "",
+                0);
+
+        assertTrue(message.contains("Could not read content from the repository"));
+        assertTrue(message.contains("HTTP 404 Not Found"));
+    }
+
+    @Test
+    void formatFailureMessage_pathBuild_isReadable() {
+        final String message = FullIndexReportMessageFormatter.formatFailureMessage(
+                "path-build-_content_page",
+                0,
+                "Missing required metadata",
+                0);
+
+        assertTrue(message.contains("Could not build the search document"));
+        assertTrue(message.contains("Missing required metadata"));
+    }
+
+    @Test
+    void formatFailureMessage_truncatesVeryLongDetail() {
+        final String longDetail = "x".repeat(350);
+        final String message = FullIndexReportMessageFormatter.formatFailureMessage("batch-1", 500, longDetail, 1);
+
+        assertTrue(message.length() < longDetail.length() + 80);
+        assertTrue(message.endsWith("..."));
     }
 }

@@ -1,14 +1,42 @@
 package com.searchstax.aem.connector.core.services.impl;
 
+import com.day.cq.dam.api.Asset;
+import com.searchstax.aem.connector.core.config.InitialSetupConfigService;
+import com.searchstax.aem.connector.core.config.MetadataFieldConfigService;
+import com.searchstax.aem.connector.core.config.model.InitialSetupConfig;
+import com.searchstax.aem.connector.core.config.model.MetadataFieldMappingConfig;
+import com.searchstax.aem.connector.core.dto.response.ApiResponse;
+import org.apache.sling.api.resource.ValueMap;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+import java.util.Calendar;
+import java.util.GregorianCalendar;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.TimeZone;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
+@ExtendWith(MockitoExtension.class)
 class IndexingHelperServiceImplTest {
 
-    private final IndexingHelperServiceImpl helper = new IndexingHelperServiceImpl();
+    @InjectMocks
+    private IndexingHelperServiceImpl helper;
+
+    @Mock
+    private MetadataFieldConfigService metadataFieldConfigService;
+
+    @Mock
+    private InitialSetupConfigService initialSetupConfigService;
 
     @Test
     void cleanText_removesHtmlTagsAndNormalizesWhitespace() {
@@ -99,5 +127,75 @@ class IndexingHelperServiceImplTest {
 
         assertTrue(message.contains("Could not build the index document"));
         assertTrue(message.contains("document build failed"));
+    }
+
+    @Test
+    void isSuccess_returnsFalseForNullOrNon2xx() {
+        assertFalse(helper.isSuccess(null));
+        assertFalse(helper.isSuccess(new ApiResponse(500, "")));
+        assertTrue(helper.isSuccess(new ApiResponse(200, "{\"success\":true}")));
+        assertFalse(helper.isSuccess(new ApiResponse(200, "{\"success\":false}")));
+    }
+
+    @Test
+    void calculateDelay_usesExponentialBackoff() {
+        assertEquals(700L, helper.calculateDelay(1));
+        assertEquals(1400L, helper.calculateDelay(2));
+        assertEquals(2800L, helper.calculateDelay(3));
+    }
+
+    @Test
+    void shouldRetry_returnsTrueFor503() {
+        assertTrue(helper.shouldRetry(new ApiResponse(503, "unavailable")));
+    }
+
+    @Test
+    void resolveFieldName_appendsLanguageSuffixForTextFields() {
+        assertEquals("title_txt_en", helper.resolveFieldName("title", "text", "value", "en"));
+        assertEquals("tags_ss", helper.resolveFieldName("tags", null, new String[]{"a"}, "en"));
+        assertEquals("published_dt", helper.resolveFieldName("published", null, new GregorianCalendar(), "en"));
+    }
+
+    @Test
+    void normalizeMetadataValue_convertsCalendarToInstantString() {
+        final Calendar calendar = new GregorianCalendar(TimeZone.getTimeZone("UTC"));
+        calendar.set(2026, Calendar.JUNE, 29, 12, 0, 0);
+
+        final Object normalized = helper.normalizeMetadataValue(calendar);
+
+        assertTrue(normalized.toString().contains("2026"));
+    }
+
+    @Test
+    void addConfiguredMetadataFields_mapsEnabledProperties() {
+        final MetadataFieldMappingConfig mapping = new MetadataFieldMappingConfig();
+        mapping.setEnabled(true);
+        mapping.setAemField("jcr:title");
+        mapping.setSearchStaxField("title_txt_en");
+        when(metadataFieldConfigService.getMetadataFieldMappings()).thenReturn(List.of(mapping));
+
+        final ValueMap valueMap = mock(ValueMap.class);
+        when(valueMap.get("jcr:title")).thenReturn("Page title");
+
+        final Map<String, Object> document = new HashMap<>();
+        helper.addConfiguredMetadataFields(document, valueMap);
+
+        assertEquals("Page title", document.get("title_txt_en"));
+    }
+
+    @Test
+    void isSupportedAsset_honorsAllowedFileExtensions() {
+        final InitialSetupConfig config = new InitialSetupConfig();
+        config.setAllowedFiles(new String[]{"pdf", "jpg"});
+        when(initialSetupConfigService.getConfiguration()).thenReturn(config);
+
+        final Asset pdfAsset = mock(Asset.class);
+        when(pdfAsset.getName()).thenReturn("brochure.pdf");
+
+        final Asset txtAsset = mock(Asset.class);
+        when(txtAsset.getName()).thenReturn("notes.txt");
+
+        assertTrue(helper.isSupportedAsset(pdfAsset));
+        assertFalse(helper.isSupportedAsset(txtAsset));
     }
 }

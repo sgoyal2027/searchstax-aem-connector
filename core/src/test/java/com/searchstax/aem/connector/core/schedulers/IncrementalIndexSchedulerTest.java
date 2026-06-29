@@ -141,4 +141,38 @@ class IncrementalIndexSchedulerTest {
 
         verify(resolver).close();
     }
+
+    @Test
+    void testRun_skipsWhenPreviousExecutionStillRunning() throws Exception {
+        final Field runningField = IncrementalIndexScheduler.class.getDeclaredField("running");
+        runningField.setAccessible(true);
+        @SuppressWarnings("unchecked")
+        final java.util.concurrent.atomic.AtomicBoolean running =
+                (java.util.concurrent.atomic.AtomicBoolean) runningField.get(schedulerService);
+        running.set(true);
+
+        schedulerService.run();
+
+        verifyNoInteractions(queueService);
+    }
+
+    @Test
+    void testRun_stopsWhenQueueMakesNoProgress() throws Exception {
+        final IndexRequest request = mock(IndexRequest.class);
+
+        when(queueService.size())
+                .thenReturn(1)
+                .thenReturn(1)
+                .thenReturn(1)
+                .thenReturn(1);
+
+        when(queueService.getBatch(10)).thenReturn(List.of(request));
+        when(resolverUtil.getServiceResolver()).thenReturn(resolver);
+
+        schedulerService.run();
+
+        verify(incrementalIndexingService).processBatch(eq(resolver), anyList());
+        verify(queueService, times(4)).size();
+        verify(resolver).close();
+    }
 }

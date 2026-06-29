@@ -50,4 +50,36 @@ class SearchIndexJobConsumerTest {
 
         verify(queueService, never()).addRequest(any(), any(), any());
     }
+
+    @Test
+    void process_nullPath_cancelsJob() {
+        when(job.getProperty("path", String.class)).thenReturn(null);
+        when(job.getProperty("actionType", String.class)).thenReturn("ACTIVATE");
+
+        assertEquals(JobResult.CANCEL, consumer.process(job));
+
+        verify(queueService, never()).addRequest(any(), any(), any());
+    }
+
+    @Test
+    void process_deleteAction_enqueuesRequest() {
+        when(job.getProperty("path", String.class)).thenReturn("/content/wknd/en/page");
+        when(job.getProperty("actionType", String.class)).thenReturn("DELETE");
+        when(job.getId()).thenReturn("job-delete");
+
+        assertEquals(JobResult.OK, consumer.process(job));
+
+        verify(queueService).addRequest("/content/wknd/en/page", ReplicationActionType.DELETE, "job-delete");
+    }
+
+    @Test
+    void process_deactivateAction_enqueuesRequest() {
+        when(job.getProperty("path", String.class)).thenReturn("/content/wknd/en/page");
+        when(job.getProperty("actionType", String.class)).thenReturn("DEACTIVATE");
+        when(job.getId()).thenReturn("job-deactivate");
+
+        assertEquals(JobResult.OK, consumer.process(job));
+
+        verify(queueService).addRequest("/content/wknd/en/page", ReplicationActionType.DEACTIVATE, "job-deactivate");
+    }
 }

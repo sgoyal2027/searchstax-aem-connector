@@ -1,5 +1,7 @@
 package com.searchstax.aem.connector.core.config.wizard;
 
+import com.adobe.granite.crypto.CryptoException;
+import com.adobe.granite.crypto.CryptoSupport;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
 import org.apache.sling.api.resource.ValueMap;
@@ -54,6 +56,9 @@ class SearchStaxWizardApiOsgiConfigurationTest {
     @Mock
     private Configuration fullIndexConfiguration;
 
+    @Mock
+    private CryptoSupport cryptoSupport;
+
     private SearchStaxWizardOsgiPersistServlet servlet;
     private SearchStaxWizardResourceProvider resourceProvider;
 
@@ -61,6 +66,7 @@ class SearchStaxWizardApiOsgiConfigurationTest {
     void setUp() throws Exception {
         servlet = new SearchStaxWizardOsgiPersistServlet();
         injectField(servlet, "configurationAdmin", configurationAdmin);
+        injectField(servlet, "cryptoSupport", cryptoSupport);
 
         resourceProvider = new SearchStaxWizardResourceProvider();
         injectField(resourceProvider, "configurationAdmin", configurationAdmin);
@@ -243,6 +249,66 @@ class SearchStaxWizardApiOsgiConfigurationTest {
 
         assertEquals("prod", valueMap.get("activeEnvironment", String.class));
         assertEquals("/content/prod", valueMap.get("includePaths", String[].class)[0]);
+    }
+
+    @Test
+    void persistApiConfiguration_encryptsPostedToken() throws Exception {
+        when(configurationAdmin.getConfiguration(SearchStaxOsgiConfigurationPids.API_CONFIGURATION_PID))
+                .thenReturn(apiConfiguration);
+        when(apiConfiguration.getProperties()).thenReturn(new Hashtable<>());
+        when(cryptoSupport.protect("plain-token")).thenReturn("{protected-token}");
+
+        context.request().setServletPath(SearchStaxWizardBindingPaths.SERVLET_API_SAVE);
+        context.request().setMethod("POST");
+        context.request().addRequestParameter("endpointUrl", "https://api.example.com");
+        context.request().addRequestParameter("apiToken", "plain-token");
+
+        servlet.doPost(context.request(), context.response());
+
+        @SuppressWarnings("rawtypes")
+        final ArgumentCaptor<Dictionary> captor = ArgumentCaptor.forClass(Dictionary.class);
+        verify(apiConfiguration).update(captor.capture());
+        assertEquals("{protected-token}", captor.getValue().get("apiToken"));
+    }
+
+    @Test
+    void persistApiConfiguration_preservesExistingTokenWhenPostedBlank() throws Exception {
+        final Hashtable<String, Object> existing = new Hashtable<>();
+        existing.put("apiToken", "{stored-token}");
+        when(configurationAdmin.getConfiguration(SearchStaxOsgiConfigurationPids.API_CONFIGURATION_PID))
+                .thenReturn(apiConfiguration);
+        when(apiConfiguration.getProperties()).thenReturn(existing);
+
+        context.request().setServletPath(SearchStaxWizardBindingPaths.SERVLET_API_SAVE);
+        context.request().setMethod("POST");
+        context.request().addRequestParameter("endpointUrl", "https://api.example.com");
+
+        servlet.doPost(context.request(), context.response());
+
+        @SuppressWarnings("rawtypes")
+        final ArgumentCaptor<Dictionary> captor = ArgumentCaptor.forClass(Dictionary.class);
+        verify(apiConfiguration).update(captor.capture());
+        assertEquals("{stored-token}", captor.getValue().get("apiToken"));
+    }
+
+    @Test
+    void persistApiConfiguration_storesPlaintextWhenEncryptionFails() throws Exception {
+        when(configurationAdmin.getConfiguration(SearchStaxOsgiConfigurationPids.API_CONFIGURATION_PID))
+                .thenReturn(apiConfiguration);
+        when(apiConfiguration.getProperties()).thenReturn(new Hashtable<>());
+        when(cryptoSupport.protect("plain-token")).thenThrow(new CryptoException("encrypt failed"));
+
+        context.request().setServletPath(SearchStaxWizardBindingPaths.SERVLET_API_SAVE);
+        context.request().setMethod("POST");
+        context.request().addRequestParameter("endpointUrl", "https://api.example.com");
+        context.request().addRequestParameter("apiToken", "plain-token");
+
+        servlet.doPost(context.request(), context.response());
+
+        @SuppressWarnings("rawtypes")
+        final ArgumentCaptor<Dictionary> captor = ArgumentCaptor.forClass(Dictionary.class);
+        verify(apiConfiguration).update(captor.capture());
+        assertEquals("plain-token", captor.getValue().get("apiToken"));
     }
 
     private ValueMap invokeBuildFullIndexValueMap(final ResourceResolver resolver) throws Exception {

@@ -14,16 +14,22 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.osgi.service.event.Event;
 
 import java.util.Dictionary;
 import java.util.Hashtable;
 import java.util.Set;
 
+import static org.mockito.ArgumentMatchers.anyMap;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(AemContextExtension.class)
 @ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 class PublishListenerTest {
 
     @InjectMocks
@@ -136,5 +142,84 @@ class PublishListenerTest {
         listener.handleEvent(event);
 
         verifyNoInteractions(jobManager);
+    }
+
+    @Test
+    void handleEvent_queuesJobForValidActivateOnAuthor() {
+        when(slingSettings.getRunModes()).thenReturn(Set.of("author"));
+        when(initialSetupConfigService.getConfiguration()).thenReturn(config);
+        when(jobManager.addJob(eq("searchstaxconnector/incremental-index"), anyMap())).thenReturn(job);
+
+        listener.handleEvent(createReplicationEvent("/content/wknd/en/page", ReplicationActionType.ACTIVATE));
+
+        verify(jobManager).addJob(eq("searchstaxconnector/incremental-index"), argThat(props ->
+                "/content/wknd/en/page".equals(props.get("path"))
+                        && "ACTIVATE".equals(props.get("actionType"))
+                        && props.get("eventTime") instanceof Long));
+    }
+
+    @Test
+    void handleEvent_skipsWhenConnectorDisabled() {
+        config.setEnableConnector(false);
+        when(slingSettings.getRunModes()).thenReturn(Set.of("author"));
+        when(initialSetupConfigService.getConfiguration()).thenReturn(config);
+
+        listener.handleEvent(createReplicationEvent("/content/wknd/en/page", ReplicationActionType.ACTIVATE));
+
+        verifyNoInteractions(jobManager);
+    }
+
+    @Test
+    void handleEvent_skipsPathOutsideRootPaths() {
+        config.setRootPaths(new String[]{"/content/wknd"});
+        when(slingSettings.getRunModes()).thenReturn(Set.of("author"));
+        when(initialSetupConfigService.getConfiguration()).thenReturn(config);
+
+        listener.handleEvent(createReplicationEvent("/content/other/en/page", ReplicationActionType.ACTIVATE));
+
+        verifyNoInteractions(jobManager);
+    }
+
+    @Test
+    void handleEvent_skipsExcludedPath() {
+        config.setExcludePaths(new String[]{"/content/wknd/private"});
+        when(slingSettings.getRunModes()).thenReturn(Set.of("author"));
+        when(initialSetupConfigService.getConfiguration()).thenReturn(config);
+
+        listener.handleEvent(createReplicationEvent("/content/wknd/private/page", ReplicationActionType.ACTIVATE));
+
+        verifyNoInteractions(jobManager);
+    }
+
+    @Test
+    void handleEvent_skipsTagReplication() {
+        when(slingSettings.getRunModes()).thenReturn(Set.of("author"));
+        when(initialSetupConfigService.getConfiguration()).thenReturn(config);
+
+        listener.handleEvent(createReplicationEvent("/content/cq:tags/wknd", ReplicationActionType.ACTIVATE));
+
+        verifyNoInteractions(jobManager);
+    }
+
+    @Test
+    void handleEvent_skipsUnsupportedPathPrefix() {
+        when(slingSettings.getRunModes()).thenReturn(Set.of("author"));
+        when(initialSetupConfigService.getConfiguration()).thenReturn(config);
+
+        listener.handleEvent(createReplicationEvent("/etc/designs/wknd", ReplicationActionType.ACTIVATE));
+
+        verifyNoInteractions(jobManager);
+    }
+
+    @Test
+    void handleEvent_acceptsDamPath() {
+        when(slingSettings.getRunModes()).thenReturn(Set.of("author"));
+        when(initialSetupConfigService.getConfiguration()).thenReturn(config);
+        when(jobManager.addJob(eq("searchstaxconnector/incremental-index"), anyMap())).thenReturn(job);
+
+        listener.handleEvent(createReplicationEvent("/content/dam/wknd/image.jpg", ReplicationActionType.DELETE));
+
+        verify(jobManager).addJob(eq("searchstaxconnector/incremental-index"), argThat(props ->
+                "DELETE".equals(props.get("actionType"))));
     }
 }

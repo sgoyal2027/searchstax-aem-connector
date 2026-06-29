@@ -5,6 +5,7 @@ import com.searchstax.aem.connector.core.constants.SearchStaxIndexingLimits;
 import com.searchstax.aem.connector.core.dto.request.IndexRequest;
 import com.searchstax.aem.connector.core.dto.response.ApiResponse;
 import com.searchstax.aem.connector.core.models.PayloadBatch;
+import com.searchstax.aem.connector.core.services.AssetDocumentBuilderService;
 import com.searchstax.aem.connector.core.services.DocumentValidationService;
 import com.searchstax.aem.connector.core.services.FailedRequestService;
 import com.searchstax.aem.connector.core.services.IndexFailureNotificationService;
@@ -43,6 +44,9 @@ class IncrementalIndexingServiceImplTest {
 
     @Mock
     private PageDocumentBuilderService pageDocumentBuilderService;
+
+    @Mock
+    private AssetDocumentBuilderService assetDocumentBuilderService;
 
     @Mock
     private DocumentValidationService documentValidationService;
@@ -221,6 +225,88 @@ class IncrementalIndexingServiceImplTest {
                 eq("job-retry"),
                 eq(0L),
                 isNull());
+    }
+
+    @Test
+    void processBatch_usesAssetBuilderForDamPaths() throws Exception {
+        final IndexRequest request = activateRequest("/content/dam/wknd/en/image.jpg", "job-asset");
+        when(assetDocumentBuilderService.buildDocument(resourceResolver, request.getPath()))
+                .thenReturn(Map.of("language_s", "en", "id", request.getPath(), "title_txt_en", "Asset"));
+        when(documentValidationService.validateMandatoryFields(any(), eq("en"))).thenReturn(Optional.empty());
+        final PayloadBatch payloadBatch = payloadBatch(request, "{}");
+        when(payLoadBatchService.buildIndexBatches(any(), any())).thenReturn(List.of(payloadBatch));
+        when(searchstaxClientService.indexDocument(anyString(), eq(request.getPath())))
+                .thenReturn(new ApiResponse(200, "ok"));
+        when(indexingHelperService.isSuccess(any())).thenReturn(true);
+
+        incrementalIndexingService.processBatch(resourceResolver, List.of(request));
+
+        verify(assetDocumentBuilderService).buildDocument(resourceResolver, request.getPath());
+        verify(pageDocumentBuilderService, never()).buildDocument(any(), anyString());
+        verify(queueService).removeProcessed(List.of(request));
+    }
+
+    @Test
+    void processBatch_skipsNullDocumentAsUnsupported() throws Exception {
+        final IndexRequest request = activateRequest("/content/wknd/en/page", "job-null");
+        when(pageDocumentBuilderService.buildDocument(resourceResolver, request.getPath())).thenReturn(null);
+
+        incrementalIndexingService.processBatch(resourceResolver, List.of(request));
+
+        verify(queueService).removeProcessed(List.of(request));
+        verify(indexingAuditService).recordEvent(
+                eq(request.getPath()),
+                eq("ACTIVATE"),
+                eq(IndexingAuditService.STATUS_SKIPPED),
+                eq("Unsupported or missing document"),
+                eq("job-null"),
+                eq(0L),
+                isNull());
+    }
+
+    @Test
+    void processBatch_deleteSuccessRemovesFromQueue() throws Exception {
+        final IndexRequest request = new IndexRequest(
+                "/content/wknd/en/page", ReplicationActionType.DELETE, System.currentTimeMillis());
+        request.setCorrelationId("job-delete");
+        final PayloadBatch deleteBatch = payloadBatch(request, "{\"delete\":true}");
+        when(payLoadBatchService.buildDeleteBatches(any(), any())).thenReturn(List.of(deleteBatch));
+        when(searchstaxClientService.deleteDocument(anyString(), eq(request.getPath())))
+                .thenReturn(new ApiResponse(200, "ok"));
+        when(indexingHelperService.isSuccess(any())).thenReturn(true);
+
+        incrementalIndexingService.processBatch(resourceResolver, List.of(request));
+
+        verify(queueService).removeProcessed(List.of(request));
+        verify(indexingAuditService).recordEvent(
+                eq(request.getPath()),
+                eq("DELETE"),
+                eq(IndexingAuditService.STATUS_SUCCESS),
+                eq("Deleted"),
+                eq("job-delete"),
+                any(Long.class),
+                isNull());
+    }
+
+    @Test
+    void processBatch_deletePermanentFailure_savesFailedRequest() throws Exception {
+        final IndexRequest request = new IndexRequest(
+                "/content/wknd/en/page", ReplicationActionType.DEACTIVATE, System.currentTimeMillis());
+        request.setCorrelationId("job-deactivate");
+        final PayloadBatch deleteBatch = payloadBatch(request, "{\"delete\":true}");
+        final ApiResponse apiResponse = new ApiResponse(404, "not found");
+        when(payLoadBatchService.buildDeleteBatches(any(), any())).thenReturn(List.of(deleteBatch));
+        when(searchstaxClientService.deleteDocument(anyString(), eq(request.getPath()))).thenReturn(apiResponse);
+        when(indexingHelperService.isSuccess(any())).thenReturn(false);
+        when(indexingHelperService.isPlanLimitExceeded(any())).thenReturn(false);
+        when(indexingHelperService.isPermanentFailure(any())).thenReturn(true);
+        when(indexingHelperService.formatFailureMessage(eq("DELETE_PERMANENT_FAILURE"), eq(apiResponse), isNull()))
+                .thenReturn("delete permanent");
+
+        incrementalIndexingService.processBatch(resourceResolver, List.of(request));
+
+        verify(failedRequestService).saveFailedRequest(request, "DELETE_PERMANENT_FAILURE", apiResponse);
+        verify(queueService).removeProcessed(List.of(request));
     }
 
     private static IndexRequest activateRequest(final String path, final String correlationId) {

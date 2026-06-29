@@ -1,10 +1,16 @@
 package com.searchstax.aem.connector.core.services.impl;
 
+import com.day.cq.replication.ReplicationActionType;
 import com.searchstax.aem.connector.core.services.IndexingAuditService;
+import com.searchstax.aem.connector.core.services.IncrementalQueueService;
+import com.searchstax.aem.connector.core.testcontext.AppAemContext;
 import com.searchstax.aem.connector.core.utils.ResolverUtil;
+import io.wcm.testing.mock.aem.junit5.AemContext;
+import io.wcm.testing.mock.aem.junit5.AemContextExtension;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
 import org.apache.sling.api.resource.ValueMap;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -19,13 +25,21 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-@ExtendWith(MockitoExtension.class)
+@ExtendWith({AemContextExtension.class, MockitoExtension.class})
 class IndexingAuditServiceImplTest {
+
+    private static final String FAILED_ROOT = "/var/searchstaxconnector/incremental-index/failed";
+
+    private final AemContext context = AppAemContext.newAemContext();
 
     @Mock
     private ResolverUtil resolverUtil;
+
+    @Mock
+    private IncrementalQueueService incrementalQueueService;
 
     @Mock
     private ResourceResolver resourceResolver;
@@ -35,6 +49,11 @@ class IndexingAuditServiceImplTest {
 
     @InjectMocks
     private IndexingAuditServiceImpl indexingAuditService;
+
+    @BeforeEach
+    void bindResolver() throws Exception {
+        when(resolverUtil.getServiceResolver()).thenReturn(context.resourceResolver());
+    }
 
     @Test
     void listEvents_excludesQueuedAndFiltersByActionAndStatus() throws Exception {
@@ -97,6 +116,62 @@ class IndexingAuditServiceImplTest {
         final var lastPage = indexingAuditService.listEventsPaged("ALL", "ALL", true, 2, 2);
         assertEquals(3, lastPage.getTotalCount());
         assertEquals(1, lastPage.getEvents().size());
+    }
+
+    @Test
+    void recordEvent_persistsAuditNode() throws Exception {
+        when(resolverUtil.getServiceResolver()).thenReturn(context.resourceResolver());
+
+        indexingAuditService.recordEvent(
+                "/content/wknd/en/page",
+                "ACTIVATE",
+                IndexingAuditService.STATUS_SUCCESS,
+                "Indexed",
+                "corr-1",
+                250L,
+                "batch-1");
+
+        final Resource auditRoot = context.resourceResolver().getResource(IndexingAuditServiceImpl.AUDIT_ROOT);
+        assertEquals(1, countChildren(auditRoot));
+        final ValueMap valueMap = auditRoot.getChildren().iterator().next().getValueMap();
+        assertEquals("/content/wknd/en/page", valueMap.get("path", String.class));
+        assertEquals("corr-1", valueMap.get("correlationId", String.class));
+        assertEquals(250L, valueMap.get("durationMs", Long.class));
+    }
+
+    @Test
+    void reprocessFailedPath_removesFailedRecordAndRequeues() throws Exception {
+        when(resolverUtil.getServiceResolver()).thenReturn(context.resourceResolver());
+        context.create().resource(FAILED_ROOT, "jcr:primaryType", "sling:Folder");
+        context.create().resource(
+                FAILED_ROOT + "/failed-1",
+                "path", "/content/wknd/en/page",
+                "actionType", "DELETE");
+
+        indexingAuditService.reprocessFailedPath("/content/wknd/en/page");
+
+        assertEquals(0, countChildren(context.resourceResolver().getResource(FAILED_ROOT)));
+        verify(incrementalQueueService).addRequest("/content/wknd/en/page", ReplicationActionType.DELETE);
+    }
+
+    @Test
+    void clearAllEvents_removesIncrementalAuditNodes() throws Exception {
+        when(resolverUtil.getServiceResolver()).thenReturn(context.resourceResolver());
+        context.create().resource(IndexingAuditServiceImpl.AUDIT_ROOT, "jcr:primaryType", "sling:Folder");
+        context.create().resource(IndexingAuditServiceImpl.AUDIT_ROOT + "/event-1", "path", "/content/a");
+
+        assertEquals(1, indexingAuditService.clearAllEvents());
+        assertEquals(0, countChildren(context.resourceResolver().getResource(IndexingAuditServiceImpl.AUDIT_ROOT)));
+    }
+
+    private static int countChildren(final Resource resource) {
+        int count = 0;
+        if (resource != null) {
+            for (final Resource ignored : resource.getChildren()) {
+                count++;
+            }
+        }
+        return count;
     }
 
     private static Resource auditEvent(final String action, final String status, final String message) {

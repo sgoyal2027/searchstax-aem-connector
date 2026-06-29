@@ -1,10 +1,14 @@
 package com.searchstax.aem.connector.core.services.impl;
 
 import com.searchstax.aem.connector.core.services.FullIndexAuditService;
+import com.searchstax.aem.connector.core.testcontext.AppAemContext;
 import com.searchstax.aem.connector.core.utils.ResolverUtil;
+import io.wcm.testing.mock.aem.junit5.AemContext;
+import io.wcm.testing.mock.aem.junit5.AemContextExtension;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
 import org.apache.sling.api.resource.ValueMap;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -17,34 +21,45 @@ import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.lenient;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-@ExtendWith(MockitoExtension.class)
+@ExtendWith({AemContextExtension.class, MockitoExtension.class})
 class FullIndexAuditServiceImplTest {
+
+    private final AemContext context = AppAemContext.newAemContext();
 
     @Mock
     private ResolverUtil resolverUtil;
 
-    @Mock
-    private ResourceResolver resourceResolver;
-
-    @Mock
-    private Resource auditRoot;
-
     @InjectMocks
     private FullIndexAuditServiceImpl fullIndexAuditService;
 
+    @BeforeEach
+    void bindResolver() throws Exception {
+        when(resolverUtil.getServiceResolver()).thenReturn(context.resourceResolver());
+    }
+
     @Test
     void listEventsForReport_filtersByStatus() throws Exception {
-        when(resolverUtil.getServiceResolver()).thenReturn(resourceResolver);
-        when(resourceResolver.getResource(FullIndexAuditServiceImpl.AUDIT_ROOT)).thenReturn(auditRoot);
-
-        final List<Resource> auditEvents = List.of(
-                auditEvent(FullIndexAuditService.STATUS_SUCCESS, "/content/a"),
-                auditEvent("FAILURE", "/content/b"));
-        when(auditRoot.getChildren()).thenReturn(auditEvents);
+        context.create().resource(FullIndexAuditServiceImpl.AUDIT_ROOT, "jcr:primaryType", "sling:Folder");
+        context.create().resource(
+                FullIndexAuditServiceImpl.AUDIT_ROOT + "/event-success",
+                "path", "/content/a",
+                "status", FullIndexAuditService.STATUS_SUCCESS,
+                "action", FullIndexAuditService.ACTION_FULL_REINDEX,
+                "message", "Indexed in batch 1",
+                "batchId", "batch-1",
+                "eventKind", "BATCH",
+                "timestamp", Calendar.getInstance());
+        context.create().resource(
+                FullIndexAuditServiceImpl.AUDIT_ROOT + "/event-failure",
+                "path", "/content/b",
+                "status", "FAILURE",
+                "action", FullIndexAuditService.ACTION_FULL_REINDEX,
+                "message", "Failed",
+                "batchId", "batch-2",
+                "eventKind", "BATCH",
+                "timestamp", Calendar.getInstance());
 
         final List<Map<String, Object>> successes =
                 fullIndexAuditService.listEventsForReport(FullIndexAuditService.STATUS_SUCCESS, 50, 24);
@@ -55,33 +70,83 @@ class FullIndexAuditServiceImplTest {
     }
 
     @Test
+    void recordSuccessBatch_persistsAuditNodes() {
+        fullIndexAuditService.recordSuccessBatch(List.of("/content/wknd/en/page", "/content/wknd/en/about"), 2, 500L);
+
+        final Resource auditRoot = context.resourceResolver().getResource(FullIndexAuditServiceImpl.AUDIT_ROOT);
+        int childCount = 0;
+        for (final Resource ignored : auditRoot.getChildren()) {
+            childCount++;
+        }
+        assertEquals(2, childCount);
+    }
+
+    @Test
+    void clearAllEvents_removesAuditChildren() {
+        context.create().resource(FullIndexAuditServiceImpl.AUDIT_ROOT, "jcr:primaryType", "sling:Folder");
+        context.create().resource(FullIndexAuditServiceImpl.AUDIT_ROOT + "/event-1", "path", "/content/a");
+        context.create().resource(FullIndexAuditServiceImpl.AUDIT_ROOT + "/event-2", "path", "/content/b");
+
+        final int removed = fullIndexAuditService.clearAllEvents();
+
+        assertEquals(2, removed);
+        assertTrue(context.resourceResolver().getResource(FullIndexAuditServiceImpl.AUDIT_ROOT).getChildren().iterator().hasNext() == false);
+    }
+
+    @Test
+    void purgeOlderThanHours_removesStaleEvents() {
+        context.create().resource(FullIndexAuditServiceImpl.AUDIT_ROOT, "jcr:primaryType", "sling:Folder");
+        final Calendar stale = Calendar.getInstance();
+        stale.add(Calendar.HOUR, -48);
+        final Calendar recent = Calendar.getInstance();
+        context.create().resource(
+                FullIndexAuditServiceImpl.AUDIT_ROOT + "/event-stale",
+                "path", "/content/old",
+                "timestamp", stale);
+        context.create().resource(
+                FullIndexAuditServiceImpl.AUDIT_ROOT + "/event-recent",
+                "path", "/content/new",
+                "timestamp", recent);
+
+        fullIndexAuditService.purgeOlderThanHours(24);
+
+        assertEquals(
+                "/content/new",
+                context.resourceResolver()
+                        .getResource(FullIndexAuditServiceImpl.AUDIT_ROOT)
+                        .getChildren()
+                        .iterator()
+                        .next()
+                        .getValueMap()
+                        .get("path", String.class));
+    }
+
+    @Test
     void listEventsForReport_returnsAllWhenStatusFilterIsAll() throws Exception {
-        when(resolverUtil.getServiceResolver()).thenReturn(resourceResolver);
-        when(resourceResolver.getResource(FullIndexAuditServiceImpl.AUDIT_ROOT)).thenReturn(auditRoot);
-        final Resource first = auditEvent(FullIndexAuditService.STATUS_SUCCESS, "/content/a");
-        final Resource second = auditEvent(FullIndexAuditService.STATUS_SUCCESS, "/content/b");
-        when(auditRoot.getChildren()).thenReturn(List.of(first, second));
+        when(resolverUtil.getServiceResolver()).thenReturn(context.resourceResolver());
+        context.create().resource(FullIndexAuditServiceImpl.AUDIT_ROOT, "jcr:primaryType", "sling:Folder");
+        context.create().resource(
+                FullIndexAuditServiceImpl.AUDIT_ROOT + "/event-a",
+                "path", "/content/a",
+                "status", FullIndexAuditService.STATUS_SUCCESS,
+                "action", FullIndexAuditService.ACTION_FULL_REINDEX,
+                "message", "Indexed",
+                "batchId", "batch-1",
+                "eventKind", "BATCH",
+                "timestamp", Calendar.getInstance());
+        context.create().resource(
+                FullIndexAuditServiceImpl.AUDIT_ROOT + "/event-b",
+                "path", "/content/b",
+                "status", FullIndexAuditService.STATUS_SUCCESS,
+                "action", FullIndexAuditService.ACTION_FULL_REINDEX,
+                "message", "Indexed",
+                "batchId", "batch-2",
+                "eventKind", "BATCH",
+                "timestamp", Calendar.getInstance());
 
         final List<Map<String, Object>> events = fullIndexAuditService.listEventsForReport("ALL", 50, 24);
 
         assertEquals(2, events.size());
         assertTrue(events.stream().allMatch(event -> FullIndexAuditService.STATUS_SUCCESS.equals(event.get("status"))));
-    }
-
-    private static Resource auditEvent(final String status, final String path) {
-        final Resource resource = mock(Resource.class);
-        final ValueMap valueMap = mock(ValueMap.class);
-        final Calendar timestamp = Calendar.getInstance();
-
-        lenient().when(resource.getValueMap()).thenReturn(valueMap);
-        lenient().when(valueMap.get("timestamp", Calendar.class)).thenReturn(timestamp);
-        lenient().when(valueMap.get("status", "")).thenReturn(status);
-        lenient().when(valueMap.get("path", "")).thenReturn(path);
-        lenient().when(valueMap.get("action", FullIndexAuditService.ACTION_FULL_REINDEX))
-                .thenReturn(FullIndexAuditService.ACTION_FULL_REINDEX);
-        lenient().when(valueMap.get("message", "")).thenReturn("Indexed in batch 1");
-        lenient().when(valueMap.get("batchId", "")).thenReturn("batch-1");
-        lenient().when(valueMap.get("eventKind", "BATCH")).thenReturn("BATCH");
-        return resource;
     }
 }
