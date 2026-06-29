@@ -55,6 +55,45 @@ class ProtectedValueCodecTest {
         assertFalse(codec.looksEncrypted("short"));
     }
 
+    @Test
+    void unprotectIfNeeded_returnsEmptyForNullOrBlank() {
+        assertEquals("", codec.unprotectIfNeeded(null));
+        assertEquals("", codec.unprotectIfNeeded("   "));
+    }
+
+    @Test
+    void unprotectIfNeeded_returnsTrimmedValueWhenCryptoSupportUnavailable() {
+        assertEquals("plain-token", codec.unprotectIfNeeded("  plain-token  "));
+    }
+
+    @Test
+    void unprotectIfNeeded_attemptsUnprotectForBlobWhenNotMarkedProtected() throws CryptoException {
+        injectCryptoSupport();
+        final String blob = "{" + "x".repeat(50) + "}";
+
+        when(cryptoSupport.isProtected(blob)).thenReturn(false);
+        when(cryptoSupport.unprotect(blob)).thenReturn("decrypted-blob");
+
+        assertEquals("decrypted-blob", codec.unprotectIfNeeded(blob));
+    }
+
+    @Test
+    void unprotectIfNeeded_returnsTrimmedPlaintextWhenDecryptFails() throws CryptoException {
+        injectCryptoSupport();
+        final String blob = "{" + "x".repeat(50) + "}";
+
+        when(cryptoSupport.isProtected(blob)).thenReturn(true);
+        when(cryptoSupport.unprotect(blob)).thenThrow(new CryptoException("failed"));
+
+        assertEquals(blob, codec.unprotectIfNeeded(blob));
+    }
+
+    @Test
+    void looksEncrypted_returnsFalseForBlankValue() {
+        assertFalse(codec.looksEncrypted(null));
+        assertFalse(codec.looksEncrypted(" "));
+    }
+
     private void injectCryptoSupport() {
         try {
             final var field = ProtectedValueCodec.class.getDeclaredField("cryptoSupport");

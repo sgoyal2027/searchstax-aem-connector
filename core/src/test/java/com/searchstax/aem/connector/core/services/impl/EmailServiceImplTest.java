@@ -97,6 +97,46 @@ class EmailServiceImplTest {
         assertEquals("SMTP host and port are required.", emailService.sendEmailOrError(emailRequest()));
     }
 
+    @Test
+    void sendEmailOrError_returnsErrorWhenSmtpConnectionFails() {
+        final EmailConfig config = validConfig();
+        when(protectedValueCodec.unprotectIfNeeded(null)).thenReturn("");
+
+        final String error = emailService.sendEmailOrError(emailRequest(), config);
+
+        assertFalse(error == null || error.isEmpty());
+    }
+
+    @Test
+    void sendEmailOrError_returnsErrorWhenAllRecipientsBlank() {
+        final EmailRequest request = new EmailRequest();
+        request.setRecipients(new String[]{"  ", ""});
+        request.setSubject("Subject");
+        request.setBody("Body");
+
+        final String error = emailService.sendEmailOrError(request, validConfig());
+
+        assertFalse(error == null || error.isEmpty());
+    }
+
+    @Test
+    void sendEmail_returnsTrueWhenUnderlyingSendSucceeds() {
+        final EmailServiceImpl successfulSender =
+                new EmailServiceImpl() {
+                    @Override
+                    public String sendEmailOrError(final EmailRequest request) {
+                        return null;
+                    }
+
+                    @Override
+                    public String sendEmailOrError(final EmailRequest request, final EmailConfig config) {
+                        return null;
+                    }
+                };
+
+        assertTrue(successfulSender.sendEmail(emailRequest()));
+    }
+
     private static EmailRequest emailRequest() {
         final EmailRequest request = new EmailRequest();
         request.setRecipients(new String[]{"ops@example.com"});

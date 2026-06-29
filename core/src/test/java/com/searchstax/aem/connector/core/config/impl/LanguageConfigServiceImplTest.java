@@ -62,6 +62,17 @@ class LanguageConfigServiceImplTest {
         assertEquals("en", languageConfigService.resolveLanguageFromPath("/content/dam/wknd/english/report.pdf"));
     }
 
+    @Test
+    void mapToSearchStaxLanguage_returnsEnForBlankInput() {
+        assertEquals("en", languageConfigService.mapToSearchStaxLanguage(null));
+        assertEquals("en", languageConfigService.mapToSearchStaxLanguage("  "));
+    }
+
+    @Test
+    void resolveLanguageFromPath_resolvesIso639TwoLanguageCodeInPath() {
+        assertEquals("en", languageConfigService.resolveLanguageFromPath("/content/dam/wknd/eng/report.pdf"));
+    }
+
     private static LanguageMappingConfig enabledMapping(
             final String aemLanguage,
             final String customAemLanguage,

@@ -122,4 +122,71 @@ class MetadataFieldConfigServiceImplTest {
         assertTrue(
                 service.getMetadataFieldMappings().isEmpty());
     }
+
+    @Test
+    void refreshMappings_reloadsWhenJsonChanges() throws Exception {
+        when(resolverUtil.getServiceResolver()).thenReturn(resolver);
+        when(resolver.getResource("/conf/searchstaxconnector/settings/metadatafieldmapping"))
+                .thenReturn(resource);
+        when(resource.getValueMap()).thenReturn(valueMap);
+        when(valueMap.get("metadataMappings", String.class))
+                .thenReturn("[{\"aemField\":\"dc:title\",\"searchStaxField\":\"title_txt\"}]")
+                .thenReturn(
+                        "[{\"aemField\":\"dc:description\",\"searchStaxField\":\"description_txt\"},"
+                                + "{\"aemField\":\"dc:title\",\"searchStaxField\":\"title_txt\"}]");
+
+        service.activate();
+        assertEquals(1, service.getMetadataFieldMappings().size());
+
+        service.refreshMappings();
+
+        assertEquals(2, service.getMetadataFieldMappings().size());
+        assertEquals("dc:description", service.getMetadataFieldMappings().get(0).getAemField());
+    }
+
+    @Test
+    void loadMappings_returnsEmptyWhenConfigResourceMissing() throws Exception {
+        when(resolverUtil.getServiceResolver()).thenReturn(resolver);
+        when(resolver.getResource("/conf/searchstaxconnector/settings/metadatafieldmapping"))
+                .thenReturn(null);
+
+        service.activate();
+
+        assertTrue(service.getMetadataFieldMappings().isEmpty());
+    }
+
+    @Test
+    void loadMappings_returnsEmptyWhenJsonMissingOrBlank() throws Exception {
+        when(resolverUtil.getServiceResolver()).thenReturn(resolver);
+        when(resolver.getResource("/conf/searchstaxconnector/settings/metadatafieldmapping"))
+                .thenReturn(resource);
+        when(resource.getValueMap()).thenReturn(valueMap);
+        when(valueMap.get("metadataMappings", String.class)).thenReturn("   ");
+
+        service.activate();
+
+        assertTrue(service.getMetadataFieldMappings().isEmpty());
+    }
+
+    @Test
+    void loadMappings_returnsEmptyWhenJsonInvalid() throws Exception {
+        when(resolverUtil.getServiceResolver()).thenReturn(resolver);
+        when(resolver.getResource("/conf/searchstaxconnector/settings/metadatafieldmapping"))
+                .thenReturn(resource);
+        when(resource.getValueMap()).thenReturn(valueMap);
+        when(valueMap.get("metadataMappings", String.class)).thenReturn("{not-json}");
+
+        service.activate();
+
+        assertTrue(service.getMetadataFieldMappings().isEmpty());
+    }
+
+    @Test
+    void loadMappings_returnsEmptyWhenResolverThrows() throws Exception {
+        when(resolverUtil.getServiceResolver()).thenThrow(new RuntimeException("resolver unavailable"));
+
+        service.activate();
+
+        assertTrue(service.getMetadataFieldMappings().isEmpty());
+    }
 }

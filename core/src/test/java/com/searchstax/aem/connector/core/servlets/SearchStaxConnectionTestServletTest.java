@@ -17,9 +17,14 @@ import org.mockito.quality.Strictness;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.net.InetSocketAddress;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.sun.net.httpserver.HttpServer;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.verify;
@@ -146,5 +151,120 @@ class SearchStaxConnectionTestServletTest {
 
         writer.flush();
         verify(response).setStatus(SlingHttpServletResponse.SC_BAD_REQUEST);
+    }
+
+    @Test
+    void doPost_searchSelect_successReturns200Json() throws Exception {
+        final HttpServer server = HttpServer.create(new InetSocketAddress(0), 0);
+        final int port = server.getAddress().getPort();
+        server.createContext(
+                "/emselect",
+                exchange -> {
+                    final byte[] body = "ok".getBytes(StandardCharsets.UTF_8);
+                    exchange.sendResponseHeaders(200, body.length);
+                    exchange.getResponseBody().write(body);
+                    exchange.close();
+                });
+        server.start();
+        try {
+            parameters.put("endpointUrl", "http://127.0.0.1:" + port);
+            parameters.put("apiToken", "plain-token");
+            parameters.put("endpointType", "searchSelect");
+
+            servlet.doPost(request, response);
+
+            writer.flush();
+            verify(response).setStatus(SlingHttpServletResponse.SC_OK);
+            assertTrue(stringWriter.toString().contains("\"success\":true"));
+            assertTrue(stringWriter.toString().contains("/emselect?q=*&rows=1"));
+        } finally {
+            server.stop(0);
+        }
+    }
+
+    @Test
+    void doPost_searchUpdate_usesSavedTokenAndMaps401ToUnauthorizedMessage() throws Exception {
+        final HttpServer server = HttpServer.create(new InetSocketAddress(0), 0);
+        final int port = server.getAddress().getPort();
+        server.createContext(
+                "/update",
+                exchange -> {
+                    exchange.sendResponseHeaders(401, -1);
+                    exchange.close();
+                });
+        server.start();
+        try {
+            final ApiConfig saved = new ApiConfig();
+            saved.setUpdateToken("saved-update-token");
+            when(apiConfigService.getConfiguration()).thenReturn(saved);
+
+            parameters.put("endpointUrl", "http://127.0.0.1:" + port + "/update");
+            parameters.put("apiToken", "");
+            parameters.put("endpointType", "searchUpdate");
+
+            servlet.doPost(request, response);
+
+            writer.flush();
+            verify(response).setStatus(SlingHttpServletResponse.SC_BAD_REQUEST);
+            assertTrue(stringWriter.toString().contains("Invalid or unauthorized token"));
+        } finally {
+            server.stop(0);
+        }
+    }
+
+    @Test
+    void doPost_discoveryEndpoint_successReturnsReachableMessage() throws Exception {
+        final HttpServer server = HttpServer.create(new InetSocketAddress(0), 0);
+        final int port = server.getAddress().getPort();
+        server.createContext(
+                "/",
+                exchange -> {
+                    exchange.sendResponseHeaders(200, -1);
+                    exchange.close();
+                });
+        server.start();
+        try {
+            parameters.put("endpointUrl", "http://127.0.0.1:" + port);
+            parameters.put("apiToken", "discovery-key");
+            parameters.put("endpointType", "discovery");
+
+            servlet.doPost(request, response);
+
+            writer.flush();
+            verify(response).setStatus(SlingHttpServletResponse.SC_OK);
+            assertTrue(stringWriter.toString().contains("Endpoint is reachable"));
+        } finally {
+            server.stop(0);
+        }
+    }
+
+    @Test
+    void doPost_usesSavedGeneralApiTokenWhenPostedTokenBlank() throws Exception {
+        final HttpServer server = HttpServer.create(new InetSocketAddress(0), 0);
+        final int port = server.getAddress().getPort();
+        server.createContext(
+                "/emselect",
+                exchange -> {
+                    exchange.sendResponseHeaders(200, -1);
+                    exchange.close();
+                });
+        server.start();
+        try {
+            final ApiConfig saved = new ApiConfig();
+            saved.setApiToken("saved-general-token");
+            when(apiConfigService.getConfiguration()).thenReturn(saved);
+
+            parameters.put("endpointUrl", "http://127.0.0.1:" + port);
+            parameters.put("apiToken", "");
+            parameters.put("endpointType", "general");
+
+            servlet.doPost(request, response);
+
+            writer.flush();
+            verify(response).setStatus(SlingHttpServletResponse.SC_OK);
+            assertTrue(stringWriter.toString().contains("\"success\":true"));
+        } finally {
+            server.stop(0);
+        }
     }
 }

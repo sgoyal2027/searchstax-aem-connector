@@ -9,6 +9,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.lang.reflect.Method;
+import java.nio.charset.StandardCharsets;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -87,18 +88,42 @@ class SearchStaxConnectionTestServletHelperTest {
         assertEquals("{protected}", invoke("unprotectTokenIfNeeded", "{protected}"));
     }
 
+    @Test
+    void unprotectTokenIfNeeded_returnsRawValueWhenCryptoSupportUnavailable() throws Exception {
+        final SearchStaxConnectionTestServlet servletWithoutCrypto = new SearchStaxConnectionTestServlet();
+
+        assertEquals("plain-token", invokeOn(servletWithoutCrypto, "unprotectTokenIfNeeded", "plain-token"));
+    }
+
+    @Test
+    void readBody_readsErrorStreamForFailedStatus() throws Exception {
+        final java.net.HttpURLConnection connection = org.mockito.Mockito.mock(java.net.HttpURLConnection.class);
+        when(connection.getErrorStream())
+                .thenReturn(new java.io.ByteArrayInputStream("error-body".getBytes(StandardCharsets.UTF_8)));
+
+        assertEquals("error-body", invoke("readBody", 500, connection));
+    }
+
     private Object invoke(final String methodName, final Object... args) throws Exception {
+        return invokeOn(servlet, methodName, args);
+    }
+
+    private Object invokeOn(final SearchStaxConnectionTestServlet target, final String methodName, final Object... args)
+            throws Exception {
         final Class<?>[] types = new Class<?>[args.length];
         for (int i = 0; i < args.length; i++) {
-            types[i] = args[i].getClass();
             if (args[i] instanceof Integer) {
                 types[i] = int.class;
             } else if (args[i] instanceof Boolean) {
                 types[i] = boolean.class;
+            } else if (args[i] instanceof java.net.HttpURLConnection) {
+                types[i] = java.net.HttpURLConnection.class;
+            } else {
+                types[i] = args[i].getClass();
             }
         }
         final Method method = SearchStaxConnectionTestServlet.class.getDeclaredMethod(methodName, types);
         method.setAccessible(true);
-        return method.invoke(servlet, args);
+        return method.invoke(target, args);
     }
 }
