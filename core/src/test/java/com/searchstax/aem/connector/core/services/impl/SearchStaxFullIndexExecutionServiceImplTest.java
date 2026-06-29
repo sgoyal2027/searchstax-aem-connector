@@ -759,6 +759,90 @@ class SearchStaxFullIndexExecutionServiceImplTest {
         verify(incrementalQueueService).clearPendingQueue();
     }
 
+    @Test
+    void finishProgress_setsSuccessWhenNoFailures() throws Exception {
+        final TestableExecutionService service = new TestableExecutionService(failureDir);
+        setField(service, "startedAt", System.currentTimeMillis() - 5_000L);
+        setField(service, "failedBatchCount", 0);
+        setField(service, "failureCount", 0L);
+
+        invokeFinishProgress(service);
+
+        final FullIndexProgress snapshot = service.getProgressSnapshot();
+        assertEquals(FullIndexProgress.State.SUCCESS, snapshot.getState());
+        assertEquals("Full index completed successfully", snapshot.getMessage());
+        assertTrue(snapshot.getElapsedMs() > 0L);
+    }
+
+    @Test
+    void finishProgress_setsPartialFailureForPathFailuresOnly() throws Exception {
+        final TestableExecutionService service = new TestableExecutionService(failureDir);
+        setField(service, "failedBatchCount", 0);
+        setField(service, "failureCount", 3L);
+
+        invokeFinishProgress(service);
+
+        final FullIndexProgress snapshot = service.getProgressSnapshot();
+        assertEquals(FullIndexProgress.State.PARTIAL_FAILURE, snapshot.getState());
+        assertTrue(snapshot.getMessage().contains("3 path failure(s)"));
+    }
+
+    @Test
+    void finishProgress_setsPartialFailureForFailedBatchesOnly() throws Exception {
+        final TestableExecutionService service = new TestableExecutionService(failureDir);
+        setField(service, "failedBatchCount", 2);
+        setField(service, "failureCount", 0L);
+
+        invokeFinishProgress(service);
+
+        final FullIndexProgress snapshot = service.getProgressSnapshot();
+        assertEquals(FullIndexProgress.State.PARTIAL_FAILURE, snapshot.getState());
+        assertTrue(snapshot.getMessage().contains("2 failed batch(es)"));
+    }
+
+    @Test
+    void finishProgress_setsPartialFailureForBatchesAndPaths() throws Exception {
+        final TestableExecutionService service = new TestableExecutionService(failureDir);
+        setField(service, "failedBatchCount", 1);
+        setField(service, "failureCount", 2L);
+
+        invokeFinishProgress(service);
+
+        final FullIndexProgress snapshot = service.getProgressSnapshot();
+        assertEquals(FullIndexProgress.State.PARTIAL_FAILURE, snapshot.getState());
+        assertTrue(snapshot.getMessage().contains("1 failed batch(es)"));
+        assertTrue(snapshot.getMessage().contains("2 path failure(s)"));
+    }
+
+    @Test
+    void failProgress_setsFailedStateAndMessage() throws Exception {
+        final TestableExecutionService service = new TestableExecutionService(failureDir);
+        setField(service, "startedAt", System.currentTimeMillis() - 1_000L);
+
+        invokeFailProgress(service, "Traversal interrupted");
+
+        final FullIndexProgress snapshot = service.getProgressSnapshot();
+        assertEquals(FullIndexProgress.State.FAILED, snapshot.getState());
+        assertEquals("Traversal interrupted", snapshot.getMessage());
+        assertTrue(snapshot.getElapsedMs() > 0L);
+    }
+
+    private void invokeFinishProgress(final TestableExecutionService service) throws Exception {
+        final Method method =
+                SearchStaxFullIndexExecutionServiceImpl.class.getDeclaredMethod("finishProgress");
+        method.setAccessible(true);
+        method.invoke(service);
+    }
+
+    private void invokeFailProgress(final TestableExecutionService service, final String message)
+            throws Exception {
+        final Method method =
+                SearchStaxFullIndexExecutionServiceImpl.class.getDeclaredMethod(
+                        "failProgress", String.class);
+        method.setAccessible(true);
+        method.invoke(service, message);
+    }
+
     private void invokeClearIncrementalPendingQueue(final TestableExecutionService service)
             throws Exception {
         final Method method =

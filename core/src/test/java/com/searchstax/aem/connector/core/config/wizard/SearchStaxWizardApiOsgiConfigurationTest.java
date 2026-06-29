@@ -292,6 +292,76 @@ class SearchStaxWizardApiOsgiConfigurationTest {
     }
 
     @Test
+    void getResource_returnsNullForUnknownPath() {
+        final ResolveContext<Void> resolveContext = mock(ResolveContext.class);
+        when(resolveContext.getResourceResolver()).thenReturn(context.resourceResolver());
+
+        assertNull(resourceProvider.getResource(
+                resolveContext,
+                SearchStaxWizardBindingPaths.ROOT + "/unknown",
+                mock(ResourceContext.class),
+                null));
+    }
+
+    @Test
+    void getResource_fullIndexJcrContent_exposesEnvironmentAndPaths() throws Exception {
+        final Hashtable<String, Object> envProps = new Hashtable<>();
+        envProps.put("activeEnvironment", "dev");
+        when(configurationAdmin.getConfiguration(SearchStaxOsgiConfigurationPids.ENVIRONMENT_CONFIGURATION_PID))
+                .thenReturn(environmentConfiguration);
+        when(environmentConfiguration.getProperties()).thenReturn(envProps);
+
+        final String fullIndexPid =
+                SearchStaxOsgiConfigPidResolver.namedConfigurationPid(
+                        SearchStaxOsgiConfigurationPids.FULL_INDEX_CONFIGURATION_PID, "dev");
+        final Hashtable<String, Object> fullIndexProps = new Hashtable<>();
+        fullIndexProps.put("includePaths", new String[]{"/content/wknd"});
+        fullIndexProps.put("excludePaths", new String[]{"/content/wknd/private"});
+        when(configurationAdmin.getConfiguration(fullIndexPid)).thenReturn(fullIndexConfiguration);
+        when(fullIndexConfiguration.getProperties()).thenReturn(fullIndexProps);
+
+        final ResolveContext<Void> resolveContext = mock(ResolveContext.class);
+        when(resolveContext.getResourceResolver()).thenReturn(context.resourceResolver());
+
+        final Resource resource = resourceProvider.getResource(
+                resolveContext,
+                SearchStaxWizardBindingPaths.FULL_INDEX_JCR_CONTENT,
+                mock(ResourceContext.class),
+                null);
+
+        assertNotNull(resource);
+        final ValueMap valueMap = resource.adaptTo(ValueMap.class);
+        assertEquals("dev", valueMap.get("activeEnvironment", String.class));
+        assertEquals("/content/wknd", valueMap.get("includePaths", String[].class)[0]);
+    }
+
+    @Test
+    void buildFullIndexValueMap_mergesLegacyConfWhenOsgiEmpty() throws Exception {
+        context.create().resource(
+                SearchStaxLegacyWizardConfPaths.FULL_INDEX_JCR_CONTENT,
+                "includePaths",
+                new String[]{"/content/legacy"},
+                "excludePaths",
+                new String[]{"/content/legacy/private"});
+
+        final Hashtable<String, Object> envProps = new Hashtable<>();
+        when(configurationAdmin.getConfiguration(SearchStaxOsgiConfigurationPids.ENVIRONMENT_CONFIGURATION_PID))
+                .thenReturn(environmentConfiguration);
+        when(environmentConfiguration.getProperties()).thenReturn(envProps);
+
+        final String fullIndexPid =
+                SearchStaxOsgiConfigPidResolver.namedConfigurationPid(
+                        SearchStaxOsgiConfigurationPids.FULL_INDEX_CONFIGURATION_PID, "");
+        when(configurationAdmin.getConfiguration(fullIndexPid)).thenReturn(fullIndexConfiguration);
+        when(fullIndexConfiguration.getProperties()).thenReturn(new Hashtable<>());
+
+        final ValueMap valueMap = invokeBuildFullIndexValueMap(context.resourceResolver());
+
+        assertEquals("/content/legacy", valueMap.get("includePaths", String[].class)[0]);
+        assertEquals("/content/legacy/private", valueMap.get("excludePaths", String[].class)[0]);
+    }
+
+    @Test
     void persistApiConfiguration_storesPlaintextWhenEncryptionFails() throws Exception {
         when(configurationAdmin.getConfiguration(SearchStaxOsgiConfigurationPids.API_CONFIGURATION_PID))
                 .thenReturn(apiConfiguration);

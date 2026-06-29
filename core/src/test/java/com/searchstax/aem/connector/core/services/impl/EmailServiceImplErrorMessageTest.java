@@ -33,6 +33,13 @@ class EmailServiceImplErrorMessageTest {
         assertEquals("Unable to send email.", message);
     }
 
+    @Test
+    void resolveEmailErrorMessage_returnsOriginalMessageWhenPresent() throws Exception {
+        final String message = invokeResolveEmailErrorMessage(new EmailException("Mailbox unavailable"));
+
+        assertEquals("Mailbox unavailable", message);
+    }
+
     private static String invokeResolveEmailErrorMessage(final EmailException exception) throws Exception {
         final Method method =
                 EmailServiceImpl.class.getDeclaredMethod("resolveEmailErrorMessage", EmailException.class);

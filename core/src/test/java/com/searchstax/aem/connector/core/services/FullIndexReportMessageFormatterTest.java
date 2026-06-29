@@ -139,4 +139,44 @@ class FullIndexReportMessageFormatterTest {
         assertTrue(FullIndexReportMessageFormatter.formatFailureMessage("batch-2", 599, "", 0)
                 .contains("HTTP 599 Network or transport error"));
     }
+
+    @Test
+    void formatFailureMessage_mapsAdditionalHttpStatuses() {
+        assertTrue(FullIndexReportMessageFormatter.formatFailureMessage("batch-1", 400, "", 0)
+                .contains("HTTP 400 Bad Request"));
+        assertTrue(FullIndexReportMessageFormatter.formatFailureMessage("batch-1", 403, "", 0)
+                .contains("HTTP 403 Forbidden"));
+        assertTrue(FullIndexReportMessageFormatter.formatFailureMessage("batch-1", 500, "", 0)
+                .contains("HTTP 500 Internal Server Error"));
+        assertTrue(FullIndexReportMessageFormatter.formatFailureMessage("batch-1", 502, "", 0)
+                .contains("HTTP 502 Bad Gateway"));
+        assertTrue(FullIndexReportMessageFormatter.formatFailureMessage("batch-1", 418, "", 0)
+                .contains("HTTP 418"));
+    }
+
+    @Test
+    void formatFailureMessage_genericPathFailure_usesFallbackDescription() {
+        final String message =
+                FullIndexReportMessageFormatter.formatFailureMessage("path-other", 500, "failed", 0);
+
+        assertTrue(message.contains("Path failed during full reindex"));
+        assertTrue(message.contains("failed"));
+    }
+
+    @Test
+    void formatFailureMessage_batchWithoutNumber_usesGenericBatchMessage() {
+        final String message =
+                FullIndexReportMessageFormatter.formatFailureMessage("batch", 503, "down", 2);
+
+        assertTrue(message.contains("Full reindex batch failed to post to SearchStax"));
+        assertTrue(message.contains("after 2 retry attempt(s)"));
+    }
+
+    @Test
+    void formatSuccessMessageFromStored_parsesBatchNumberFromLegacyMessage() {
+        final String message = FullIndexReportMessageFormatter.formatSuccessMessageFromStored(
+                "Indexed in batch 7", "batch-unknown", 250L);
+
+        assertTrue(message.contains("batch 7"));
+    }
 }

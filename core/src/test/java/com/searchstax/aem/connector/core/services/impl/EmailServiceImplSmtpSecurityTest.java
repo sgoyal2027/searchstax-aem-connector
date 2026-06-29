@@ -63,6 +63,19 @@ class EmailServiceImplSmtpSecurityTest {
         assertFalse(email.isStartTLSEnabled());
     }
 
+    @Test
+    void applySmtpSecurity_startTlsCanBeRequired() throws Exception {
+        final HtmlEmail email = new HtmlEmail();
+        final EmailConfig config = new EmailConfig();
+        config.setSmtpPort(587);
+        config.setSmtpRequireStartTls(true);
+
+        invokeApplySmtpSecurity(email, config);
+
+        assertTrue(email.isStartTLSEnabled());
+        assertTrue(email.isStartTLSRequired());
+    }
+
     private static void invokeApplySmtpSecurity(final HtmlEmail email, final EmailConfig config) throws Exception {
         final Method method =
                 EmailServiceImpl.class.getDeclaredMethod("applySmtpSecurity", HtmlEmail.class, EmailConfig.class);

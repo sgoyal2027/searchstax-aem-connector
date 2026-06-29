@@ -260,4 +260,121 @@ class IndexingHelperServiceImplTest {
 
         assertEquals("", helper.extractText(asset));
     }
+
+    @Test
+    void isSupportedAsset_returnsFalseForNullAsset() {
+        assertFalse(helper.isSupportedAsset(null));
+    }
+
+    @Test
+    void isPermanentFailure_includesClientAndPayloadErrors() {
+        assertTrue(helper.isPermanentFailure(new ApiResponse(400, "")));
+        assertTrue(helper.isPermanentFailure(new ApiResponse(404, "")));
+        assertFalse(helper.isPermanentFailure(null));
+        assertFalse(helper.isPermanentFailure(new ApiResponse(503, "")));
+    }
+
+    @Test
+    void isTextExtractableAsset_matchesConfiguredMimeTypes() {
+        final Asset pdf = mock(Asset.class);
+        when(pdf.getMimeType()).thenReturn("application/pdf");
+        final Asset image = mock(Asset.class);
+        when(image.getMimeType()).thenReturn("image/jpeg");
+
+        assertTrue(helper.isTextExtractableAsset(pdf));
+        assertFalse(helper.isTextExtractableAsset(image));
+    }
+
+    @Test
+    void resolveFieldName_preservesAlreadySuffixedField() {
+        assertEquals("title_txt_en", helper.resolveFieldName("title_txt_en", "text", "x", "en"));
+    }
+
+    @Test
+    void resolveFieldName_mapsTypedAndValueBasedSuffixes() {
+        assertEquals("count_l", helper.resolveFieldName("count", "int", 1, "en"));
+        assertEquals("price_d", helper.resolveFieldName("price", "double", 1.5d, "en"));
+        assertEquals("active_b", helper.resolveFieldName("active", "boolean", true, "en"));
+        assertEquals("published_dt", helper.resolveFieldName("published", "date", new GregorianCalendar(), "en"));
+        assertEquals("tags_ss_fr", helper.resolveFieldName("tags", "strings", new String[]{"a"}, "fr"));
+        assertEquals("code_s_en", helper.resolveFieldName("code", "string", "abc", "en"));
+        assertEquals("fallback_txt_de", helper.resolveFieldName("fallback", null, "text", "de"));
+    }
+
+    @Test
+    void normalizeMetadataValue_returnsNonCalendarValuesUnchanged() {
+        assertEquals("plain", helper.normalizeMetadataValue("plain"));
+    }
+
+    @Test
+    void addConfiguredMetadataFields_skipsDisabledAndInvalidMappings() {
+        final MetadataFieldMappingConfig disabled = new MetadataFieldMappingConfig();
+        disabled.setEnabled(false);
+        disabled.setAemField("jcr:title");
+        disabled.setSearchStaxField("title_txt_en");
+
+        final MetadataFieldMappingConfig invalid = new MetadataFieldMappingConfig();
+        invalid.setEnabled(true);
+        invalid.setAemField("");
+        invalid.setSearchStaxField("");
+
+        when(metadataFieldConfigService.getMetadataFieldMappings())
+                .thenReturn(List.of(disabled, invalid));
+
+        final Map<String, Object> document = new HashMap<>();
+        helper.addConfiguredMetadataFields(document, mock(ValueMap.class));
+
+        assertTrue(document.isEmpty());
+    }
+
+    @Test
+    void addConfiguredMetadataFields_usesCustomPropertyWhenConfigured() {
+        final MetadataFieldMappingConfig mapping = new MetadataFieldMappingConfig();
+        mapping.setEnabled(true);
+        mapping.setAemField("jcr:title");
+        mapping.setCustomProperty("custom/title");
+        mapping.setSearchStaxField("title_txt_en");
+        when(metadataFieldConfigService.getMetadataFieldMappings()).thenReturn(List.of(mapping));
+
+        final ValueMap valueMap = mock(ValueMap.class);
+        when(valueMap.get("custom/title")).thenReturn("Custom title");
+
+        final Map<String, Object> document = new HashMap<>();
+        helper.addConfiguredMetadataFields(document, valueMap);
+
+        assertEquals("Custom title", document.get("title_txt_en"));
+    }
+
+    @Test
+    void formatFailureMessage_handlesDeleteRetryAndDefaultReasonCodes() {
+        assertTrue(helper.formatFailureMessage(
+                "DELETE_RETRY_EXHAUSTED",
+                new ApiResponse(503, "down"),
+                null).contains("Delete from search index failed"));
+
+        assertTrue(helper.formatFailureMessage(
+                "DELETE_RETRY_EXHAUSTED",
+                null,
+                new IllegalStateException("network")).contains("network"));
+
+        assertTrue(helper.formatFailureMessage(
+                "CUSTOM_REASON",
+                new ApiResponse(500, "server error"),
+                null).contains("CUSTOM_REASON"));
+    }
+
+    @Test
+    void formatFailureMessage_blankReasonUsesApiOrExceptionDetail() {
+        assertTrue(helper.formatFailureMessage(
+                "",
+                new ApiResponse(503, "unavailable"),
+                null).contains("HTTP 503"));
+
+        assertTrue(helper.formatFailureMessage(
+                "   ",
+                null,
+                new IllegalStateException("build failed")).contains("build failed"));
+
+        assertEquals("Indexing failed", helper.formatFailureMessage("", null, null));
+    }
 }
