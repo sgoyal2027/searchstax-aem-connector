@@ -63,6 +63,9 @@ public class SearchStaxFullIndexStatusServlet extends SlingAllMethodsServlet {
                         && (snapshotState == State.SUCCESS
                         || snapshotState == State.PARTIAL_FAILURE
                         || snapshotState == State.FAILED);
+        final boolean currentRunInProgress = snapshotState == State.RUNNING;
+        final long startedAt = currentRunInProgress ? progress.getStartedAt() : 0L;
+        final long elapsedMs = currentRunInProgress ? progress.getElapsedMs() : 0L;
 
         final Map<String, Object> body = new LinkedHashMap<>();
         body.put("jobId", currentJobId);
@@ -76,9 +79,13 @@ public class SearchStaxFullIndexStatusServlet extends SlingAllMethodsServlet {
         body.put("assetsIndexed", progress.getAssetsIndexed());
         body.put("currentBatchNumber", progress.getCurrentBatchNumber());
         body.put("lastIndexedPath", abbreviateMiddle(progress.getLastIndexedPath(), ABBREVIATED_PATH_LENGTH));
-        body.put("startedAt", progress.getStartedAt());
-        body.put("elapsedMs", progress.getElapsedMs());
-        body.put("completedAt", complete ? (progress.getStartedAt() + progress.getElapsedMs()) : 0L);
+        body.put("startedAt", startedAt);
+        body.put("elapsedMs", complete ? progress.getElapsedMs() : elapsedMs);
+        body.put(
+                "completedAt",
+                complete && progress.getStartedAt() > 0
+                        ? progress.getStartedAt() + progress.getElapsedMs()
+                        : 0L);
         body.put("running", running);
         body.put("complete", complete);
 

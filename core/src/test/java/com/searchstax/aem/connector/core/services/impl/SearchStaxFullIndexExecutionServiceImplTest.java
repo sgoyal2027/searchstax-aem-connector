@@ -9,6 +9,7 @@ import com.searchstax.aem.connector.core.config.model.EmailConfig;
 import com.searchstax.aem.connector.core.dto.request.EmailRequest;
 import com.searchstax.aem.connector.core.services.EmailService;
 import com.searchstax.aem.connector.core.services.FullIndexProgress;
+import com.searchstax.aem.connector.core.services.IncrementalQueueService;
 import com.searchstax.aem.connector.core.services.SearchStaxFullIndexFailureStore;
 import com.searchstax.aem.connector.core.services.SearchStaxFullIndexRetryPolicy;
 import com.searchstax.aem.connector.core.services.SearchStaxIndexBatchBuffer;
@@ -39,6 +40,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -55,6 +57,9 @@ class SearchStaxFullIndexExecutionServiceImplTest {
 
     @Mock
     private EmailConfigService emailConfigService;
+
+    @Mock
+    private IncrementalQueueService incrementalQueueService;
 
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
@@ -700,6 +705,45 @@ class SearchStaxFullIndexExecutionServiceImplTest {
 
         assertEquals(1, countFailureFiles());
         assertEquals(1L, getField(service, "failureCount"));
+    }
+
+    @Test
+    void getProgressSnapshot_freezesElapsedForCompletedRun() throws Exception {
+        final TestableExecutionService service = new TestableExecutionService(failureDir);
+        setField(service, "state", FullIndexProgress.State.SUCCESS);
+        setField(service, "startedAt", System.currentTimeMillis() - 60_000L);
+        setField(service, "completedElapsedMs", 120_000L);
+
+        assertEquals(120_000L, service.getProgressSnapshot().getElapsedMs());
+    }
+
+    @Test
+    void getProgressSnapshot_returnsZeroElapsedWhileIdle() throws Exception {
+        final TestableExecutionService service = new TestableExecutionService(failureDir);
+        setField(service, "state", FullIndexProgress.State.IDLE);
+        setField(service, "startedAt", System.currentTimeMillis() - 60_000L);
+        setField(service, "completedElapsedMs", 120_000L);
+
+        assertEquals(0L, service.getProgressSnapshot().getElapsedMs());
+    }
+
+    @Test
+    void clearIncrementalPendingQueue_delegatesToQueueService() throws Exception {
+        final TestableExecutionService service = new TestableExecutionService(failureDir);
+        setField(service, "incrementalQueueService", incrementalQueueService);
+        when(incrementalQueueService.clearPendingQueue()).thenReturn(3);
+
+        invokeClearIncrementalPendingQueue(service);
+
+        verify(incrementalQueueService).clearPendingQueue();
+    }
+
+    private void invokeClearIncrementalPendingQueue(final TestableExecutionService service)
+            throws Exception {
+        final Method method =
+                SearchStaxFullIndexExecutionServiceImpl.class.getDeclaredMethod("clearIncrementalPendingQueue");
+        method.setAccessible(true);
+        method.invoke(service);
     }
 
     private void invokeSendConsolidatedFailureEmailIfNeeded(final TestableExecutionService service)

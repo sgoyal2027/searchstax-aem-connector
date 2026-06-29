@@ -100,7 +100,7 @@
             return;
         }
         var lastPath = truncateText(status.lastIndexedPath || "", 120);
-        var completedAt = formatTimestamp(status.completedAt);
+        var completedAt = status.running ? "" : formatTimestamp(status.completedAt);
         var details = "Indexed: " + (status.totalProcessed || 0)
             + " | Attempted: " + (status.totalAttempted != null ? status.totalAttempted : (status.totalProcessed || 0) + (status.failureCount || 0))
             + " | Pages: " + (status.pagesIndexed || 0)

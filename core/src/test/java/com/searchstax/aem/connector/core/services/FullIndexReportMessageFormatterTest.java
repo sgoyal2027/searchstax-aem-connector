@@ -56,7 +56,7 @@ class FullIndexReportMessageFormatterTest {
         final String message = FullIndexReportMessageFormatter.formatFailureMessage(
                 "path-document-limit-_content_large",
                 413,
-                "Document payload 12000 bytes exceeds SRS 10240 byte limit",
+                "Document payload 12000 bytes exceeds 10240 byte limit",
                 0);
 
         assertTrue(message.contains("per-document size limit"));
