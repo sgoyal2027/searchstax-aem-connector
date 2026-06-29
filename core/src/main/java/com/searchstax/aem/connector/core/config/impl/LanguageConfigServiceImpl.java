@@ -17,6 +17,7 @@ import org.slf4j.LoggerFactory;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
+import java.util.MissingResourceException;
 
 @Component(service = LanguageConfigService.class)
 public class LanguageConfigServiceImpl implements LanguageConfigService {
@@ -88,6 +89,95 @@ public class LanguageConfigServiceImpl implements LanguageConfigService {
         }
 
         return aemLanguage;
+    }
+
+    @Override
+    public String resolveLanguageFromPath(final String path) {
+        if (path == null || path.isBlank()) {
+            return "en";
+        }
+
+        for (final String segment : path.split("/")) {
+            if (segment.isBlank()) {
+                continue;
+            }
+
+            final String resolvedLanguage = resolveSegmentToSearchStaxLanguage(segment);
+            if (resolvedLanguage != null) {
+                return resolvedLanguage;
+            }
+        }
+
+        return "en";
+    }
+
+    private String resolveSegmentToSearchStaxLanguage(final String segment) {
+        final String normalized =
+                segment.trim().toLowerCase(Locale.ROOT);
+
+        final String mappedLanguage = mapConfiguredAemLanguage(normalized);
+        if (mappedLanguage != null) {
+            return mappedLanguage;
+        }
+
+        final String languageCode = resolveLanguageNameToCode(normalized);
+        if (languageCode == null) {
+            return null;
+        }
+
+        final String mappedFromCode = mapConfiguredAemLanguage(languageCode);
+        return mappedFromCode != null
+                ? mappedFromCode
+                : mapToSearchStaxLanguage(languageCode);
+    }
+
+    private String mapConfiguredAemLanguage(final String normalizedSegment) {
+        for (final LanguageMappingConfig mapping : cachedMappings) {
+            if (!mapping.isEnabledLanguageMapping()) {
+                continue;
+            }
+
+            final String configuredAem = resolveConfiguredAemLanguage(mapping);
+            if (configuredAem == null || configuredAem.isBlank()) {
+                continue;
+            }
+
+            if (normalizedSegment.equals(configuredAem.trim().toLowerCase(Locale.ROOT))) {
+                final String searchStaxLanguage = mapping.getSearchStaxLanguage();
+                return searchStaxLanguage != null && !searchStaxLanguage.isBlank()
+                        ? searchStaxLanguage.trim()
+                        : configuredAem;
+            }
+        }
+
+        return null;
+    }
+
+    private static String resolveLanguageNameToCode(final String normalizedSegment) {
+        for (final Locale locale : Locale.getAvailableLocales()) {
+            final String language = locale.getLanguage();
+            if (language == null || language.isBlank()) {
+                continue;
+            }
+
+            final String displayName = locale.getDisplayLanguage(Locale.ENGLISH);
+            if (displayName != null
+                    && normalizedSegment.equals(displayName.trim().toLowerCase(Locale.ROOT))) {
+                return language;
+            }
+
+            try {
+                final String iso3Language = locale.getISO3Language();
+                if (iso3Language != null
+                        && normalizedSegment.equals(iso3Language.trim().toLowerCase(Locale.ROOT))) {
+                    return language;
+                }
+            } catch (final MissingResourceException ignored) {
+                // Locale has no ISO-639-2 code; skip.
+            }
+        }
+
+        return null;
     }
 
     private static String resolveConfiguredAemLanguage(final LanguageMappingConfig mapping) {

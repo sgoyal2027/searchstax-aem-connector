@@ -15,4 +15,10 @@ public interface LanguageConfigService {
      * Returns the input unchanged when no enabled mapping matches.
      */
     String mapToSearchStaxLanguage(String aemLanguage);
+
+    /**
+     * Resolves language from an asset or content path by matching path segments against
+     * enabled AEM language mappings. Returns {@code en} when no match is found.
+     */
+    String resolveLanguageFromPath(String path);
 }

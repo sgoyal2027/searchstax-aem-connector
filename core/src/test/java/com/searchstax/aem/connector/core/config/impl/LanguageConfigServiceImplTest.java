@@ -37,6 +37,31 @@ class LanguageConfigServiceImplTest {
         assertEquals("fr", languageConfigService.mapToSearchStaxLanguage("fr"));
     }
 
+    @Test
+    void resolveLanguageFromPath_returnsMappedLanguageFromPathSegment() {
+        assertEquals("en", languageConfigService.resolveLanguageFromPath("/content/dam/wknd/en/report.pdf"));
+    }
+
+    @Test
+    void resolveLanguageFromPath_returnsDefaultWhenNoLanguageInPath() {
+        assertEquals("en", languageConfigService.resolveLanguageFromPath("/content/dam/wknd/documents/report.pdf"));
+    }
+
+    @Test
+    void resolveLanguageFromPath_returnsCustomMappedLanguage() {
+        assertEquals("gb", languageConfigService.resolveLanguageFromPath("/content/dam/wknd/en-gb/report.pdf"));
+    }
+
+    @Test
+    void resolveLanguageFromPath_returnsDefaultForBlankPath() {
+        assertEquals("en", languageConfigService.resolveLanguageFromPath(" "));
+    }
+
+    @Test
+    void resolveLanguageFromPath_resolvesFullLanguageNameInPath() {
+        assertEquals("en", languageConfigService.resolveLanguageFromPath("/content/dam/wknd/english/report.pdf"));
+    }
+
     private static LanguageMappingConfig enabledMapping(
             final String aemLanguage,
             final String customAemLanguage,

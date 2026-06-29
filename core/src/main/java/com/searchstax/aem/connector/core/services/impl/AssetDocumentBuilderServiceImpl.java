@@ -87,9 +87,7 @@ public class AssetDocumentBuilderServiceImpl implements
                 "mimeType",
                 asset.getMimeType());
 
-        document.put(
-                "language_s",
-                "en");
+        String language = "en";
 
         Resource metadataResource =
                 assetResource.getChild(
@@ -108,15 +106,18 @@ public class AssetDocumentBuilderServiceImpl implements
             if (metadataLanguage != null
                     && !metadataLanguage.isBlank()) {
 
-                document.put(
-                        "language_s",
-                        languageConfigService.mapToSearchStaxLanguage(metadataLanguage));
+                language =
+                        languageConfigService.mapToSearchStaxLanguage(metadataLanguage);
+            } else {
+                language = languageConfigService.resolveLanguageFromPath(path);
             }
 
             indexingHelperService
                     .addConfiguredMetadataFields(
                             document,
                             metadata);
+        } else {
+            language = languageConfigService.resolveLanguageFromPath(path);
         }
 
         String extractedText =
@@ -124,8 +125,7 @@ public class AssetDocumentBuilderServiceImpl implements
                         indexingHelperService.extractText(
                                 asset));
 
-        String language = languageConfigService.mapToSearchStaxLanguage(
-                (String) document.getOrDefault("language_s", "en"));
+        language = languageConfigService.mapToSearchStaxLanguage(language);
         document.put("language_s", language);
 
         indexingHelperService.addField(

@@ -139,6 +139,9 @@ class AssetDocumentBuilderServiceImplTest {
         when(languageConfigService.mapToSearchStaxLanguage("en"))
                 .thenReturn("en");
 
+        when(languageConfigService.resolveLanguageFromPath("/content/dam/test.pdf"))
+                .thenReturn("en");
+
         Map<String, Object> document =
                 service.buildDocument(
                         resolver,
@@ -240,6 +243,9 @@ class AssetDocumentBuilderServiceImplTest {
         when(metadata.get("dc:language", String.class))
                 .thenReturn("");
 
+        when(languageConfigService.resolveLanguageFromPath("/content/dam/test.pdf"))
+                .thenReturn("en");
+
         when(languageConfigService.mapToSearchStaxLanguage("en"))
                 .thenReturn("en");
 
@@ -255,5 +261,152 @@ class AssetDocumentBuilderServiceImplTest {
                         "/content/dam/test.pdf");
 
         assertEquals("en", document.get("language_s"));
+    }
+
+    @Test
+    void testBuildDocumentWithPathLanguage() throws Exception {
+
+        final String assetPath = "/content/dam/wknd/fr/report.pdf";
+
+        when(resolver.getResource(assetPath))
+                .thenReturn(assetResource);
+
+        when(assetResource.adaptTo(Asset.class))
+                .thenReturn(asset);
+
+        when(indexingHelperService.isSupportedAsset(asset))
+                .thenReturn(true);
+
+        when(asset.getMimeType())
+                .thenReturn("application/pdf");
+
+        when(externalizer.publishLink(any(), anyString()))
+                .thenReturn("https://publish/content/dam/wknd/fr/report.pdf");
+
+        when(assetResource.getChild("jcr:content/metadata"))
+                .thenReturn(null);
+
+        when(languageConfigService.resolveLanguageFromPath(assetPath))
+                .thenReturn("fr");
+
+        when(languageConfigService.mapToSearchStaxLanguage("fr"))
+                .thenReturn("fr");
+
+        when(indexingHelperService.extractText(asset))
+                .thenReturn("bonjour");
+
+        when(indexingHelperService.cleanText("bonjour"))
+                .thenReturn("bonjour");
+
+        Map<String, Object> document =
+                service.buildDocument(
+                        resolver,
+                        assetPath);
+
+        assertEquals("fr", document.get("language_s"));
+
+        verify(indexingHelperService)
+                .addField(
+                        eq(document),
+                        eq("content_txts_fr"),
+                        eq("bonjour"));
+    }
+
+    @Test
+    void testBuildDocumentWithFullLanguageNameInPath() throws Exception {
+
+        final String assetPath = "/content/dam/wknd/english/report.pdf";
+
+        when(resolver.getResource(assetPath))
+                .thenReturn(assetResource);
+
+        when(assetResource.adaptTo(Asset.class))
+                .thenReturn(asset);
+
+        when(indexingHelperService.isSupportedAsset(asset))
+                .thenReturn(true);
+
+        when(asset.getMimeType())
+                .thenReturn("application/pdf");
+
+        when(externalizer.publishLink(any(), anyString()))
+                .thenReturn("https://publish/content/dam/wknd/english/report.pdf");
+
+        when(assetResource.getChild("jcr:content/metadata"))
+                .thenReturn(null);
+
+        when(languageConfigService.resolveLanguageFromPath(assetPath))
+                .thenReturn("en");
+
+        when(languageConfigService.mapToSearchStaxLanguage("en"))
+                .thenReturn("en");
+
+        when(indexingHelperService.extractText(asset))
+                .thenReturn("hello");
+
+        when(indexingHelperService.cleanText("hello"))
+                .thenReturn("hello");
+
+        Map<String, Object> document =
+                service.buildDocument(
+                        resolver,
+                        assetPath);
+
+        assertEquals("en", document.get("language_s"));
+
+        verify(indexingHelperService)
+                .addField(
+                        eq(document),
+                        eq("content_txts_en"),
+                        eq("hello"));
+    }
+
+    @Test
+    void testBuildDocumentMetadataLanguageOverridesPath() throws Exception {
+
+        final String assetPath = "/content/dam/wknd/en/report.pdf";
+
+        when(resolver.getResource(assetPath))
+                .thenReturn(assetResource);
+
+        when(assetResource.adaptTo(Asset.class))
+                .thenReturn(asset);
+
+        when(indexingHelperService.isSupportedAsset(asset))
+                .thenReturn(true);
+
+        when(asset.getMimeType())
+                .thenReturn("application/pdf");
+
+        when(externalizer.publishLink(any(), anyString()))
+                .thenReturn("https://publish/content/dam/wknd/en/report.pdf");
+
+        when(assetResource.getChild("jcr:content/metadata"))
+                .thenReturn(metadataResource);
+
+        when(metadataResource.getValueMap())
+                .thenReturn(metadata);
+
+        when(metadata.get("dc:language", String.class))
+                .thenReturn("fr");
+
+        when(languageConfigService.mapToSearchStaxLanguage("fr"))
+                .thenReturn("fr");
+
+        when(indexingHelperService.extractText(asset))
+                .thenReturn("bonjour");
+
+        when(indexingHelperService.cleanText("bonjour"))
+                .thenReturn("bonjour");
+
+        Map<String, Object> document =
+                service.buildDocument(
+                        resolver,
+                        assetPath);
+
+        assertEquals("fr", document.get("language_s"));
+
+        verify(languageConfigService, never())
+                .resolveLanguageFromPath(anyString());
     }
 }
