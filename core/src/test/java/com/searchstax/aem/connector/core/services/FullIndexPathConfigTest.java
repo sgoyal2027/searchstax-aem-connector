@@ -103,6 +103,58 @@ class FullIndexPathConfigTest {
     }
 
     @Test
+    void fromRequest_collectsMultifieldItemParameters() {
+        when(request.getParameter("rootPath")).thenReturn("/content/site");
+        when(request.getParameterValues(org.mockito.ArgumentMatchers.eq("includePaths")))
+                .thenReturn(new String[0]);
+        when(request.getParameterValues(org.mockito.ArgumentMatchers.eq("./includePaths")))
+                .thenReturn(new String[0]);
+        when(request.getParameterValues(org.mockito.ArgumentMatchers.eq("excludePaths")))
+                .thenReturn(new String[0]);
+        when(request.getParameterValues(org.mockito.ArgumentMatchers.eq("./excludePaths")))
+                .thenReturn(new String[0]);
+        when(request.getParameterValues(org.mockito.ArgumentMatchers.eq("includeChildPaths")))
+                .thenReturn(new String[]{"true"});
+        when(request.getParameterNames())
+                .thenReturn(java.util.Collections.enumeration(
+                        java.util.List.of("includePaths/item0/path", "includePaths/item1/path")));
+        when(request.getParameter("includePaths/item0/path")).thenReturn("/content/site/en");
+        when(request.getParameter("includePaths/item1/path")).thenReturn("/content/site/fr");
+
+        final FullIndexPathConfig config = FullIndexPathConfig.fromRequest(request);
+
+        assertArrayEquals(
+                new String[]{"/content/site/en", "/content/site/fr"},
+                config.getIncludePaths());
+    }
+
+    @Test
+    void fromJobProperties_handlesSingleStringAndObjectArrayValues() {
+        final Map<String, Object> props = new HashMap<>();
+        props.put(SearchStaxFullIndexDefaults.JOB_PROP_ROOT_PATH, "/content");
+        props.put(SearchStaxFullIndexDefaults.JOB_PROP_INCLUDE_PATHS, "/content/en");
+        props.put(SearchStaxFullIndexDefaults.JOB_PROP_EXCLUDE_PATHS, new Object[]{" /content/private ", null, ""});
+        props.put(SearchStaxFullIndexDefaults.JOB_PROP_INCLUDE_CHILD_PATHS, new String[]{"true"});
+
+        final FullIndexPathConfig config = FullIndexPathConfig.fromJobProperties(props);
+
+        assertEquals("/content", config.getRootPath());
+        assertArrayEquals(new String[]{"/content/en"}, config.getIncludePaths());
+        assertArrayEquals(new String[]{"/content/private"}, config.getExcludePaths());
+        assertTrue(config.getIncludeChildPaths()[0]);
+    }
+
+    @Test
+    void fromJobProperties_returnsEmptyConfigForNullOrEmptyMap() {
+        final FullIndexPathConfig empty = FullIndexPathConfig.fromJobProperties(null);
+        assertEquals("", empty.getRootPath());
+        assertEquals(0, empty.getIncludePaths().length);
+
+        final FullIndexPathConfig blank = FullIndexPathConfig.fromJobProperties(new HashMap<>());
+        assertEquals("", blank.getRootPath());
+    }
+
+    @Test
     void gettersReturnDefensiveCopies() {
         final FullIndexPathConfig config = new FullIndexPathConfig(
                 "/content",

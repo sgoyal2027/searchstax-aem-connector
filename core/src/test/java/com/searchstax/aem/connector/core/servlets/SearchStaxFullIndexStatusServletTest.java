@@ -202,6 +202,50 @@ class SearchStaxFullIndexStatusServletTest {
     }
 
     @Test
+    void doGet_reportsPartialFailureAsComplete() throws Exception {
+        when(searchStaxFullIndexRunService.getProgress()).thenReturn(
+                new FullIndexProgress(
+                        State.PARTIAL_FAILURE, 20, 18, 2, 15, 3, 2,
+                        "/content/wknd/en/page", 2_000L, 45_000L, "Completed with path failures"));
+
+        servlet.doGet(request, response);
+
+        final JsonNode body = MAPPER.readTree(stringWriter.toString());
+        assertEquals("PARTIAL_FAILURE", body.get("state").asText());
+        assertTrue(body.get("complete").asBoolean());
+        assertFalse(body.get("running").asBoolean());
+        assertEquals(20L, body.get("totalProcessed").asLong());
+        assertEquals(45_000L, body.get("elapsedMs").asLong());
+    }
+
+    @Test
+    void doGet_reportsFailedAsCompleteDespiteQueuedJob() throws Exception {
+        final Job queuedJob = org.mockito.Mockito.mock(Job.class);
+        when(queuedJob.getId()).thenReturn("job-queued");
+        when(jobManager.findJobs(
+                        any(),
+                        eq(SearchStaxFullIndexDefaults.JOB_TOPIC),
+                        eq(-1L),
+                        Mockito.<Map<String, Object>[]>isNull()))
+                .thenAnswer(invocation -> {
+                    if (invocation.getArgument(0) == JobManager.QueryType.QUEUED) {
+                        return List.of(queuedJob);
+                    }
+                    return Collections.emptyList();
+                });
+        when(searchStaxFullIndexRunService.getProgress()).thenReturn(
+                new FullIndexProgress(State.FAILED, 0, 0, 0, 0, 0, 0, "", 1_000L, 500L, "Traversal failed"));
+
+        servlet.doGet(request, response);
+
+        final JsonNode body = MAPPER.readTree(stringWriter.toString());
+        assertEquals("FAILED", body.get("state").asText());
+        assertTrue(body.get("complete").asBoolean());
+        assertFalse(body.get("running").asBoolean());
+        assertEquals("Traversal failed", body.get("message").asText());
+    }
+
+    @Test
     void doGet_hidesElapsedWhileIdle() throws Exception {
         when(searchStaxFullIndexRunService.getProgress()).thenReturn(
                 new FullIndexProgress(State.IDLE, 0, 0, 0, 0, 0, 0, "", 0L, 0L, ""));

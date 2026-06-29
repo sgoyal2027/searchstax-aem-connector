@@ -168,6 +168,95 @@ class SearchStaxFullIndexDocumentBuilderTest {
     }
 
     @Test
+    void buildPageIfPublished_returnsNullWhenResourceMissing() {
+        when(resolver.getResource("/content/missing")).thenReturn(null);
+
+        assertNull(documentBuilder.buildPageIfPublished(resolver, "/content/missing"));
+    }
+
+    @Test
+    void buildPageIfPublished_returnsNullWhenPageManagerMissing() {
+        when(resolver.getResource(PAGE_PATH)).thenReturn(pageResource);
+        when(pageResource.adaptTo(ReplicationStatus.class)).thenReturn(replicationStatus);
+        when(replicationStatus.isActivated()).thenReturn(true);
+        when(replicationStatus.isDeactivated()).thenReturn(false);
+        when(replicationStatus.isPending()).thenReturn(false);
+        when(resolver.adaptTo(PageManager.class)).thenReturn(null);
+
+        assertNull(documentBuilder.buildPageIfPublished(resolver, PAGE_PATH));
+    }
+
+    @Test
+    void buildPageIfPublished_returnsNullWhenBuilderThrows() throws Exception {
+        stubPublishedPage();
+        when(pageDocumentBuilderService.buildDocument(resolver, PAGE_PATH))
+                .thenThrow(new IllegalStateException("build failed"));
+
+        assertNull(documentBuilder.buildPageIfPublished(resolver, PAGE_PATH));
+    }
+
+    @Test
+    void buildAssetIfPublished_returnsNullWhenNotDamAsset() {
+        when(resolver.getResource(ASSET_PATH)).thenReturn(assetResource);
+        when(assetResource.getChild("jcr:content/metadata")).thenReturn(null);
+
+        assertNull(documentBuilder.buildAssetIfPublished(resolver, ASSET_PATH));
+    }
+
+    @Test
+    void buildAssetIfPublished_returnsNullWhenBuilderThrows() throws Exception {
+        stubPublishedAsset();
+        when(assetDocumentBuilderService.buildDocument(resolver, ASSET_PATH))
+                .thenThrow(new IllegalStateException("asset build failed"));
+
+        assertNull(documentBuilder.buildAssetIfPublished(resolver, ASSET_PATH));
+    }
+
+    @Test
+    void collectDamReferencesFromPage_returnsEmptyForNullResolverOrPath() {
+        assertTrue(documentBuilder.collectDamReferencesFromPage(null, PAGE_PATH).isEmpty());
+        assertTrue(documentBuilder.collectDamReferencesFromPage(resolver, "").isEmpty());
+    }
+
+    @Test
+    void collectDamReferencesFromPage_collectsObjectArrayDamPaths() {
+        final String pagePath = "/content/wknd/us/en/page";
+        final Resource contentResource = mock(Resource.class);
+        final ValueMap contentValueMap = mock(ValueMap.class);
+
+        when(resolver.adaptTo(PageManager.class)).thenReturn(pageManager);
+        when(pageManager.getPage(pagePath)).thenReturn(page);
+        when(page.getContentResource()).thenReturn(contentResource);
+        when(contentResource.getValueMap()).thenReturn(contentValueMap);
+        stubValueMapForEach(
+                contentValueMap,
+                consumer ->
+                        consumer.accept(
+                                "gallery",
+                                new Object[] {"/content/dam/wknd/a.jpg", "/content/wknd/not-dam"}));
+
+        final Set<String> references = documentBuilder.collectDamReferencesFromPage(resolver, pagePath);
+
+        assertEquals(Set.of("/content/dam/wknd/a.jpg"), references);
+    }
+
+    @Test
+    void isPublished_usesJcrContentReplicationStatusWhenMissingOnResource() {
+        final Resource resource = mock(Resource.class);
+        final Resource content = mock(Resource.class);
+        final ReplicationStatus contentStatus = mock(ReplicationStatus.class);
+
+        when(resource.adaptTo(ReplicationStatus.class)).thenReturn(null);
+        when(resource.getChild("jcr:content")).thenReturn(content);
+        when(content.adaptTo(ReplicationStatus.class)).thenReturn(contentStatus);
+        when(contentStatus.isActivated()).thenReturn(true);
+        when(contentStatus.isDeactivated()).thenReturn(false);
+        when(contentStatus.isPending()).thenReturn(false);
+
+        assertTrue(SearchStaxFullIndexDocumentBuilder.isPublished(resource));
+    }
+
+    @Test
     void buildAssetIfPublished_returnsNullWhenUnpublished() {
         when(resolver.getResource(ASSET_PATH)).thenReturn(assetResource);
         when(assetResource.getChild("jcr:content/metadata")).thenReturn(mock(Resource.class));

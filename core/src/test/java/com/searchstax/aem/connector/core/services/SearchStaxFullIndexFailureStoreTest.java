@@ -2,8 +2,20 @@ package com.searchstax.aem.connector.core.services;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.searchstax.aem.connector.core.testcontext.AppAemContext;
+import com.searchstax.aem.connector.core.testutil.OsgiFieldInjector;
+import com.searchstax.aem.connector.core.utils.ResolverUtil;
+import io.wcm.testing.mock.aem.junit5.AemContext;
+import io.wcm.testing.mock.aem.junit5.AemContextExtension;
+import org.apache.sling.api.resource.Resource;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.io.TempDir;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -15,13 +27,27 @@ import java.util.Map;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.mockito.Mockito.when;
 
+@ExtendWith({AemContextExtension.class, MockitoExtension.class})
+@MockitoSettings(strictness = Strictness.LENIENT)
 class SearchStaxFullIndexFailureStoreTest {
 
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
+    private final AemContext aemContext = AppAemContext.newAemContext();
+
+    @Mock
+    private ResolverUtil resolverUtil;
+
     @TempDir
     Path tempDir;
+
+    @BeforeEach
+    void bindJcrResolver() throws Exception {
+        aemContext.create().resource("/var", "jcr:primaryType", "sling:Folder");
+        when(resolverUtil.getServiceResolver()).thenReturn(aemContext.resourceResolver());
+    }
 
     @Test
     void recordFailure_writesAllRequiredFields() throws Exception {
@@ -63,6 +89,90 @@ class SearchStaxFullIndexFailureStoreTest {
         final String truncated =
                 SearchStaxFullIndexFailureStore.truncateErrorMessage("x".repeat(10_000));
         assertEquals(8 * 1024, truncated.length());
+    }
+
+    @Test
+    void truncateErrorMessage_handlesNullAndShortValues() {
+        assertEquals("", SearchStaxFullIndexFailureStore.truncateErrorMessage(null));
+        assertEquals("short", SearchStaxFullIndexFailureStore.truncateErrorMessage("short"));
+    }
+
+    @Test
+    void listFailuresSince_returnsEmptyWhenDirectoryMissing() throws Exception {
+        final Path missing = tempDir.resolve("does-not-exist");
+        final SearchStaxFullIndexFailureStore store = new SearchStaxFullIndexFailureStore(missing);
+
+        assertTrue(store.listFailuresSince(Instant.EPOCH).isEmpty());
+    }
+
+    @Test
+    void clearAllFailures_returnsZeroForEmptyDirectory() throws Exception {
+        Files.createDirectories(tempDir);
+        final SearchStaxFullIndexFailureStore store = new SearchStaxFullIndexFailureStore(tempDir);
+
+        assertEquals(0, store.clearAllFailures());
+    }
+
+    @Test
+    void listFailureEventsForReport_includesAllStatusesWhenFilterIsAll() throws Exception {
+        final SearchStaxFullIndexFailureStore store = new SearchStaxFullIndexFailureStore(tempDir);
+        store.recordFailure(
+                new SearchStaxFullIndexFailureStore.FailureRecord(
+                        "batch-all",
+                        List.of("/content/a"),
+                        503,
+                        "failed",
+                        100,
+                        Instant.now(),
+                        1));
+
+        assertEquals(1, store.listFailureEventsForReport("ALL", 10, 24).size());
+    }
+
+    @Test
+    void recordFailure_jcr_persistsAndListsRecords() throws Exception {
+        final SearchStaxFullIndexFailureStore store = new SearchStaxFullIndexFailureStore();
+        OsgiFieldInjector.inject(store, "resolverUtil", resolverUtil);
+        final Instant timestamp = Instant.parse("2026-06-29T10:00:00Z");
+
+        store.recordFailure(
+                new SearchStaxFullIndexFailureStore.FailureRecord(
+                        "batch-jcr-1",
+                        List.of("/content/wknd/en/page"),
+                        503,
+                        "Service Unavailable",
+                        512,
+                        timestamp,
+                        3));
+
+        final List<SearchStaxFullIndexFailureStore.FailureRecord> failures =
+                store.listFailuresSince(Instant.parse("2026-06-29T09:00:00Z"));
+
+        assertEquals(1, failures.size());
+        assertEquals("batch-jcr-1", failures.get(0).getBatchId());
+        assertEquals(503, failures.get(0).getStatusCode());
+        assertEquals("/content/wknd/en/page", failures.get(0).getPaths().get(0));
+
+        final Resource runsRoot = aemContext.resourceResolver().getResource(SearchStaxFullIndexFailureStore.JCR_RUNS_PATH);
+        assertTrue(runsRoot != null && runsRoot.hasChildren());
+    }
+
+    @Test
+    void clearAllFailures_jcr_removesPersistedRecords() throws Exception {
+        final SearchStaxFullIndexFailureStore store = new SearchStaxFullIndexFailureStore();
+        OsgiFieldInjector.inject(store, "resolverUtil", resolverUtil);
+        store.recordFailure(
+                new SearchStaxFullIndexFailureStore.FailureRecord(
+                        "batch-jcr-clear",
+                        List.of("/content/a"),
+                        500,
+                        "error",
+                        100,
+                        Instant.now(),
+                        1));
+
+        assertEquals(1, store.clearAllFailures());
+        assertTrue(store.listFailuresSince(Instant.EPOCH).isEmpty());
     }
 
     @Test
