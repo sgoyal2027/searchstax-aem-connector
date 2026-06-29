@@ -100,7 +100,7 @@
             return;
         }
         var lastPath = truncateText(status.lastIndexedPath || "", 120);
-        var completedAt = status.running ? "" : formatTimestamp(status.completedAt);
+        var completedAt = formatTimestamp(status.completedAt);
         var details = "Indexed: " + (status.totalProcessed || 0)
             + " | Attempted: " + (status.totalAttempted != null ? status.totalAttempted : (status.totalProcessed || 0) + (status.failureCount || 0))
             + " | Pages: " + (status.pagesIndexed || 0)
@@ -420,23 +420,9 @@
                     startPolling(button, originalLabel, data.jobId || "");
                     return;
                 }
-                return fetchStatus().then(function (status) {
-                    if (status.running) {
-                        clearResult(button);
-                        renderResult(
-                            button,
-                            "success",
-                            data.message || "Full index is already in progress.",
-                            details,
-                            "Success"
-                        );
-                        startPolling(button, originalLabel, status.jobId || "");
-                        return;
-                    }
-                    renderResult(button, "error", data.message || "Request completed.", details, "Failure");
-                    button.disabled = false;
-                    setButtonText(button, originalLabel);
-                });
+                renderResult(button, "error", data.message || "Request completed.", details, "Failure");
+                button.disabled = false;
+                setButtonText(button, originalLabel);
             })
             .catch(function (err) {
                 console.error(LOG, "Full index run fetch error:", err);
@@ -462,9 +448,6 @@
                     if (status.complete && status.jobId && activeJobId && status.jobId !== activeJobId) {
                         renderProgress(button, {
                             message: "Waiting for full index job to start...",
-                            totalProcessed: 0,
-                            totalAttempted: 0,
-                            failureCount: 0,
                             pagesIndexed: 0,
                             assetsIndexed: 0,
                             currentBatchNumber: 0,
@@ -531,12 +514,11 @@
         }
         fetchStatus()
             .then(function (status) {
-                if (!status.running || status.complete) {
+                if (!status.running) {
                     return;
                 }
-                clearResult(button);
                 renderProgress(button, status);
-                startPolling(button, "Run full indexing", status.jobId || "");
+                startPolling(button, "Run full indexing", "");
             })
             .catch(function (err) {
                 console.warn(LOG, "Could not resume full index status polling:", err);

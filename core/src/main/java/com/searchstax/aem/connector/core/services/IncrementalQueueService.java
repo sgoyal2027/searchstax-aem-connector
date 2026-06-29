@@ -22,11 +22,4 @@ public interface IncrementalQueueService {
     int size();
 
     void incrementRetryCount(IndexRequest request);
-
-    /**
-     * Removes all pending incremental index requests (e.g. after a full reindex completes).
-     *
-     * @return number of queue items removed
-     */
-    int clearPendingQueue();
 }

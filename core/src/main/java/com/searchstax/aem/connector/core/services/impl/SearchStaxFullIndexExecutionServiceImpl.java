@@ -22,7 +22,6 @@ import com.searchstax.aem.connector.core.services.SearchStaxFullIndexDocumentBui
 import com.searchstax.aem.connector.core.services.SearchStaxFullIndexDocumentSerializer;
 import com.searchstax.aem.connector.core.services.SearchStaxFullIndexExecutionService;
 import com.searchstax.aem.connector.core.services.FullIndexAuditService;
-import com.searchstax.aem.connector.core.services.IncrementalQueueService;
 import com.searchstax.aem.connector.core.services.SearchStaxFullIndexFailureStore;
 import com.searchstax.aem.connector.core.services.SearchStaxFullIndexPathConfigurationService;
 import com.searchstax.aem.connector.core.services.SearchStaxFullIndexRetryPolicy;
@@ -103,9 +102,6 @@ public class SearchStaxFullIndexExecutionServiceImpl implements SearchStaxFullIn
     @Reference
     private SearchStaxFullIndexRuntimeConfigService runtimeConfigService;
 
-    @Reference
-    private IncrementalQueueService incrementalQueueService;
-
     private final Object progressLock = new Object();
     private State state = State.IDLE;
     private long totalProcessed;
@@ -117,7 +113,6 @@ public class SearchStaxFullIndexExecutionServiceImpl implements SearchStaxFullIn
     private int currentBatchNumber;
     private String lastIndexedPath = "";
     private long startedAt;
-    private long completedElapsedMs;
     private String progressMessage = "";
 
     private int batchesSinceHardCommit;
@@ -218,7 +213,6 @@ public class SearchStaxFullIndexExecutionServiceImpl implements SearchStaxFullIn
             }
 
             finishProgress();
-            clearIncrementalPendingQueue();
             sendConsolidatedFailureEmailIfNeeded();
             LOG.info(
                     "Full index finished state={}. totalProcessed={}, success={}, pathFailures={}, "
@@ -242,7 +236,7 @@ public class SearchStaxFullIndexExecutionServiceImpl implements SearchStaxFullIn
     @Override
     public FullIndexProgress getProgressSnapshot() {
         synchronized (progressLock) {
-            final long elapsed = resolveElapsedMs();
+            final long elapsed = startedAt > 0 ? System.currentTimeMillis() - startedAt : 0;
             return new FullIndexProgress(
                     state,
                     totalProcessed,
@@ -255,24 +249,6 @@ public class SearchStaxFullIndexExecutionServiceImpl implements SearchStaxFullIn
                     startedAt,
                     elapsed,
                     progressMessage);
-        }
-    }
-
-    @Override
-    public void clearProgressForNewRun() {
-        synchronized (progressLock) {
-            state = State.IDLE;
-            totalProcessed = 0;
-            successCount = 0;
-            failureCount = 0;
-            failedBatchCount = 0;
-            pagesIndexed = 0;
-            assetsIndexed = 0;
-            currentBatchNumber = 0;
-            lastIndexedPath = "";
-            startedAt = 0;
-            completedElapsedMs = 0;
-            progressMessage = "";
         }
     }
 
@@ -580,7 +556,7 @@ public class SearchStaxFullIndexExecutionServiceImpl implements SearchStaxFullIn
             if (!documentSerializer.isWithinDocumentLimit(documentBytes)) {
                 final String errorMessage =
                         String.format(
-                                "Document payload %d bytes exceeds %d byte limit",
+                                "Document payload %d bytes exceeds SRS %d byte limit",
                                 documentBytes,
                                 SearchStaxIndexingLimits.MAX_DOCUMENT_BYTES);
                 LOG.warn("Skipping path {}: {}", path, errorMessage);
@@ -978,40 +954,12 @@ public class SearchStaxFullIndexExecutionServiceImpl implements SearchStaxFullIn
             currentBatchNumber = 0;
             lastIndexedPath = "";
             startedAt = System.currentTimeMillis();
-            completedElapsedMs = 0;
             progressMessage = message;
-        }
-    }
-
-    private long resolveElapsedMs() {
-        if (state == State.RUNNING) {
-            return startedAt > 0 ? System.currentTimeMillis() - startedAt : 0;
-        }
-        if (state == State.IDLE) {
-            return 0;
-        }
-        return completedElapsedMs;
-    }
-
-    private void captureCompletedElapsed() {
-        completedElapsedMs = startedAt > 0 ? System.currentTimeMillis() - startedAt : 0;
-    }
-
-    private void clearIncrementalPendingQueue() {
-        if (incrementalQueueService == null) {
-            return;
-        }
-        try {
-            final int cleared = incrementalQueueService.clearPendingQueue();
-            LOG.info("Cleared {} pending incremental index request(s) after full reindex", cleared);
-        } catch (Exception e) {
-            LOG.warn("Unable to clear incremental pending queue after full reindex", e);
         }
     }
 
     private void finishProgress() {
         synchronized (progressLock) {
-            captureCompletedElapsed();
             if (failedBatchCount == 0 && failureCount == 0) {
                 state = State.SUCCESS;
                 progressMessage = "Full index completed successfully";
@@ -1037,7 +985,6 @@ public class SearchStaxFullIndexExecutionServiceImpl implements SearchStaxFullIn
 
     private void failProgress(final String message) {
         synchronized (progressLock) {
-            captureCompletedElapsed();
             state = State.FAILED;
             progressMessage = message;
         }

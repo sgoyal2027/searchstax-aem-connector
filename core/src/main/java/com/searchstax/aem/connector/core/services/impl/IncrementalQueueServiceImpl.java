@@ -193,34 +193,6 @@ public class IncrementalQueueServiceImpl implements IncrementalQueueService {
         updateRequest(request);
     }
 
-    @Override
-    public int clearPendingQueue() {
-        try (ResourceResolver resolver = resolverUtil.getServiceResolver()) {
-            final Resource pendingRoot = resolver.getResource(PENDING_QUEUE_PATH);
-            if (pendingRoot == null) {
-                return 0;
-            }
-
-            final List<Resource> children = new ArrayList<>();
-            pendingRoot.getChildren().forEach(children::add);
-
-            int removed = 0;
-            for (final Resource child : children) {
-                resolver.delete(child);
-                removed++;
-            }
-
-            if (removed > 0) {
-                resolver.commit();
-                LOG.info("Cleared {} pending incremental index request(s) from queue", removed);
-            }
-            return removed;
-        } catch (Exception e) {
-            LOG.error("Unable to clear incremental pending queue", e);
-            return 0;
-        }
-    }
-
     private static int size(final ResourceResolver resolver) {
         final Resource pendingRoot = resolver.getResource(PENDING_QUEUE_PATH);
         if (pendingRoot == null) {
