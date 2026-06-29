@@ -164,6 +164,35 @@ class IndexingAuditServiceImplTest {
         assertEquals(0, countChildren(context.resourceResolver().getResource(IndexingAuditServiceImpl.AUDIT_ROOT)));
     }
 
+    @Test
+    void purgeOlderThanHours_removesStaleAuditEvents() throws Exception {
+        when(resolverUtil.getServiceResolver()).thenReturn(context.resourceResolver());
+        context.create().resource(IndexingAuditServiceImpl.AUDIT_ROOT, "jcr:primaryType", "sling:Folder");
+        final Calendar stale = Calendar.getInstance();
+        stale.add(Calendar.HOUR, -48);
+        final Calendar recent = Calendar.getInstance();
+        context.create().resource(
+                IndexingAuditServiceImpl.AUDIT_ROOT + "/event-stale",
+                "path", "/content/old",
+                "timestamp", stale);
+        context.create().resource(
+                IndexingAuditServiceImpl.AUDIT_ROOT + "/event-recent",
+                "path", "/content/new",
+                "timestamp", recent);
+
+        indexingAuditService.purgeOlderThanHours(24);
+
+        assertEquals(
+                "/content/new",
+                context.resourceResolver()
+                        .getResource(IndexingAuditServiceImpl.AUDIT_ROOT)
+                        .getChildren()
+                        .iterator()
+                        .next()
+                        .getValueMap()
+                        .get("path", String.class));
+    }
+
     private static int countChildren(final Resource resource) {
         int count = 0;
         if (resource != null) {

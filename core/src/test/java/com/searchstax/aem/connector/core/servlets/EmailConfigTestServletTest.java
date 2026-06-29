@@ -56,4 +56,57 @@ class EmailConfigTestServletTest {
 
         assertEquals("{protected-password}", config.getSmtpPassword());
     }
+
+    @Test
+    void buildTestConfig_fallsBackToSavedValuesWhenPostedBlank() {
+        final SlingHttpServletRequest request = mock(SlingHttpServletRequest.class);
+        when(request.getParameter("smtpHost")).thenReturn("");
+        when(request.getParameter("smtpPort")).thenReturn("");
+        when(request.getParameter("smtpUser")).thenReturn("");
+        when(request.getParameter("fromEmail")).thenReturn("");
+        when(request.getParameter("receiverEmails")).thenReturn("");
+        when(request.getParameter("smtpPassword")).thenReturn(null);
+
+        final EmailConfig saved = new EmailConfig();
+        saved.setSmtpHost("saved.example.com");
+        saved.setSmtpPort(2525);
+        saved.setSmtpUser("saved@example.com");
+        saved.setFromEmail("from@example.com");
+        saved.setReceiverEmails("ops@example.com");
+        saved.setSmtpUseSsl(true);
+        saved.setSmtpPassword("{protected-password}");
+
+        final EmailConfig config = EmailConfigTestServlet.buildTestConfig(request, saved);
+
+        assertEquals("saved.example.com", config.getSmtpHost());
+        assertEquals(2525, config.getSmtpPort());
+        assertEquals("saved@example.com", config.getSmtpUser());
+        assertEquals("from@example.com", config.getFromEmail());
+        assertEquals("ops@example.com", config.getReceiverEmails());
+        assertTrue(config.isSmtpUseSsl());
+        assertEquals("{protected-password}", config.getSmtpPassword());
+    }
+
+    @Test
+    void buildTestConfig_parsePortUsesFallbackForInvalidValue() {
+        final SlingHttpServletRequest request = mock(SlingHttpServletRequest.class);
+        when(request.getParameter("smtpPort")).thenReturn("not-a-number");
+
+        final EmailConfig saved = new EmailConfig();
+        saved.setSmtpPort(465);
+
+        assertEquals(465, EmailConfigTestServlet.buildTestConfig(request, saved).getSmtpPort());
+    }
+
+    @Test
+    void buildTestConfig_resolveCheckboxAcceptsOnValue() {
+        final SlingHttpServletRequest request = mock(SlingHttpServletRequest.class);
+        when(request.getParameter("smtpUseSSL")).thenReturn("on");
+        when(request.getParameter("smtpUseStartTLS")).thenReturn("false");
+
+        final EmailConfig config = EmailConfigTestServlet.buildTestConfig(request, new EmailConfig());
+
+        assertTrue(config.isSmtpUseSsl());
+        assertFalse(config.isSmtpUseStartTls());
+    }
 }

@@ -17,6 +17,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.lang.reflect.Type;
@@ -25,7 +26,6 @@ import java.util.List;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
@@ -173,6 +173,67 @@ class IndexingReportServletTest {
         final List<Map<String, Object>> events = GSON.fromJson(GSON.toJson(payload.get("events")), LIST_MAP_TYPE);
         assertEquals("2026-06-18 12:00:00", events.get(0).get("timestamp"));
         assertEquals("2026-06-18 09:00:00", events.get(1).get("timestamp"));
+    }
+
+    @Test
+    void doGet_incrementalReport_usesDefaultPagination() throws Exception {
+        when(indexingAuditService.listEventsPaged(null, null, true, 0, 100))
+                .thenReturn(new IndexingReportPage(List.of(), 0));
+
+        servlet.doGet(request, response);
+
+        verify(indexingAuditService).listEventsPaged(null, null, true, 0, 100);
+        final Map<String, Object> payload = GSON.fromJson(responseBody.toString(), PAYLOAD_TYPE);
+        assertEquals("incremental", payload.get("type"));
+        assertEquals(1, ((Number) payload.get("page")).intValue());
+        assertEquals(100, ((Number) payload.get("pageSize")).intValue());
+        assertEquals(0, ((Number) payload.get("totalPages")).intValue());
+    }
+
+    @Test
+    void doGet_fullReport_usesLimitParamWhenPageSizeMissing() throws Exception {
+        when(request.getParameter("type")).thenReturn("full");
+        when(request.getParameter("limit")).thenReturn("50");
+        when(request.getParameter("retentionHours")).thenReturn("24");
+        when(fullIndexAuditService.listEventsForReport(any(), anyInt(), anyInt())).thenReturn(List.of());
+        when(fullIndexFailureStore.listFailureEventsForReport(any(), anyInt(), anyInt())).thenReturn(List.of());
+
+        servlet.doGet(request, response);
+
+        final Map<String, Object> payload = GSON.fromJson(responseBody.toString(), PAYLOAD_TYPE);
+        assertEquals(50, ((Number) payload.get("pageSize")).intValue());
+    }
+
+    @Test
+    void doGet_fullReport_returnsEmptyPageWhenOffsetBeyondTotal() throws Exception {
+        when(request.getParameter("type")).thenReturn("full");
+        when(request.getParameter("page")).thenReturn("3");
+        when(request.getParameter("pageSize")).thenReturn("10");
+        when(request.getParameter("retentionHours")).thenReturn("24");
+        when(fullIndexAuditService.listEventsForReport(any(), anyInt(), anyInt()))
+                .thenReturn(List.of(eventRow("SUCCESS", "ok")));
+        when(fullIndexFailureStore.listFailureEventsForReport(any(), anyInt(), anyInt()))
+                .thenReturn(List.of());
+
+        servlet.doGet(request, response);
+
+        final Map<String, Object> payload = GSON.fromJson(responseBody.toString(), PAYLOAD_TYPE);
+        assertEquals(1, ((Number) payload.get("totalCount")).intValue());
+        assertEquals(0, ((List<?>) payload.get("events")).size());
+    }
+
+    @Test
+    void doGet_fullReport_returnsInternalErrorWhenLoadFails() throws Exception {
+        when(request.getParameter("type")).thenReturn("full");
+        when(fullIndexAuditService.listEventsForReport(any(), anyInt(), anyInt())).thenReturn(List.of());
+        when(fullIndexFailureStore.listFailureEventsForReport(any(), anyInt(), anyInt()))
+                .thenThrow(new IOException("JCR unavailable"));
+
+        servlet.doGet(request, response);
+
+        verify(response).setStatus(SlingHttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+        assertTrue(responseBody.toString().contains("\"success\":false"));
+        assertTrue(responseBody.toString().contains("Unable to load indexing report"));
     }
 
     private static final Type LIST_MAP_TYPE = new TypeToken<List<Map<String, Object>>>() {}.getType();

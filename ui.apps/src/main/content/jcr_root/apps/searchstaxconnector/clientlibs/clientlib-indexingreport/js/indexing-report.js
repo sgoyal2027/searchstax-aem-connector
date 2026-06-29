@@ -555,7 +555,7 @@
             } else if (formatted.indexOf("Indexed in batch ") === 0) {
                 formatted = formatted.replace(
                     "Indexed in batch ",
-                    "Successfully posted to SearchStax in full reindex batch ");
+                    "Successfully indexed to SearchStax in full reindex batch ");
             } else if (formatted.indexOf("(retries:") >= 0) {
                 formatted = "Full reindex batch failed to post to SearchStax " + formatted;
             }

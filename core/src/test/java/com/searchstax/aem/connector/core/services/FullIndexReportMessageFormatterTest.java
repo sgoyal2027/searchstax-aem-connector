@@ -14,7 +14,7 @@ class FullIndexReportMessageFormatterTest {
 
         assertTrue(message.contains("batch 12"));
         assertTrue(message.contains("850 ms"));
-        assertTrue(message.contains("Successfully posted to SearchStax"));
+        assertTrue(message.contains("Successfully indexed to SearchStax"));
     }
 
     @Test
@@ -23,7 +23,7 @@ class FullIndexReportMessageFormatterTest {
                 "Indexed in batch 3", "batch-3", 120L);
 
         assertTrue(message.contains("batch 3"));
-        assertTrue(message.contains("Successfully posted to SearchStax"));
+        assertTrue(message.contains("Successfully indexed to SearchStax"));
     }
 
     @Test
@@ -74,13 +74,13 @@ class FullIndexReportMessageFormatterTest {
         final String message = FullIndexReportMessageFormatter.formatSuccessMessage(4, 0L);
 
         assertTrue(message.contains("batch 4"));
-        assertTrue(message.contains("Successfully posted to SearchStax"));
+        assertTrue(message.contains("Successfully indexed to SearchStax"));
         assertFalse(message.contains("ms"));
     }
 
     @Test
     void formatSuccessMessageFromStored_keepsAlreadyFormattedMessage() {
-        final String stored = "Successfully posted to SearchStax in full reindex batch 2 (90 ms)";
+        final String stored = "Successfully indexed to SearchStax in full reindex batch 2 (90 ms)";
 
         assertEquals(stored, FullIndexReportMessageFormatter.formatSuccessMessageFromStored(stored, "batch-2", 90L));
     }
@@ -128,5 +128,15 @@ class FullIndexReportMessageFormatterTest {
 
         assertTrue(message.length() < longDetail.length() + 80);
         assertTrue(message.endsWith("..."));
+    }
+
+    @Test
+    void formatFailureMessage_batchFailure_mapsCommonHttpStatuses() {
+        assertTrue(FullIndexReportMessageFormatter.formatFailureMessage("batch-2", 401, "", 0)
+                .contains("HTTP 401 Unauthorized"));
+        assertTrue(FullIndexReportMessageFormatter.formatFailureMessage("batch-2", 429, "", 0)
+                .contains("HTTP 429 Too Many Requests"));
+        assertTrue(FullIndexReportMessageFormatter.formatFailureMessage("batch-2", 599, "", 0)
+                .contains("HTTP 599 Network or transport error"));
     }
 }

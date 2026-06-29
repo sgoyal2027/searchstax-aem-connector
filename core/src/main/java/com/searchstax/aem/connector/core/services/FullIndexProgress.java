@@ -58,7 +58,7 @@ public final class FullIndexProgress {
     }
 
     /**
-     * Documents successfully posted to SearchStax (same as {@link #getSuccessCount()}).
+     * Documents successfully indexed to SearchStax (same as {@link #getSuccessCount()}).
      */
     public long getTotalProcessed() {
         return totalProcessed;

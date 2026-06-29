@@ -12,8 +12,10 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.util.List;
 import java.util.Map;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -46,6 +48,53 @@ class DocumentValidationServiceImplTest {
         when(indexingHelperService.resolveFieldName("title_txt", "text", "", "en")).thenReturn("title_txt_en");
 
         assertTrue(validationService.validateMandatoryFields(Map.of("id", "/content/page"), "en").isPresent());
+    }
+
+    @Test
+    void validateMandatoryFields_returnsErrorWhenDocumentIsNull() {
+        assertTrue(validationService.validateMandatoryFields(null, "en").isPresent());
+        assertTrue(
+                validationService.validateMandatoryFields(null, "en").get().contains("document is null"));
+    }
+
+    @Test
+    void validateMandatoryFields_defaultsBlankLanguageToEnglish() {
+        final MetadataFieldMappingConfig mapping = mandatoryMapping("title", "title_txt");
+        when(metadataFieldConfigService.getMetadataFieldMappings()).thenReturn(List.of(mapping));
+        when(indexingHelperService.resolveFieldName("title_txt", "text", "", "en")).thenReturn("title_txt_en");
+
+        assertTrue(validationService.validateMandatoryFields(Map.of(), " ").isPresent());
+        verify(indexingHelperService).resolveFieldName("title_txt", "text", "", "en");
+    }
+
+    @Test
+    void validateMandatoryFields_skipsDisabledAndNonMandatoryMappings() {
+        final MetadataFieldMappingConfig disabled = mandatoryMapping("title", "title_txt");
+        disabled.setEnabled(false);
+        final MetadataFieldMappingConfig optional = mandatoryMapping("description", "desc_txt");
+        optional.setMandatory(false);
+        when(metadataFieldConfigService.getMetadataFieldMappings()).thenReturn(List.of(disabled, optional));
+
+        assertFalse(validationService.validateMandatoryFields(Map.of("id", "/content/page"), "en").isPresent());
+    }
+
+    @Test
+    void validateMandatoryFields_failsWhenMandatoryStringValueIsBlank() {
+        final MetadataFieldMappingConfig mapping = mandatoryMapping("title", "title_txt");
+        when(metadataFieldConfigService.getMetadataFieldMappings()).thenReturn(List.of(mapping));
+        when(indexingHelperService.resolveFieldName("title_txt", "text", "", "en")).thenReturn("title_txt_en");
+
+        assertTrue(validationService.validateMandatoryFields(Map.of("title_txt_en", "   "), "en").isPresent());
+    }
+
+    @Test
+    void validateMandatoryFields_failsWhenMandatoryListValueIsEmpty() {
+        final MetadataFieldMappingConfig mapping = mandatoryMapping("tags", "tags_txt");
+        mapping.setSearchStaxFieldType("texts");
+        when(metadataFieldConfigService.getMetadataFieldMappings()).thenReturn(List.of(mapping));
+        when(indexingHelperService.resolveFieldName("tags_txt", "texts", "", "en")).thenReturn("tags_txt_en");
+
+        assertTrue(validationService.validateMandatoryFields(Map.of("tags_txt_en", List.of()), "en").isPresent());
     }
 
     private static MetadataFieldMappingConfig mandatoryMapping(final String aemField, final String solrField) {

@@ -84,4 +84,29 @@ class IndexingReportClearServletTest {
         assertEquals("full", payload.get("type"));
         assertEquals(15, ((Number) payload.get("removedCount")).intValue());
     }
+
+    @Test
+    void doPost_fullReport_includesSuccessAndFailureBreakdown() throws Exception {
+        when(request.getParameter("type")).thenReturn("full");
+        when(fullIndexAuditService.clearAllEvents()).thenReturn(7);
+        when(fullIndexFailureStore.clearAllFailures()).thenReturn(3);
+
+        servlet.doPost(request, response);
+
+        final Map<String, Object> payload = GSON.fromJson(responseBody.toString(), PAYLOAD_TYPE);
+        assertEquals(7, ((Number) payload.get("removedSuccessEvents")).intValue());
+        assertEquals(3, ((Number) payload.get("removedFailureEvents")).intValue());
+    }
+
+    @Test
+    void doPost_returnsInternalErrorWhenClearFails() throws Exception {
+        when(request.getParameter("type")).thenReturn("incremental");
+        when(indexingAuditService.clearAllEvents()).thenThrow(new RuntimeException("JCR error"));
+
+        servlet.doPost(request, response);
+
+        verify(response).setStatus(SlingHttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+        assertTrue(responseBody.toString().contains("\"success\":false"));
+        assertTrue(responseBody.toString().contains("Unable to clear indexing report"));
+    }
 }

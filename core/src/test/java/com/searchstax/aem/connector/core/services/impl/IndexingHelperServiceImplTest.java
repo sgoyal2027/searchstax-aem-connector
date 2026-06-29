@@ -198,4 +198,66 @@ class IndexingHelperServiceImplTest {
         assertTrue(helper.isSupportedAsset(pdfAsset));
         assertFalse(helper.isSupportedAsset(txtAsset));
     }
+
+    @Test
+    void isSuccess_returnsFalseWhenBodyContainsSuccessFalse() {
+        assertFalse(helper.isSuccess(new ApiResponse(200, "{\"success\":false,\"message\":\"rejected\"}")));
+    }
+
+    @Test
+    void shouldRetry_returnsTrueForNullResponse() {
+        assertTrue(helper.shouldRetry(null));
+    }
+
+    @Test
+    void isPlanLimitExceeded_detects429WithPlanLimitMessage() {
+        final ApiResponse response = new ApiResponse(429, "Plan Limit Exceeded for tenant");
+
+        assertTrue(helper.isPlanLimitExceeded(response));
+        assertFalse(helper.shouldRetry(response));
+    }
+
+    @Test
+    void addField_skipsNullValues() {
+        final Map<String, Object> document = new HashMap<>();
+        helper.addField(document, "title", null);
+        helper.addField(document, "title", "Hello");
+
+        assertEquals(1, document.size());
+        assertEquals("Hello", document.get("title"));
+    }
+
+    @Test
+    void detectLanguage_returnsEnglishDefault() {
+        assertEquals("en", helper.detectLanguage("Bonjour le monde"));
+        assertEquals("en", helper.detectLanguage(null));
+    }
+
+    @Test
+    void isSupportedAsset_returnsTrueWhenAllowedFilesNotConfigured() {
+        when(initialSetupConfigService.getConfiguration()).thenReturn(new InitialSetupConfig());
+
+        assertTrue(helper.isSupportedAsset(mock(Asset.class)));
+    }
+
+    @Test
+    void isSupportedAsset_returnsFalseForExtensionlessName() {
+        final InitialSetupConfig config = new InitialSetupConfig();
+        config.setAllowedFiles(new String[]{"pdf"});
+        when(initialSetupConfigService.getConfiguration()).thenReturn(config);
+
+        final Asset asset = mock(Asset.class);
+        when(asset.getName()).thenReturn("README");
+
+        assertFalse(helper.isSupportedAsset(asset));
+    }
+
+    @Test
+    void extractText_returnsEmptyWhenOriginalRenditionMissing() {
+        final Asset asset = mock(Asset.class);
+        when(asset.getPath()).thenReturn("/content/dam/file.pdf");
+        when(asset.getOriginal()).thenReturn(null);
+
+        assertEquals("", helper.extractText(asset));
+    }
 }

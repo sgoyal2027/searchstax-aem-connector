@@ -52,4 +52,22 @@ class JsonServletResponseUtilTest {
     void escapeJson_escapesQuotesAndBackslashes() {
         assertEquals("line1line2 \\\"quoted\\\"", JsonServletResponseUtil.escapeJson("line1\nline2 \"quoted\""));
     }
+
+    @Test
+    void writeInternalError_setsServerErrorStatus() throws Exception {
+        final StringWriter body = new StringWriter();
+        when(response.getWriter()).thenReturn(new PrintWriter(body));
+
+        JsonServletResponseUtil.writeInternalError(response, "SMTP failed");
+
+        final ArgumentCaptor<Integer> statusCaptor = ArgumentCaptor.forClass(Integer.class);
+        verify(response).setStatus(statusCaptor.capture());
+        assertEquals(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, statusCaptor.getValue());
+        assertTrue(body.toString().contains("SMTP failed"));
+    }
+
+    @Test
+    void escapeJson_returnsEmptyStringForNull() {
+        assertEquals("", JsonServletResponseUtil.escapeJson(null));
+    }
 }

@@ -16,11 +16,11 @@ public final class FullIndexReportMessageFormatter {
         }
         if (durationMs > 0) {
             return String.format(
-                    "Successfully posted to SearchStax in full reindex batch %d (%d ms)",
+                    "Successfully indexed to SearchStax in full reindex batch %d (%d ms)",
                     batchNumber,
                     durationMs);
         }
-        return String.format("Successfully posted to SearchStax in full reindex batch %d", batchNumber);
+        return String.format("Successfully indexed to SearchStax in full reindex batch %d", batchNumber);
     }
 
     public static String formatSuccessMessageFromStored(

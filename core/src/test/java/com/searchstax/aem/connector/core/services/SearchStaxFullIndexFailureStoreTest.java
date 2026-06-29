@@ -189,4 +189,68 @@ class SearchStaxFullIndexFailureStoreTest {
 
         assertTrue(store.listFailureEventsForReport("SUCCESS", 50, 24).isEmpty());
     }
+
+    @Test
+    void clearAllFailures_removesFilesystemRecords() throws Exception {
+        final SearchStaxFullIndexFailureStore store = new SearchStaxFullIndexFailureStore(tempDir);
+        store.recordFailure(
+                new SearchStaxFullIndexFailureStore.FailureRecord(
+                        "batch-1",
+                        List.of("/content/a"),
+                        503,
+                        "Service Unavailable",
+                        100,
+                        Instant.now(),
+                        1));
+        store.recordFailure(
+                new SearchStaxFullIndexFailureStore.FailureRecord(
+                        "batch-2",
+                        List.of("/content/b"),
+                        500,
+                        "Server error",
+                        200,
+                        Instant.now(),
+                        2));
+
+        assertEquals(2, store.clearAllFailures());
+        assertTrue(store.listFailuresSince(Instant.EPOCH).isEmpty());
+    }
+
+    @Test
+    void listFailureEventsForReport_limitsResultsToMaxResults() throws Exception {
+        final SearchStaxFullIndexFailureStore store = new SearchStaxFullIndexFailureStore(tempDir);
+        for (int i = 0; i < 5; i++) {
+            store.recordFailure(
+                    new SearchStaxFullIndexFailureStore.FailureRecord(
+                            "batch-" + i,
+                            List.of("/content/page-" + i),
+                            503,
+                            "failed",
+                            100,
+                            Instant.now(),
+                            1));
+        }
+
+        assertEquals(2, store.listFailureEventsForReport("FAILURE", 2, 24).size());
+    }
+
+    @Test
+    void listFailureEventsForReport_usesBatchIdWhenPathsEmpty() throws Exception {
+        final SearchStaxFullIndexFailureStore store = new SearchStaxFullIndexFailureStore(tempDir);
+        store.recordFailure(
+                new SearchStaxFullIndexFailureStore.FailureRecord(
+                        "batch-empty-paths",
+                        List.of(),
+                        503,
+                        "batch failed",
+                        100,
+                        Instant.now(),
+                        3));
+
+        final List<Map<String, Object>> events = store.listFailureEventsForReport("FAILURE", 10, 24);
+
+        assertEquals(1, events.size());
+        assertEquals("batch-empty-paths", events.get(0).get("path"));
+        assertEquals("BATCH", events.get(0).get("failureKind"));
+    }
 }

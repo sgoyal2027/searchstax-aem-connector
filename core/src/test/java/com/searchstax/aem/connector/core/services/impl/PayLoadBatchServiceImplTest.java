@@ -152,6 +152,35 @@ class PayLoadBatchServiceImplTest {
         assertNotNull(requests.get(0).getBatchId());
     }
 
+    @Test
+    void testBuildIndexBatches_skipsSingleDocumentExceedingBatchPayloadLimit() throws Exception {
+        final String oversizedContent = "x".repeat(SearchStaxIndexingLimits.MAX_BATCH_PAYLOAD_BYTES + 1);
+        final List<IndexRequest> requests =
+                List.of(newRequest("/content/huge"), newRequest("/content/normal"));
+        final List<Map<String, Object>> documents =
+                List.of(newDocument("/content/huge", oversizedContent), newDocument("/content/normal", "ok"));
+
+        final List<PayloadBatch> result = service.buildIndexBatches(requests, documents);
+
+        assertEquals(1, result.size());
+        assertEquals("/content/normal", result.get(0).getRequests().get(0).getPath());
+    }
+
+    @Test
+    void testBuildIndexBatches_splitsWhenPayloadSizeExceeded() throws Exception {
+        final String largeContent = "y".repeat(6 * 1024 * 1024);
+        final List<IndexRequest> requests =
+                List.of(newRequest("/content/large-1"), newRequest("/content/large-2"));
+        final List<Map<String, Object>> documents =
+                List.of(newDocument("/content/large-1", largeContent), newDocument("/content/large-2", largeContent));
+
+        final List<PayloadBatch> result = service.buildIndexBatches(requests, documents);
+
+        assertEquals(2, result.size());
+        assertEquals(1, result.get(0).getRequests().size());
+        assertEquals(1, result.get(1).getRequests().size());
+    }
+
     private IndexRequest newRequest(String path) {
 
         IndexRequest request =
@@ -163,13 +192,17 @@ class PayLoadBatchServiceImplTest {
     }
 
     private Map<String, Object> newDocument(String id) {
+        return newDocument(id, "Sample Content");
+    }
+
+    private Map<String, Object> newDocument(String id, String content) {
 
         Map<String, Object> map =
                 new HashMap<>();
 
         map.put("id", id);
         map.put("title", "Title");
-        map.put("content", "Sample Content");
+        map.put("content", content);
 
         return map;
     }
