@@ -128,38 +128,10 @@ class SearchStaxFullIndexStatusServletTest {
         final JsonNode body = MAPPER.readTree(stringWriter.toString());
         assertEquals("RUNNING", body.get("state").asText());
         assertEquals("job-active", body.get("jobId").asText());
-        assertEquals("Waiting for full index job to start...", body.get("message").asText());
+        assertEquals("Full index job is running.", body.get("message").asText());
         assertTrue(body.get("running").asBoolean());
         assertFalse(body.get("complete").asBoolean());
-        assertTrue(body.get("pendingStart").asBoolean());
         assertEquals(0L, body.get("completedAt").asLong());
-        assertEquals(0L, body.get("totalProcessed").asLong());
-    }
-
-    @Test
-    void doGet_hidesStaleCountersWhileNewJobQueued() throws Exception {
-        when(jobManager.findJobs(
-                        eq(JobManager.QueryType.QUEUED),
-                        eq(SearchStaxFullIndexDefaults.JOB_TOPIC),
-                        eq(-1L),
-                        Mockito.<Map<String, Object>[]>isNull()))
-                .thenReturn(List.of(job));
-        when(job.getId()).thenReturn("job-new");
-        when(searchStaxFullIndexRunService.getProgress()).thenReturn(
-                new FullIndexProgress(
-                        State.SUCCESS, 40, 40, 0, 9, 31, 1,
-                        "/content/dam/asset.jpg",
-                        1_000L, 120_000L, "Previous run finished"));
-
-        servlet.doGet(request, response);
-
-        final JsonNode body = MAPPER.readTree(stringWriter.toString());
-        assertEquals("RUNNING", body.get("state").asText());
-        assertFalse(body.get("complete").asBoolean());
-        assertEquals(0L, body.get("totalProcessed").asLong());
-        assertEquals(0L, body.get("elapsedMs").asLong());
-        assertEquals(0L, body.get("completedAt").asLong());
-        assertEquals("Full index job is running.", body.get("message").asText());
     }
 
     @Test

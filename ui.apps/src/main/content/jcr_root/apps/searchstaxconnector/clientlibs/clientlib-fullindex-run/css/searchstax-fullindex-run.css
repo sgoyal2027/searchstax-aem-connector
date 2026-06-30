@@ -13,11 +13,6 @@
     border-left: 4px solid #1473e6;
 }
 
-#searchstax-full-index-progress .searchstax-fullindex-progress-panel--waiting {
-    border-left: 4px solid #e68619;
-    background: #fffaf2;
-}
-
 #searchstax-full-index-progress .searchstax-fullindex-progress-bar {
     display: block;
     width: 100%;

@@ -15,10 +15,5 @@ public interface SearchStaxFullIndexExecutionService {
      */
     void execute(FullIndexPathConfig pathConfig);
 
-    /**
-     * Clears in-memory progress from a prior run when a new job is queued.
-     */
-    void clearProgressForNewRun();
-
     FullIndexProgress getProgressSnapshot();
 }

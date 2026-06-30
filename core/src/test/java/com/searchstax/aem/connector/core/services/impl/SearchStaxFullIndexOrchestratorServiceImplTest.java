@@ -77,21 +77,6 @@ class SearchStaxFullIndexOrchestratorServiceImplTest {
 
         lenient().when(initialSetupConfigService.getConfiguration())
                 .thenReturn(setupConfig);
-
-        lenient().when(executionService.getProgressSnapshot())
-                .thenReturn(
-                        new FullIndexProgress(
-                                FullIndexProgress.State.IDLE,
-                                0,
-                                0,
-                                0,
-                                0,
-                                0,
-                                0,
-                                "",
-                                0L,
-                                0L,
-                                ""));
     }
 
     private FullIndexPathConfig createConfig() {
@@ -202,21 +187,6 @@ class SearchStaxFullIndexOrchestratorServiceImplTest {
                 eq(-1L),
                 ArgumentMatchers.<Map<String, Object>[]>any()))
                 .thenReturn(Collections.singleton(job));
-
-        when(executionService.getProgressSnapshot())
-                .thenReturn(
-                        new FullIndexProgress(
-                                FullIndexProgress.State.RUNNING,
-                                1,
-                                1,
-                                0,
-                                1,
-                                0,
-                                1,
-                                "/content/site",
-                                1L,
-                                100L,
-                                "Indexing"));
 
         FullIndexTriggerResult result =
                 service.triggerFullIndex(createConfig());
@@ -477,54 +447,6 @@ class SearchStaxFullIndexOrchestratorServiceImplTest {
     }
 
     @Test
-    void testAllowTriggerDespiteStaleQueuedJobAfterTerminalProgress() throws Exception {
-
-        when(jobManager.findJobs(
-                eq(JobManager.QueryType.ACTIVE),
-                eq(SearchStaxFullIndexDefaults.JOB_TOPIC),
-                eq(-1L),
-                ArgumentMatchers.<Map<String, Object>[]>any()))
-                .thenReturn(Collections.emptyList());
-
-        when(jobManager.findJobs(
-                eq(JobManager.QueryType.QUEUED),
-                eq(SearchStaxFullIndexDefaults.JOB_TOPIC),
-                eq(-1L),
-                ArgumentMatchers.<Map<String, Object>[]>any()))
-                .thenReturn(Collections.singleton(job));
-
-        when(executionService.getProgressSnapshot())
-                .thenReturn(
-                        new FullIndexProgress(
-                                FullIndexProgress.State.SUCCESS,
-                                40,
-                                40,
-                                0,
-                                9,
-                                31,
-                                1,
-                                "/content/dam/asset.jpg",
-                                1L,
-                                120_000L,
-                                "Full index completed successfully"));
-
-        mockValidPaths();
-
-        when(jobManager.addJob(
-                eq(SearchStaxFullIndexDefaults.JOB_TOPIC),
-                anyMap()))
-                .thenReturn(job);
-
-        when(job.getId()).thenReturn("job-new");
-
-        final FullIndexTriggerResult result = service.triggerFullIndex(createConfig());
-
-        assertTrue(result.isAccepted());
-        assertEquals(202, result.getHttpStatus());
-        verify(executionService).clearProgressForNewRun();
-    }
-
-    @Test
     void testAllowExcludeInsideInclude() throws Exception {
 
         FullIndexPathConfig config =
@@ -550,7 +472,6 @@ class SearchStaxFullIndexOrchestratorServiceImplTest {
 
         assertTrue(result.isAccepted());
         assertEquals(202, result.getHttpStatus());
-        verify(executionService).clearProgressForNewRun();
     }
 
     @Test

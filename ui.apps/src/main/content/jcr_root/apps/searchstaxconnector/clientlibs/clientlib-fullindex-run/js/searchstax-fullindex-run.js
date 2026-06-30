@@ -99,23 +99,17 @@
         if (!container) {
             return;
         }
-        clearResult(anchor);
-
-        var isWaiting = Boolean(status.pendingStart);
-        var panelClass = isWaiting
-            ? "searchstax-fullindex-progress-panel--waiting"
-            : "searchstax-fullindex-progress-panel--running";
         var lastPath = truncateText(status.lastIndexedPath || "", 120);
-        var completedAt = status.running ? "" : formatTimestamp(status.completedAt);
-        var details = "Attempted: " + (status.totalAttempted != null ? status.totalAttempted : (status.totalProcessed || 0) + (status.failureCount || 0))
-            + " | Indexed: " + (status.totalProcessed || 0)
+        var completedAt = formatTimestamp(status.completedAt);
+        var details = "Indexed: " + (status.totalProcessed || 0)
+            + " | Attempted: " + (status.totalAttempted != null ? status.totalAttempted : (status.totalProcessed || 0) + (status.failureCount || 0))
             + " | Pages: " + (status.pagesIndexed || 0)
             + " | Assets: " + (status.assetsIndexed || 0)
             + " | Batches: " + (status.currentBatchNumber || 0)
             + " | Elapsed: " + formatElapsed(status.elapsedMs);
         var completedText = completedAt ? (" | Completed: " + completedAt) : "";
 
-        container.innerHTML = "<div class='searchstax-fullindex-progress-panel " + panelClass + "'>"
+        container.innerHTML = "<div class='searchstax-fullindex-progress-panel searchstax-fullindex-progress-panel--running'>"
             + "<div class='searchstax-fullindex-progress-bar-wrap'>"
             + "<coral-progress class='searchstax-fullindex-progress-bar' indeterminate size='L'></coral-progress>"
             + "</div>"
@@ -130,31 +124,6 @@
                     + "</div>")
                 : "")
             + "</div>";
-    }
-
-    function emptyProgressStatus(message) {
-        return {
-            message: message || "Waiting for full index job to start...",
-            pendingStart: true,
-            running: true,
-            totalProcessed: 0,
-            totalAttempted: 0,
-            failureCount: 0,
-            pagesIndexed: 0,
-            assetsIndexed: 0,
-            currentBatchNumber: 0,
-            elapsedMs: 0,
-            lastIndexedPath: "",
-            completedAt: 0
-        };
-    }
-
-    function isStaleTerminalSnapshot(status, activeJobId) {
-        if (!status || !status.complete || !activeJobId || !status.jobId) {
-            return false;
-        }
-        // Finished jobs are removed from Job Manager, so jobId is empty on normal completion.
-        return status.jobId !== activeJobId;
     }
 
     function getGlobalPoller() {
@@ -441,18 +410,19 @@
                     + (data.jobId ? (" | jobId: " + data.jobId) : "");
                 console.log(LOG, "Full index run result:", data);
                 if (accepted || Boolean(data.success)) {
+                    renderResult(
+                        button,
+                        "success",
+                        data.message || "Full index started in background.",
+                        details,
+                        "Success"
+                    );
                     startPolling(button, originalLabel, data.jobId || "");
                     return;
                 }
-                return fetchStatus().then(function (status) {
-                    if (status.running) {
-                        startPolling(button, originalLabel, status.jobId || data.jobId || "");
-                        return;
-                    }
-                    renderResult(button, "error", data.message || "Request completed.", details, "Failure");
-                    button.disabled = false;
-                    setButtonText(button, originalLabel);
-                });
+                renderResult(button, "error", data.message || "Request completed.", details, "Failure");
+                button.disabled = false;
+                setButtonText(button, originalLabel);
             })
             .catch(function (err) {
                 console.error(LOG, "Full index run fetch error:", err);
@@ -474,11 +444,22 @@
         var runTick = function () {
             fetchStatus()
                 .then(function (status) {
+                    // 1) Ignore stale terminal snapshot while a different job is active.
+                    if (status.complete && status.jobId && activeJobId && status.jobId !== activeJobId) {
+                        renderProgress(button, {
+                            message: "Waiting for full index job to start...",
+                            pagesIndexed: 0,
+                            assetsIndexed: 0,
+                            currentBatchNumber: 0,
+                            elapsedMs: 0,
+                            lastIndexedPath: "",
+                            completedAt: 0
+                        });
+                        return;
+                    }
+
+                    // 2) Terminal: render and stop.
                     if (status.complete) {
-                        if (isStaleTerminalSnapshot(status, activeJobId)) {
-                            renderProgress(button, emptyProgressStatus());
-                            return;
-                        }
                         stopPolling();
                         clearProgress(button);
                         renderTerminalResult(button, status);
@@ -487,6 +468,7 @@
                         return;
                     }
 
+                    // 3) Mismatch check while RUNNING only.
                     if (
                         status.running &&
                         status.jobId &&
@@ -507,6 +489,7 @@
                         return;
                     }
 
+                    // 4) Still running.
                     renderProgress(button, status);
                 })
                 .catch(function (err) {
@@ -531,12 +514,11 @@
         }
         fetchStatus()
             .then(function (status) {
-                if (!status.running || status.complete) {
+                if (!status.running) {
                     return;
                 }
-                clearResult(button);
                 renderProgress(button, status);
-                startPolling(button, "Run full indexing", status.jobId || "");
+                startPolling(button, "Run full indexing", "");
             })
             .catch(function (err) {
                 console.warn(LOG, "Could not resume full index status polling:", err);

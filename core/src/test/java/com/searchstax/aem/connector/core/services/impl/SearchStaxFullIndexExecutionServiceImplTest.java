@@ -731,34 +731,6 @@ class SearchStaxFullIndexExecutionServiceImplTest {
         assertEquals(1L, getField(service, "failureCount"));
     }
 
-    @Test
-    void clearProgressForNewRun_resetsSnapshotToIdle() throws Exception {
-        final TestableExecutionService service = new TestableExecutionService(failureDir);
-        setField(service, "state", FullIndexProgress.State.SUCCESS);
-        setField(service, "totalProcessed", 40L);
-        setField(service, "pagesIndexed", 9L);
-        setField(service, "assetsIndexed", 31L);
-        setField(service, "lastIndexedPath", "/content/dam/old.jpeg");
-        setField(service, "completedElapsedMs", 120_000L);
-
-        service.clearProgressForNewRun();
-
-        final FullIndexProgress snapshot = service.getProgressSnapshot();
-        assertEquals(FullIndexProgress.State.IDLE, snapshot.getState());
-        assertEquals(0L, snapshot.getTotalProcessed());
-        assertEquals(0L, snapshot.getElapsedMs());
-    }
-
-    @Test
-    void getProgressSnapshot_freezesElapsedAfterCompletion() throws Exception {
-        final TestableExecutionService service = new TestableExecutionService(failureDir);
-        setField(service, "state", FullIndexProgress.State.SUCCESS);
-        setField(service, "startedAt", System.currentTimeMillis() - 60_000L);
-        setField(service, "completedElapsedMs", 45_000L);
-
-        assertEquals(45_000L, service.getProgressSnapshot().getElapsedMs());
-    }
-
     private void invokeSendConsolidatedFailureEmailIfNeeded(final TestableExecutionService service)
             throws Exception {
         final Method method =
