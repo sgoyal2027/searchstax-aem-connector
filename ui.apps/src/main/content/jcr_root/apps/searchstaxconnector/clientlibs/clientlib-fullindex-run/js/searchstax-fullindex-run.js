@@ -83,6 +83,14 @@
         return mins + "m " + secs + "s";
     }
 
+    function resolveElapsedMs(status) {
+        var poller = getGlobalPoller();
+        if (poller && poller.startedAtMs) {
+            return Math.max(0, Date.now() - poller.startedAtMs);
+        }
+        return status.elapsedMs;
+    }
+
     function formatTimestamp(ms) {
         if (!ms) {
             return "";
@@ -106,7 +114,7 @@
             + " | Pages: " + (status.pagesIndexed || 0)
             + " | Assets: " + (status.assetsIndexed || 0)
             + " | Batches: " + (status.currentBatchNumber || 0)
-            + " | Elapsed: " + formatElapsed(status.elapsedMs);
+            + " | Elapsed: " + formatElapsed(resolveElapsedMs(status));
         var completedText = completedAt ? (" | Completed: " + completedAt) : "";
 
         container.innerHTML = "<div class='searchstax-fullindex-progress-panel searchstax-fullindex-progress-panel--running'>"
@@ -138,10 +146,11 @@
         window.searchStaxFullIndexPoller = null;
     }
 
-    function setPoller(intervalId, activeJobId) {
+    function setPoller(intervalId, activeJobId, startedAtMs) {
         window.searchStaxFullIndexPoller = {
             intervalId: intervalId,
-            activeJobId: activeJobId || ""
+            activeJobId: activeJobId || "",
+            startedAtMs: startedAtMs || Date.now()
         };
     }
 
@@ -183,7 +192,7 @@
             + " | Pages: " + (status.pagesIndexed || 0)
             + " | Assets: " + (status.assetsIndexed || 0)
             + (status.completedAt ? (" | Completed At: " + formatTimestamp(status.completedAt)) : "")
-            + " | Duration: " + formatElapsed(status.elapsedMs);
+            + " | Duration: " + formatElapsed(resolveElapsedMs(status));
         renderResult(anchor, variant, status.message || "Full index finished.", details, title);
     }
 
@@ -417,7 +426,7 @@
                         details,
                         "Success"
                     );
-                    startPolling(button, originalLabel, data.jobId || "");
+                    startPolling(button, originalLabel, data.jobId || "", Date.now());
                     return;
                 }
                 renderResult(button, "error", data.message || "Request completed.", details, "Failure");
@@ -432,7 +441,7 @@
             });
     }
 
-    function startPolling(button, originalLabel, activeJobId) {
+    function startPolling(button, originalLabel, activeJobId, startedAtMs) {
         var existing = getGlobalPoller();
         if (existing && existing.intervalId) {
             clearInterval(existing.intervalId);
@@ -504,7 +513,7 @@
 
         runTick();
         var intervalId = setInterval(runTick, POLL_INTERVAL_MS);
-        setPoller(intervalId, activeJobId);
+        setPoller(intervalId, activeJobId, startedAtMs);
     }
 
     function resumePollingIfRunning() {
@@ -518,7 +527,7 @@
                     return;
                 }
                 renderProgress(button, status);
-                startPolling(button, "Run full indexing", "");
+                startPolling(button, "Run full indexing", status.jobId || "", status.startedAt || Date.now());
             })
             .catch(function (err) {
                 console.warn(LOG, "Could not resume full index status polling:", err);
