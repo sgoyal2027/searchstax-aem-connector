@@ -91,6 +91,39 @@
         return status.elapsedMs;
     }
 
+    function isStaleJobProgress(status) {
+        var poller = getGlobalPoller();
+        if (!poller || !poller.activeJobId) {
+            return false;
+        }
+        if (status.jobId && status.jobId !== poller.activeJobId) {
+            return true;
+        }
+        if (status.complete) {
+            return false;
+        }
+        var serverStarted = Number(status.startedAt) || 0;
+        return !serverStarted || serverStarted < poller.startedAtMs - 1000;
+    }
+
+    function resolveProgressStatus(status) {
+        if (!isStaleJobProgress(status)) {
+            return status;
+        }
+        return {
+            message: "Waiting for full index job to start...",
+            totalProcessed: 0,
+            totalAttempted: 0,
+            failureCount: 0,
+            pagesIndexed: 0,
+            assetsIndexed: 0,
+            currentBatchNumber: 0,
+            lastIndexedPath: "",
+            elapsedMs: resolveElapsedMs(status),
+            completedAt: 0
+        };
+    }
+
     function formatTimestamp(ms) {
         if (!ms) {
             return "";
@@ -107,6 +140,7 @@
         if (!container) {
             return;
         }
+        status = resolveProgressStatus(status);
         var lastPath = truncateText(status.lastIndexedPath || "", 120);
         var completedAt = formatTimestamp(status.completedAt);
         var details = "Indexed: " + (status.totalProcessed || 0)
@@ -192,7 +226,7 @@
             + " | Pages: " + (status.pagesIndexed || 0)
             + " | Assets: " + (status.assetsIndexed || 0)
             + (status.completedAt ? (" | Completed At: " + formatTimestamp(status.completedAt)) : "")
-            + " | Duration: " + formatElapsed(resolveElapsedMs(status));
+            + " | Duration: " + formatElapsed(status.elapsedMs);
         renderResult(anchor, variant, status.message || "Full index finished.", details, title);
     }
 
@@ -447,6 +481,8 @@
             clearInterval(existing.intervalId);
         }
 
+        var runStartedAtMs = startedAtMs || Date.now();
+
         button.disabled = true;
         setButtonText(button, "Indexing...");
 
@@ -455,23 +491,18 @@
                 .then(function (status) {
                     // 1) Ignore stale terminal snapshot while a different job is active.
                     if (status.complete && status.jobId && activeJobId && status.jobId !== activeJobId) {
-                        renderProgress(button, {
-                            message: "Waiting for full index job to start...",
-                            pagesIndexed: 0,
-                            assetsIndexed: 0,
-                            currentBatchNumber: 0,
-                            elapsedMs: 0,
-                            lastIndexedPath: "",
-                            completedAt: 0
-                        });
+                        renderProgress(button, status);
                         return;
                     }
 
                     // 2) Terminal: render and stop.
                     if (status.complete) {
+                        var finalStatus = Object.assign({}, status, {
+                            elapsedMs: Math.max(0, Date.now() - runStartedAtMs)
+                        });
                         stopPolling();
                         clearProgress(button);
-                        renderTerminalResult(button, status);
+                        renderTerminalResult(button, finalStatus);
                         button.disabled = false;
                         setButtonText(button, originalLabel);
                         return;
@@ -513,7 +544,7 @@
 
         runTick();
         var intervalId = setInterval(runTick, POLL_INTERVAL_MS);
-        setPoller(intervalId, activeJobId, startedAtMs);
+        setPoller(intervalId, activeJobId, runStartedAtMs);
     }
 
     function resumePollingIfRunning() {
