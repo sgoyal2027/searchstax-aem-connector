@@ -1,7 +1,7 @@
 package com.searchstax.aem.connector.core.services.impl;
 
-import com.searchstax.aem.connector.core.config.InitialSetupConfigService;
-import com.searchstax.aem.connector.core.config.model.InitialSetupConfig;
+import com.searchstax.aem.connector.core.config.FullIndexConfigService;
+import com.searchstax.aem.connector.core.config.model.FullIndexConfig;
 import com.searchstax.aem.connector.core.constants.SearchStaxFullIndexDefaults;
 import com.searchstax.aem.connector.core.services.FullIndexPathConfig;
 import com.searchstax.aem.connector.core.services.FullIndexProgress;
@@ -44,7 +44,7 @@ class SearchStaxFullIndexOrchestratorServiceImplTest {
     private SlingSettingsService slingSettings;
 
     @Mock
-    private InitialSetupConfigService initialSetupConfigService;
+    private FullIndexConfigService fullIndexConfigService;
 
     @Mock
     private SearchStaxFullIndexExecutionService executionService;
@@ -64,18 +64,18 @@ class SearchStaxFullIndexOrchestratorServiceImplTest {
     @Mock
     private Job job;
 
-    private InitialSetupConfig setupConfig;
+    private FullIndexConfig setupConfig;
 
     @BeforeEach
     void setup() {
 
-        setupConfig = new InitialSetupConfig();
+        setupConfig = new FullIndexConfig();
         setupConfig.setEnableConnector(true);
 
         lenient().when(slingSettings.getRunModes())
                 .thenReturn(Set.of("author"));
 
-        lenient().when(initialSetupConfigService.getConfiguration())
+        lenient().when(fullIndexConfigService.getConfiguration())
                 .thenReturn(setupConfig);
     }
 

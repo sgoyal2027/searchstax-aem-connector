@@ -4,10 +4,9 @@
 
     "create path (sling:Folder) /conf/searchstaxconnector",
     "create path (sling:Folder) /conf/searchstaxconnector/settings",
-    "create path (sling:Folder) /conf/searchstaxconnector/settings/initialsetupconfig",
     "create path (sling:Folder) /conf/searchstaxconnector/settings/apiconfig",
     "create path (sling:Folder) /conf/searchstaxconnector/settings/emailconfig",
-    "create path (sling:Folder) /conf/searchstaxconnector/settings/fullindexsetupconfig",
+    "create path (sling:Folder) /conf/searchstaxconnector/settings/indexingconfig",
     "create path (sling:Folder) /conf/searchstaxconnector/settings/metadatafieldmapping",
     "create path (sling:Folder) /conf/searchstaxconnector/settings/languagemapping",
     "create path (sling:Folder) /var/searchstaxconnector",
@@ -25,13 +24,11 @@
 
     "set ACL on /conf/searchstaxconnector/settings (ACLOptions=merge)\n allow jcr:read,rep:write for searchstax-service-user\nend",
 
-    "set ACL on /conf/searchstaxconnector/settings/initialsetupconfig (ACLOptions=merge)\n allow jcr:read,rep:write for searchstax-service-user\nend",
-
     "set ACL on /conf/searchstaxconnector/settings/apiconfig (ACLOptions=merge)\n allow jcr:read,rep:write for searchstax-service-user\nend",
 
     "set ACL on /conf/searchstaxconnector/settings/emailconfig (ACLOptions=merge)\n allow jcr:read,rep:write for searchstax-service-user\nend",
 
-    "set ACL on /conf/searchstaxconnector/settings/fullindexsetupconfig (ACLOptions=merge)\n allow jcr:read,rep:write for searchstax-service-user\nend",
+    "set ACL on /conf/searchstaxconnector/settings/indexingconfig (ACLOptions=merge)\n allow jcr:read,rep:write for searchstax-service-user\nend",
 
     "set ACL on /conf/searchstaxconnector/settings/metadatafieldmapping (ACLOptions=merge)\n allow jcr:read,rep:write for searchstax-service-user\nend",
 

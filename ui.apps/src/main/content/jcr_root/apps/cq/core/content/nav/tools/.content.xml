@@ -3,13 +3,13 @@
     jcr:primaryType="nt:unstructured">
     <Searchstax jcr:primaryType="nt:unstructured"
         jcr:title="Searchstax Connector">
-        <initialsetup
-                jcr:description="Initial Setup Configurations"
+        <indexingconfigurations
+                jcr:description="Indexing Configurations"
                 jcr:primaryType="nt:unstructured"
-                jcr:title="Initial Setup Configurations"
-                href="/apps/searchstaxconnector/admin/wizards/initialsetup/wizard.html"
+                jcr:title="Indexing Configurations"
+                href="/apps/searchstaxconnector/admin/wizards/indexingconfig/wizard.html"
                 icon="gear"
-                id="initial-setup-wizard"/>
+                id="indexing-config-wizard"/>
         <apiconfiguration
                 jcr:primaryType="nt:unstructured"
                 jcr:title="API Configuration"
@@ -31,13 +31,6 @@
                 href="/apps/searchstaxconnector/admin/wizards/languagemapping/wizard.html"
                 icon="globeGrid"
                 id="language-mapping-wizard"/>
-        <fullindexconfigurations
-                jcr:description="Full Index Configurations"
-                jcr:primaryType="nt:unstructured"
-                jcr:title="Full Index Configurations"
-                href="/apps/searchstaxconnector/admin/wizards/fullindexing/wizard.html"
-                icon="refresh"
-                id="full-index-wizard"/>
         <emailconfigurations
                 jcr:description="Email Configurations"
                 jcr:primaryType="nt:unstructured"

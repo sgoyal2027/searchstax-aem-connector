@@ -2,8 +2,8 @@ package com.searchstax.aem.connector.core.listeners;
 
 import com.day.cq.replication.ReplicationAction;
 import com.day.cq.replication.ReplicationActionType;
-import com.searchstax.aem.connector.core.config.InitialSetupConfigService;
-import com.searchstax.aem.connector.core.config.model.InitialSetupConfig;
+import com.searchstax.aem.connector.core.config.FullIndexConfigService;
+import com.searchstax.aem.connector.core.config.model.FullIndexConfig;
 import io.wcm.testing.mock.aem.junit5.AemContextExtension;
 import org.apache.sling.event.jobs.Job;
 import org.apache.sling.event.jobs.JobManager;
@@ -42,17 +42,17 @@ class PublishListenerTest {
     private SlingSettingsService slingSettings;
 
     @Mock
-    private InitialSetupConfigService initialSetupConfigService;
+    private FullIndexConfigService fullIndexConfigService;
 
     @Mock
     private Job job;
 
-    private InitialSetupConfig config;
+    private FullIndexConfig config;
 
     @BeforeEach
     void setup() {
 
-        config = new InitialSetupConfig();
+        config = new FullIndexConfig();
         config.setEnableConnector(true);
         config.setRootPaths(new String[]{"/content"});
         config.setExcludePaths(new String[0]);
@@ -147,7 +147,7 @@ class PublishListenerTest {
     @Test
     void handleEvent_queuesJobForValidActivateOnAuthor() {
         when(slingSettings.getRunModes()).thenReturn(Set.of("author"));
-        when(initialSetupConfigService.getConfiguration()).thenReturn(config);
+        when(fullIndexConfigService.getConfiguration()).thenReturn(config);
         when(jobManager.addJob(eq("searchstaxconnector/incremental-index"), anyMap())).thenReturn(job);
 
         listener.handleEvent(createReplicationEvent("/content/wknd/en/page", ReplicationActionType.ACTIVATE));
@@ -162,7 +162,7 @@ class PublishListenerTest {
     void handleEvent_skipsWhenConnectorDisabled() {
         config.setEnableConnector(false);
         when(slingSettings.getRunModes()).thenReturn(Set.of("author"));
-        when(initialSetupConfigService.getConfiguration()).thenReturn(config);
+        when(fullIndexConfigService.getConfiguration()).thenReturn(config);
 
         listener.handleEvent(createReplicationEvent("/content/wknd/en/page", ReplicationActionType.ACTIVATE));
 
@@ -173,7 +173,7 @@ class PublishListenerTest {
     void handleEvent_skipsPathOutsideRootPaths() {
         config.setRootPaths(new String[]{"/content/wknd"});
         when(slingSettings.getRunModes()).thenReturn(Set.of("author"));
-        when(initialSetupConfigService.getConfiguration()).thenReturn(config);
+        when(fullIndexConfigService.getConfiguration()).thenReturn(config);
 
         listener.handleEvent(createReplicationEvent("/content/other/en/page", ReplicationActionType.ACTIVATE));
 
@@ -184,7 +184,7 @@ class PublishListenerTest {
     void handleEvent_skipsExcludedPath() {
         config.setExcludePaths(new String[]{"/content/wknd/private"});
         when(slingSettings.getRunModes()).thenReturn(Set.of("author"));
-        when(initialSetupConfigService.getConfiguration()).thenReturn(config);
+        when(fullIndexConfigService.getConfiguration()).thenReturn(config);
 
         listener.handleEvent(createReplicationEvent("/content/wknd/private/page", ReplicationActionType.ACTIVATE));
 
@@ -194,7 +194,7 @@ class PublishListenerTest {
     @Test
     void handleEvent_skipsTagReplication() {
         when(slingSettings.getRunModes()).thenReturn(Set.of("author"));
-        when(initialSetupConfigService.getConfiguration()).thenReturn(config);
+        when(fullIndexConfigService.getConfiguration()).thenReturn(config);
 
         listener.handleEvent(createReplicationEvent("/content/cq:tags/wknd", ReplicationActionType.ACTIVATE));
 
@@ -204,7 +204,7 @@ class PublishListenerTest {
     @Test
     void handleEvent_skipsUnsupportedPathPrefix() {
         when(slingSettings.getRunModes()).thenReturn(Set.of("author"));
-        when(initialSetupConfigService.getConfiguration()).thenReturn(config);
+        when(fullIndexConfigService.getConfiguration()).thenReturn(config);
 
         listener.handleEvent(createReplicationEvent("/etc/designs/wknd", ReplicationActionType.ACTIVATE));
 
@@ -214,7 +214,7 @@ class PublishListenerTest {
     @Test
     void handleEvent_acceptsDamPath() {
         when(slingSettings.getRunModes()).thenReturn(Set.of("author"));
-        when(initialSetupConfigService.getConfiguration()).thenReturn(config);
+        when(fullIndexConfigService.getConfiguration()).thenReturn(config);
         when(jobManager.addJob(eq("searchstaxconnector/incremental-index"), anyMap())).thenReturn(job);
 
         listener.handleEvent(createReplicationEvent("/content/dam/wknd/image.jpg", ReplicationActionType.DELETE));

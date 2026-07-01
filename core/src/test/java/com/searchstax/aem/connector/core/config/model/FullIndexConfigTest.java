@@ -13,11 +13,12 @@ class FullIndexConfigTest {
 
         FullIndexConfig config = new FullIndexConfig();
 
-        assertNull(config.getRootPath());
+        assertFalse(config.isEnableConnector());
+        assertNull(config.getRootPaths());
         assertTrue(config.getIncludePaths().isEmpty());
-
         assertNotNull(config.getExcludePaths());
         assertEquals(0, config.getExcludePaths().length);
+        assertNull(config.getAllowedFiles());
     }
 
     @Test
@@ -25,7 +26,7 @@ class FullIndexConfigTest {
 
         FullIndexConfig config = new FullIndexConfig();
 
-        config.setRootPath("/content");
+        String[] rootPaths = {"/content/site1", "/content/site2"};
 
         FullIndexIncludePathConfig includePath = new FullIndexIncludePathConfig();
         config.setIncludePaths(Collections.singletonList(includePath));
@@ -34,14 +35,18 @@ class FullIndexConfigTest {
                 "/content/exclude1",
                 "/content/exclude2"
         };
+        String[] allowedFiles = {"pdf", "docx"};
 
         config.setExcludePaths(excludePaths);
+        config.setAllowedFiles(allowedFiles);
 
-        assertEquals("/content", config.getRootPath());
+        config.setEnableConnector(true);
+        config.setRootPaths(rootPaths);
         assertEquals(1, config.getIncludePaths().size());
         assertSame(includePath, config.getIncludePaths().get(0));
 
         assertArrayEquals(excludePaths, config.getExcludePaths());
+        assertArrayEquals(allowedFiles, config.getAllowedFiles());
     }
 
     @Test

@@ -25,7 +25,7 @@ public class FullIndexConfigServiceImpl
                     FullIndexConfigServiceImpl.class);
 
     private static final String CONFIG_PATH =
-            "/conf/searchstaxconnector/settings/fullindexsetupconfig";
+            "/conf/searchstaxconnector/settings/indexingconfig";
 
     @Reference
     private ResolverUtil resolverUtil;
@@ -45,7 +45,7 @@ public class FullIndexConfigServiceImpl
             if (resource == null) {
 
                 LOG.warn(
-                        "Full Index configuration not found at {}",
+                        "Indexing configuration not found at {}",
                         CONFIG_PATH);
 
                 return config;
@@ -54,10 +54,12 @@ public class FullIndexConfigServiceImpl
             ValueMap vm =
                     resource.getValueMap();
 
-            config.setRootPath(
-                    vm.get(
-                            "rootPath",
-                            String.class));
+            config.setEnableConnector(
+                    vm.get("enableConnector", false));
+
+            config.setRootPaths(
+                    vm.get("rootPaths",  new String[0]));
+
             Resource includePathsResource =
                     resource.getChild(
                             "includePaths");
@@ -100,13 +102,16 @@ public class FullIndexConfigServiceImpl
                             "excludePaths",
                             String[].class));
 
+            config.setAllowedFiles(
+                    vm.get("allowedFiles", new String[0]));
+
             LOG.debug(
-                    "Full Index configuration loaded successfully");
+                    "Indexing configuration loaded successfully");
 
         } catch (LoginException e) {
 
             LOG.error(
-                    "Unable to load Full Index configuration",
+                    "Unable to load Indexing configuration",
                     e);
         }
 

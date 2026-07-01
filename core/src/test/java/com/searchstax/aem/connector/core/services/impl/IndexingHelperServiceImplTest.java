@@ -1,9 +1,9 @@
 package com.searchstax.aem.connector.core.services.impl;
 
 import com.day.cq.dam.api.Asset;
-import com.searchstax.aem.connector.core.config.InitialSetupConfigService;
+import com.searchstax.aem.connector.core.config.FullIndexConfigService;
 import com.searchstax.aem.connector.core.config.MetadataFieldConfigService;
-import com.searchstax.aem.connector.core.config.model.InitialSetupConfig;
+import com.searchstax.aem.connector.core.config.model.FullIndexConfig;
 import com.searchstax.aem.connector.core.config.model.MetadataFieldMappingConfig;
 import com.searchstax.aem.connector.core.dto.response.ApiResponse;
 import org.apache.sling.api.resource.ValueMap;
@@ -36,7 +36,7 @@ class IndexingHelperServiceImplTest {
     private MetadataFieldConfigService metadataFieldConfigService;
 
     @Mock
-    private InitialSetupConfigService initialSetupConfigService;
+    private FullIndexConfigService fullIndexConfigService;
 
     @Test
     void cleanText_removesHtmlTagsAndNormalizesWhitespace() {
@@ -185,9 +185,9 @@ class IndexingHelperServiceImplTest {
 
     @Test
     void isSupportedAsset_honorsAllowedFileExtensions() {
-        final InitialSetupConfig config = new InitialSetupConfig();
+        final FullIndexConfig config = new FullIndexConfig();
         config.setAllowedFiles(new String[]{"pdf", "jpg"});
-        when(initialSetupConfigService.getConfiguration()).thenReturn(config);
+        when(fullIndexConfigService.getConfiguration()).thenReturn(config);
 
         final Asset pdfAsset = mock(Asset.class);
         when(pdfAsset.getName()).thenReturn("brochure.pdf");
@@ -235,16 +235,16 @@ class IndexingHelperServiceImplTest {
 
     @Test
     void isSupportedAsset_returnsTrueWhenAllowedFilesNotConfigured() {
-        when(initialSetupConfigService.getConfiguration()).thenReturn(new InitialSetupConfig());
+        when(fullIndexConfigService.getConfiguration()).thenReturn(new FullIndexConfig());
 
         assertTrue(helper.isSupportedAsset(mock(Asset.class)));
     }
 
     @Test
     void isSupportedAsset_returnsFalseForExtensionlessName() {
-        final InitialSetupConfig config = new InitialSetupConfig();
+        final FullIndexConfig config = new FullIndexConfig();
         config.setAllowedFiles(new String[]{"pdf"});
-        when(initialSetupConfigService.getConfiguration()).thenReturn(config);
+        when(fullIndexConfigService.getConfiguration()).thenReturn(config);
 
         final Asset asset = mock(Asset.class);
         when(asset.getName()).thenReturn("README");

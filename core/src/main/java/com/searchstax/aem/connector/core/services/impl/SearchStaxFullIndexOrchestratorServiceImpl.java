@@ -1,7 +1,7 @@
 package com.searchstax.aem.connector.core.services.impl;
 
-import com.searchstax.aem.connector.core.config.InitialSetupConfigService;
-import com.searchstax.aem.connector.core.config.model.InitialSetupConfig;
+import com.searchstax.aem.connector.core.config.FullIndexConfigService;
+import com.searchstax.aem.connector.core.config.model.FullIndexConfig;
 import com.searchstax.aem.connector.core.constants.SearchStaxFullIndexDefaults;
 import com.searchstax.aem.connector.core.services.FullIndexPathConfig;
 import com.searchstax.aem.connector.core.services.FullIndexProgress;
@@ -44,7 +44,7 @@ public class SearchStaxFullIndexOrchestratorServiceImpl
     private SlingSettingsService slingSettings;
 
     @Reference
-    private InitialSetupConfigService initialSetupConfigService;
+    private FullIndexConfigService fullIndexConfigService;
 
     @Reference
     private SearchStaxFullIndexExecutionService executionService;
@@ -63,12 +63,12 @@ public class SearchStaxFullIndexOrchestratorServiceImpl
                     false, "", "Full index can only be started on author.", HTTP_BAD_REQUEST);
         }
 
-        final InitialSetupConfig setupConfig = initialSetupConfigService.getConfiguration();
+        final FullIndexConfig setupConfig = fullIndexConfigService.getConfiguration();
 
         LOG.debug("Enable Connector: {}", setupConfig.isEnableConnector());
 
         if (!setupConfig.isEnableConnector()) {
-            LOG.info("SearchStax connector is disabled via Initial Setup configuration. Skipping full index.");
+            LOG.info("SearchStax connector is disabled via Indexing configuration. Skipping full index.");
             return new FullIndexTriggerResult(
                     false, "", "SearchStax connector is disabled.", HTTP_BAD_REQUEST);
         }

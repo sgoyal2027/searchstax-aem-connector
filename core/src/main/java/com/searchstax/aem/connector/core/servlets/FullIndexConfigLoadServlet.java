@@ -55,14 +55,25 @@ public class FullIndexConfigLoadServlet
             ObjectNode json =
                     OBJECT_MAPPER.createObjectNode();
 
+            json.put(
+                    "enableConnector",
+                    config.isEnableConnector());
+
             /*
              * Root Path
              */
-            json.put(
-                    "rootPath",
-                    config.getRootPath() != null
-                            ? config.getRootPath()
-                            : "");
+            ArrayNode rootPaths =
+                    OBJECT_MAPPER.createArrayNode();
+
+            for (String path
+                    : config.getRootPaths()) {
+
+                rootPaths.add(path);
+            }
+
+            json.set(
+                    "rootPaths",
+                    rootPaths);
             /*
              * Include Paths
              */
@@ -110,6 +121,21 @@ public class FullIndexConfigLoadServlet
                     "excludePaths",
                     excludePaths);
 
+            ArrayNode allowedFiles =
+                    OBJECT_MAPPER.createArrayNode();
+
+            for (String fileType
+                    : config.getAllowedFiles()) {
+
+                allowedFiles.add(fileType);
+            }
+
+            
+            json.set(
+                    "allowedFiles",
+                    allowedFiles);
+
+
             response.setContentType(
                     "application/json");
 
@@ -123,7 +149,7 @@ public class FullIndexConfigLoadServlet
         } catch (IOException e) {
 
             LOG.error(
-                    "Error writing Full Index configuration response",
+                    "Error writing Indexing configuration response",
                     e);
 
             response.setStatus(

@@ -30,7 +30,7 @@ import java.util.Map;
                 Constants.SERVICE_DESCRIPTION
                         + "=SearchStax Full Index Config Servlet",
                 "sling.servlet.methods=POST",
-                "sling.servlet.paths=/bin/searchstaxconnector/wizard/fullindex-config-save"
+                "sling.servlet.paths=/bin/searchstaxconnector/wizard/indexing-config-save"
         }
 )
 public class FullIndexConfigSaveServlet
@@ -41,7 +41,7 @@ public class FullIndexConfigSaveServlet
                     FullIndexConfigSaveServlet.class);
 
     private static final String CONFIG_PATH =
-            "/conf/searchstaxconnector/settings/fullindexsetupconfig";
+            "/conf/searchstaxconnector/settings/indexingconfig";
 
     private static final ObjectMapper OBJECT_MAPPER =
             new ObjectMapper();
@@ -56,11 +56,17 @@ public class FullIndexConfigSaveServlet
             throws ServletException, IOException {
 
         LOG.info(
-                "Full Index configuration save started");
+                "Indexing configuration save started");
 
-        String rootPath =
-                request.getParameter(
-                        "./rootPath");
+        boolean enableConnector =
+                Boolean.parseBoolean(
+                        request.getParameter(
+                                "./enableConnector"));
+
+        String[] rootPaths =
+        removeBlankValues(
+                request.getParameterValues(
+                        "./rootPaths"));
 
         String includePathsJson =
         request.getParameter(
@@ -85,52 +91,88 @@ public class FullIndexConfigSaveServlet
                         request.getParameterValues(
                                 "./excludePaths"));
 
+        String[] allowedFiles =
+                request.getParameterValues(
+                        "./allowedFiles");
+
+        LOG.info("Root Paths: {}", Arrays.toString(rootPaths));
+        LOG.info("IncludePathsJson: {}", includePathsJson);
+        LOG.info("Exclude Paths: {}", Arrays.toString(excludePaths));
+
         /*
          * Validation
          */
-        if (rootPath == null
-                || rootPath.trim().isEmpty()) {
+        if (rootPaths == null || rootPaths.length == 0) {
 
             respondBadRequest(
                     response,
-                    "Root path is required.");
+                    "At least one root path is required.");
 
             return;
+        }
+
+        for (String rootPath : rootPaths) {
+
+            if (rootPath == null
+                    || rootPath.trim().isEmpty()) {
+
+                respondBadRequest(
+                        response,
+                        "Root path cannot be empty.");
+
+                return;
+            }
         }
 
         /*
          * Include Path Validation
          */
-        for (FullIndexIncludePathConfig includePath
-                : includePaths) {
+        for (FullIndexIncludePathConfig includePath : includePaths) {
 
-            if (!includePath.getPath()
-                    .startsWith(rootPath)) {
+                boolean valid = false;
 
-                respondBadRequest(
-                        response,
-                        "Include paths must be under root path.");
+                for (String rootPath : rootPaths) {
+                        if (includePath.getPath().startsWith(rootPath)) {
+                        valid = true;
+                        break;
+                        }
+                }
 
-                return;
-            }
+                if (!valid) {
+                        respondBadRequest(
+                                response,
+                                "Include paths must be under root paths.");
+                        return;
+                }
         }
 
         /*
          * Exclude path validation
          */
-        for (String excludePath
-                : excludePaths) {
+        for (String excludePath : excludePaths) {
 
-            if (!excludePath.startsWith(
-                    rootPath)) {
+                if (excludePath == null
+                        || excludePath.trim().isEmpty()) {
+                        continue;
+                }
 
-                respondBadRequest(
-                        response,
-                        "Exclude paths must be under root path.");
+                boolean valid = false;
 
-                return;
-            }
-        }
+                for (String rootPath : rootPaths) {
+
+                        if (excludePath.startsWith(rootPath)) {
+                        valid = true;
+                        break;
+                        }
+                }
+
+                if (!valid) {
+                        respondBadRequest(
+                                response,
+                                "Exclude paths must be under root paths.");
+                        return;
+                }
+                }
 
         try (ResourceResolver resolver =
                      resolverUtil.getServiceResolver()) {
@@ -164,13 +206,17 @@ public class FullIndexConfigSaveServlet
 
                 return;
             }
+            
+            properties.put(
+                    "enableConnector",
+                    enableConnector);
 
             /*
              * Root Path
              */
             properties.put(
-                    "rootPath",
-                    rootPath);
+                    "rootPaths",
+                    rootPaths);
 
             /*
              * Include Paths (Composite Multifield)
@@ -236,10 +282,23 @@ public class FullIndexConfigSaveServlet
                         "excludePaths");
             }
 
+            if (allowedFiles != null
+                    && allowedFiles.length > 0) {
+
+                properties.put(
+                        "allowedFiles",
+                        allowedFiles);
+
+            } else {
+
+                properties.remove(
+                        "allowedFiles");
+            }
+
             resolver.commit();
 
             LOG.info(
-                    "Full Index configuration saved successfully");
+                    "Indexing configuration saved successfully");
 
             response.setStatus(
                     HttpServletResponse.SC_OK);
@@ -252,12 +311,12 @@ public class FullIndexConfigSaveServlet
 
             response.getWriter().write(
                     "{\"success\":true,"
-                            + "\"message\":\"Full Index configuration saved successfully.\"}");
+                            + "\"message\":\"Indexing configuration saved successfully.\"}");
 
         } catch (PersistenceException e) {
 
             LOG.error(
-                    "Persistence error while saving Full Index configuration",
+                    "Persistence error while saving Indexing configuration",
                     e);
 
             response.sendError(
@@ -267,12 +326,13 @@ public class FullIndexConfigSaveServlet
         } catch (Exception e) {
 
             LOG.error(
-                    "Unexpected error while saving Full Index configuration",
+                    "Unexpected error while saving Indexing configuration",
                     e);
 
             response.sendError(
                     HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
                     "Unexpected error occurred");
+            
         }
     }
 

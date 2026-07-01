@@ -2,9 +2,8 @@ package com.searchstax.aem.connector.core.listeners;
 
 import com.day.cq.replication.ReplicationAction;
 import com.day.cq.replication.ReplicationActionType;
-
-import com.searchstax.aem.connector.core.config.InitialSetupConfigService;
-import com.searchstax.aem.connector.core.config.model.InitialSetupConfig;
+import com.searchstax.aem.connector.core.config.FullIndexConfigService;
+import com.searchstax.aem.connector.core.config.model.FullIndexConfig;
 import org.apache.sling.event.jobs.Job;
 import org.apache.sling.event.jobs.JobManager;
 import org.apache.sling.settings.SlingSettingsService;
@@ -40,7 +39,7 @@ public class PublishListener implements EventHandler {
     private SlingSettingsService slingSettings;
 
     @Reference
-    private InitialSetupConfigService initialSetupConfigService;
+    private FullIndexConfigService fullIndexConfigService;
 
     @Activate
     protected void activate() {
@@ -95,15 +94,15 @@ public class PublishListener implements EventHandler {
             return;
         }
 
-        InitialSetupConfig config =
-                initialSetupConfigService.getConfiguration();
+        FullIndexConfig config =
+                fullIndexConfigService.getConfiguration();
 
         LOG.debug("Enable Connector: {}", config.isEnableConnector());
 
         if (!config.isEnableConnector()) {
 
             LOG.info(
-                    "SearchStax connector is disabled via Initial Setup configuration. Skipping indexing job for path: {}",
+                    "SearchStax connector is disabled via Indexing configuration. Skipping indexing job for path: {}",
                     path);
 
             return;

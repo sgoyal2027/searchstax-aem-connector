@@ -1,13 +1,14 @@
 (function (document, $) {
     "use strict";
 
-    if (!window.location.pathname.includes("fullindexing")) {
+    if (!window.location.pathname.includes("indexingconfig")) {
         return;
     }
-
+    
     var LOG = "[FullIndex]";
     var LOAD_PATH = "/bin/searchstaxconnector/wizard/full-index-load";
-    var SAVE_PATH = "/bin/searchstaxconnector/wizard/fullindex-config-save";
+    var SAVE_PATH = "/bin/searchstaxconnector/wizard/indexing-config-save";
+    var ROOT_PATHS_ID = "searchstax-initial-root-paths-multifield";
     var INCLUDE_PATHS_ID = "searchstax-include-paths-multifield";
     var EXCLUDE_PATHS_ID = "searchstax-fullindex-exclude-paths-multifield";
     var MAX_LOAD_ATTEMPTS = 25;
@@ -66,12 +67,51 @@
             return;
         }
 
+        var rootMultifield = mf.findMultifield({
+            id: ROOT_PATHS_ID,
+            fieldName: "rootPaths",
+            index: 0
+        });
+
         var includeMultifield = getIncludePathsMultifield();
         var excludeMultifield = mf.findMultifield({ id: EXCLUDE_PATHS_ID, fieldName: "excludePaths", index: 1 });
         var pending = 0;
-        var success = true;
+        var success = Boolean(rootMultifield);
 
-        mf.setFieldValue(document, "rootPath", data.rootPath || "");
+        if (!rootMultifield) {
+            console.warn(LOG, "Root paths multifield not found yet");
+            success = false;
+        }
+
+        mf.setCheckboxValue(document, "enableConnector", data.enableConnector);
+
+        if (data.rootPaths && data.rootPaths.length > 0 && rootMultifield) {
+            pending += 1;
+
+            mf.populatePathMultifield(
+                rootMultifield,
+                "rootPaths",
+                data.rootPaths,
+                function (ok) {
+                    if (!ok) {
+                        success = false;
+                    }
+                    checkDone();
+                });
+        }
+
+        var allowedFilesField =
+            mf.findNamedField(document, "allowedFiles");
+
+        if (allowedFilesField) {
+
+            Coral.commons.ready(
+                allowedFilesField,
+                function (select) {
+
+                    select.values = data.allowedFiles || [];
+                });
+        }
 
         function checkDone() {
             pending -= 1;
@@ -131,7 +171,7 @@
     }
 
     function bindSaveSerialization() {
-        var form = document.querySelector("form[action*='fullindex-config-save']");
+        var form = document.querySelector("form[action*='indexing-config-save']");
         if (!form || form.dataset.searchstaxIncludePathsBound === "true") {
             return;
         }
@@ -173,7 +213,7 @@
             }
 
             $(window).adaptTo("foundation-ui")
-                .notify("Success", "Full Index configuration saved successfully.", "success");
+                .notify("Success", "Indexing configuration saved successfully.", "success");
             redirectAfterSave();
         });
 

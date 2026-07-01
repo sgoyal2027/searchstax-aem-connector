@@ -2,9 +2,9 @@ package com.searchstax.aem.connector.core.services.impl;
 
 import com.day.cq.dam.api.Asset;
 import com.day.cq.dam.api.Rendition;
-import com.searchstax.aem.connector.core.config.InitialSetupConfigService;
+import com.searchstax.aem.connector.core.config.FullIndexConfigService;
 import com.searchstax.aem.connector.core.config.MetadataFieldConfigService;
-import com.searchstax.aem.connector.core.config.model.InitialSetupConfig;
+import com.searchstax.aem.connector.core.config.model.FullIndexConfig;
 import com.searchstax.aem.connector.core.config.model.MetadataFieldMappingConfig;
 import com.searchstax.aem.connector.core.constants.SearchStaxIndexingLimits;
 import com.searchstax.aem.connector.core.dto.response.ApiResponse;
@@ -50,7 +50,7 @@ public class IndexingHelperServiceImpl
     private MetadataFieldConfigService metadataFieldConfigService;
 
     @Reference
-    private InitialSetupConfigService initialSetupConfigService;
+    private FullIndexConfigService fullIndexConfigService;
 
     @Override
     public boolean isSuccess(ApiResponse response) {
@@ -403,8 +403,8 @@ public class IndexingHelperServiceImpl
             return false;
         }
 
-        InitialSetupConfig config =
-                initialSetupConfigService
+        FullIndexConfig config =
+                fullIndexConfigService
                         .getConfiguration();
 
         String[] allowedFiles =
