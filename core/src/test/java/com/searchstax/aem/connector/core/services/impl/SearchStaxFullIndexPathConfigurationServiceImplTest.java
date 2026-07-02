@@ -22,7 +22,7 @@ class SearchStaxFullIndexPathConfigurationServiceImplTest {
     void resolveEffectiveIncludes_returnsValidIncludesUnderRoot() {
         final FullIndexPathConfig config =
                 new FullIndexPathConfig(
-                        "/content/mysite",
+                        new String[]{"/content/mysite"},
                         new String[] {"/content/mysite/us", "/content/mysite/uk"},
                         new boolean[] {true, true},
                         new String[0]);
@@ -35,7 +35,7 @@ class SearchStaxFullIndexPathConfigurationServiceImplTest {
     @Test
     void resolveEffectiveIncludes_emptyWhenIncludeOutsideRoot() {
         final FullIndexPathConfig config =
-                new FullIndexPathConfig("/content/site", new String[] {"/etc"}, new boolean[] {true}, new String[0]);
+                new FullIndexPathConfig(new String[]{"/content/site"}, new String[] {"/etc"}, new boolean[] {true}, new String[0]);
 
         assertEquals(0, service.resolveEffectiveIncludes(config).length);
     }
@@ -44,7 +44,7 @@ class SearchStaxFullIndexPathConfigurationServiceImplTest {
     void resolveEffectiveIncludes_dedupesTrailingSlashVariants() {
         final FullIndexPathConfig config =
                 new FullIndexPathConfig(
-                        "/content/site",
+                        new String[]{"/content/site"},
                         new String[] {"/content/site/us/", "/content/site/us"},
                         new boolean[] {false, false},
                         new String[0]);
@@ -56,7 +56,7 @@ class SearchStaxFullIndexPathConfigurationServiceImplTest {
     void resolveEffectiveExcludes_filtersOutsideRoot() {
         final FullIndexPathConfig config =
                 new FullIndexPathConfig(
-                        "/content/mysite",
+                        new String[]{"/content/mysite"},
                         new String[] {"/content/mysite/us"},
                         new boolean[] {true},
                         new String[] {"/content/mysite/us/blog/test", "/etc/exclude"});
@@ -100,7 +100,7 @@ class SearchStaxFullIndexPathConfigurationServiceImplTest {
     @Test
     void resolveEffectiveIncludes_emptyRoot_returnsEmpty() {
         final FullIndexPathConfig config =
-                new FullIndexPathConfig("", new String[] {"/content/site"}, new boolean[] {true}, new String[0]);
+                new FullIndexPathConfig(new String[]{""}, new String[] {"/content/site"}, new boolean[] {true}, new String[0]);
 
         assertEquals(0, service.resolveEffectiveIncludes(config).length);
     }

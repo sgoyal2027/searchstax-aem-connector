@@ -362,6 +362,7 @@
 
     function buildRunRequestBody(form) {
         var params = new URLSearchParams();
+        collectMultifieldPaths(form, "rootPaths", "rootPaths", params);
         var rootPath = getFieldValue(findFieldInForm(form, "./rootPath"));
         if (rootPath) {
             params.append("rootPath", rootPath);

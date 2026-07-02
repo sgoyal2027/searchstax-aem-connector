@@ -92,19 +92,31 @@ public class SearchStaxFullIndexOrchestratorServiceImpl
          * INPUTS (declare ONCE)
          * ==============================
          */
-        final String root = config.getRootPath();
+        final String[] rootPaths = config.getRootPaths();
         final String[] includes = config.getIncludePaths();
         final String[] excludes = config.getExcludePaths();
-        if (root == null || root.trim().isEmpty()) {
-            LOG.warn("Root path is missing");
+        if (rootPaths == null || rootPaths.length == 0) {
+            LOG.warn("Root paths are missing");
             return new FullIndexTriggerResult(
-                    false, "", "Root Path is required to start full indexing.", HTTP_BAD_REQUEST);
+                    false, "", "Root Paths is required to start full indexing.", HTTP_BAD_REQUEST);
         }
 
-        if (!pathExists(root)) {
-            LOG.warn("Root path does not exist in JCR: {}", root);
+        boolean hasNonEmptyRoot = false;
+        for (String root : rootPaths) {
+            if (root != null && !root.trim().isEmpty()) {
+                hasNonEmptyRoot = true;
+                if (!pathExists(root)) {
+                    LOG.warn("Root paths does not exist in JCR: {}", root);
+                    return new FullIndexTriggerResult(
+                            false, "", "Root paths does not exist: " + root, HTTP_BAD_REQUEST);
+                }
+            }
+        }
+
+        if (!hasNonEmptyRoot) {
+            LOG.warn("All root paths are empty");
             return new FullIndexTriggerResult(
-                    false, "", "Root path does not exist: " + root, HTTP_BAD_REQUEST);
+                    false, "", "Root Paths is required to start full indexing.", HTTP_BAD_REQUEST);
         }
 
         /*
@@ -117,11 +129,17 @@ public class SearchStaxFullIndexOrchestratorServiceImpl
                 if (include == null || include.trim().isEmpty()) {
                     continue;
                 }
-                boolean underRoot = include.equals(root) || include.startsWith(root + "/");
+                boolean underRoot = false;
+                for (String root : rootPaths) {
+                    if (root != null && !root.trim().isEmpty() && (include.equals(root) || include.startsWith(root + "/"))) {
+                        underRoot = true;
+                        break;
+                    }
+                }
                 if (!underRoot) {
-                    LOG.warn("Invalid include path {} not under root {}", include, root);
+                    LOG.warn("Invalid include path {} not under root paths", include);
                     return new FullIndexTriggerResult(
-                            false, "", "All include paths must be under root path.", HTTP_BAD_REQUEST);
+                            false, "", "All include paths must be under root paths.", HTTP_BAD_REQUEST);
                 }
                 if (!pathExists(include)) {
                     LOG.warn("Include path does not exist in JCR: {}", include);
@@ -144,9 +162,13 @@ public class SearchStaxFullIndexOrchestratorServiceImpl
                     continue;
                 }
 
-                boolean underRoot =
-                        root != null &&
-                        (exclude.equals(root) || exclude.startsWith(root + "/"));
+                boolean underRoot = false;
+                for (String root : rootPaths) {
+                    if (root != null && !root.trim().isEmpty() && (exclude.equals(root) || exclude.startsWith(root + "/"))) {
+                        underRoot = true;
+                        break;
+                    }
+                }
 
                 boolean underInclude = false;
 
@@ -180,12 +202,12 @@ public class SearchStaxFullIndexOrchestratorServiceImpl
          */
         if (effectiveIncludes.length == 0) {
 
-            LOG.warn("No valid include paths after resolution for root {}", root);
+            LOG.warn("No valid include paths after resolution for root {}", java.util.Arrays.toString(rootPaths));
 
             return new FullIndexTriggerResult(
                     false,
                     "",
-                    "No valid include paths under the configured root path.",
+                    "No valid include paths under the configured root paths.",
                     HTTP_BAD_REQUEST);
         }
 
@@ -200,7 +222,7 @@ public class SearchStaxFullIndexOrchestratorServiceImpl
 
         LOG.info(
                 "Full index config root={}, includes={}, excludes={}, includeChildPaths={}",
-                root,
+                Arrays.toString(rootPaths),
                 effectiveIncludes,
                 excludes,
                 Arrays.toString(config.getIncludeChildPaths()));

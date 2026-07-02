@@ -4,6 +4,7 @@ import com.day.cq.replication.ReplicationAction;
 import com.day.cq.replication.ReplicationActionType;
 import com.searchstax.aem.connector.core.config.FullIndexConfigService;
 import com.searchstax.aem.connector.core.config.model.FullIndexConfig;
+import com.searchstax.aem.connector.core.config.model.FullIndexIncludePathConfig;
 import org.apache.sling.event.jobs.Job;
 import org.apache.sling.event.jobs.JobManager;
 import org.apache.sling.settings.SlingSettingsService;
@@ -111,6 +112,11 @@ public class PublishListener implements EventHandler {
         // Root Path Validation
         String[] rootPaths = config.getRootPaths();
 
+        if (rootPaths == null || rootPaths.length == 0) {
+                LOG.warn("No root paths configured. Skipping incremental indexing.");
+                return;
+        }
+
         boolean matchesRootPath = false;
 
         for (String rootPath : rootPaths) {
@@ -133,8 +139,39 @@ public class PublishListener implements EventHandler {
                         path);
 
                 return;
-                }
+        }
         
+        // Include Paths Validation
+        if (config.getIncludePaths() != null
+                && !config.getIncludePaths().isEmpty()) {
+
+        boolean matchesIncludePath = false;
+
+        for (FullIndexIncludePathConfig includePath
+                : config.getIncludePaths()) {
+
+                if (includePath == null
+                        || includePath.getPath() == null
+                        || includePath.getPath().isBlank()) {
+                continue;
+                }
+
+                if (path.startsWith(includePath.getPath())) {
+
+                matchesIncludePath = true;
+                break;
+                }
+        }
+
+        if (!matchesIncludePath) {
+
+                LOG.debug(
+                        "Skipping path {} because it is outside configured include paths",
+                        path);
+
+                return;
+                }
+        }
 
         // Exclude Path Validation
         String[] excludePaths = config.getExcludePaths();

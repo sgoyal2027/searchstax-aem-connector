@@ -60,7 +60,7 @@ public class FullIndexConfigLoadServlet
                     config.isEnableConnector());
 
             /*
-             * Root Path
+             * Root Paths
              */
             ArrayNode rootPaths =
                     OBJECT_MAPPER.createArrayNode();

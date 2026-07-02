@@ -212,7 +212,7 @@ public class FullIndexConfigSaveServlet
                     enableConnector);
 
             /*
-             * Root Path
+             * Root Paths
              */
             properties.put(
                     "rootPaths",

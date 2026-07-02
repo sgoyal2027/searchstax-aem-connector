@@ -157,12 +157,12 @@ public class SearchStaxFullIndexExecutionServiceImpl implements SearchStaxFullIn
 
     @Override
     public void execute() {
-        execute(new FullIndexPathConfig("", new String[0], new boolean[0], new String[0]));
+        execute(new FullIndexPathConfig(new String[0], new String[0], new boolean[0], new String[0]));
     }
 
     @Override
     public void execute(final FullIndexPathConfig pathConfig) {
-        final FullIndexPathConfig config = pathConfig == null ? new FullIndexPathConfig("", new String[0], new boolean[0], new String[0]) : pathConfig;
+        final FullIndexPathConfig config = pathConfig == null ? new FullIndexPathConfig(new String[0], new String[0], new boolean[0], new String[0]) : pathConfig;
         final String[] effectiveIncludes = pathConfigurationService.resolveEffectiveIncludes(config);
         effectiveExcludes = pathConfigurationService.resolveEffectiveExcludes(config);
 
@@ -175,10 +175,10 @@ public class SearchStaxFullIndexExecutionServiceImpl implements SearchStaxFullIn
 
         resetProgress(State.RUNNING, "Full index started");
         LOG.info(
-                "Full index execution starting. traversalMode={}, root={}, includePaths={}, excludePaths={}, "
+                "Full index execution starting. traversalMode={}, roots={}, includePaths={}, excludePaths={}, "
                         + "includeChildPaths={}, batchSize={}, maxBatchPayloadBytes={}",
                 runtimeConfigService.getTraversalMode(),
-                config.getRootPath(),
+                java.util.Arrays.toString(config.getRootPaths()),
                 effectiveIncludes,
                 effectiveExcludes,
                 includeChildPathMap,
@@ -186,8 +186,8 @@ public class SearchStaxFullIndexExecutionServiceImpl implements SearchStaxFullIn
                 SearchStaxIndexingLimits.MAX_BATCH_PAYLOAD_BYTES);
 
         if (effectiveIncludes.length == 0) {
-            failProgress("No valid include paths under root");
-            throw new IllegalStateException("No valid include paths under root: " + config.getRootPath());
+            failProgress("No valid include paths under roots");
+            throw new IllegalStateException("No valid include paths under roots: " + java.util.Arrays.toString(config.getRootPaths()));
         }
 
         batchesSinceHardCommit = 0;

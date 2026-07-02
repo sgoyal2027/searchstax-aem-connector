@@ -36,15 +36,15 @@ public class SearchStaxFullIndexPathConfigurationServiceImpl implements SearchSt
 
         }
 
-        final String root = normalizePath(config.getRootPath(), true);
+        final String[] roots = normalizeAndDedupe(config.getRootPaths(), true);
 
-        if (root.isEmpty()) {
+        if (roots.length == 0) {
 
             return new String[0];
 
         }
 
-        return filterPathsUnderRoot(root, normalizeAndDedupe(config.getIncludePaths(), false));
+        return filterPathsUnderRoots(roots, normalizeAndDedupe(config.getIncludePaths(), false));
 
     }
 
@@ -60,15 +60,15 @@ public class SearchStaxFullIndexPathConfigurationServiceImpl implements SearchSt
 
         }
 
-        final String root = normalizePath(config.getRootPath(), true);
+        final String[] roots = normalizeAndDedupe(config.getRootPaths(), true);
 
-        if (root.isEmpty()) {
+        if (roots.length == 0) {
 
             return new String[0];
 
         }
 
-        return filterPathsUnderRoot(root, normalizeAndDedupe(config.getExcludePaths(), false));
+        return filterPathsUnderRoots(roots, normalizeAndDedupe(config.getExcludePaths(), false));
 
     }
 
@@ -176,9 +176,9 @@ public class SearchStaxFullIndexPathConfigurationServiceImpl implements SearchSt
 
 
 
-    static String[] filterPathsUnderRoot(final String root, final String[] paths) {
+    static String[] filterPathsUnderRoots(final String[] roots, final String[] paths) {
 
-        if (root == null || root.isEmpty() || paths == null || paths.length == 0) {
+        if (roots == null || roots.length == 0 || paths == null || paths.length == 0) {
 
             return new String[0];
 
@@ -188,9 +188,15 @@ public class SearchStaxFullIndexPathConfigurationServiceImpl implements SearchSt
 
         for (final String path : paths) {
 
-            if (isPathUnder(path, root)) {
+            for (final String root : roots) {
 
-                filtered.add(path);
+                if (isPathUnder(path, root)) {
+
+                    filtered.add(path);
+
+                    break;
+
+                }
 
             }
 

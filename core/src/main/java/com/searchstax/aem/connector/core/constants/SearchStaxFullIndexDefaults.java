@@ -7,7 +7,7 @@ package com.searchstax.aem.connector.core.constants;
 public final class SearchStaxFullIndexDefaults {
 
     public static final String JOB_TOPIC = "searchstax/fullindex";
-    public static final String JOB_PROP_ROOT_PATH = "rootPath";
+    public static final String JOB_PROP_ROOT_PATHS = "rootPaths";
     public static final String JOB_PROP_INCLUDE_PATHS = "includePaths";
     public static final String JOB_PROP_EXCLUDE_PATHS = "excludePaths";
     public static final String JOB_PROP_CHILD_PAGES = "childPages";

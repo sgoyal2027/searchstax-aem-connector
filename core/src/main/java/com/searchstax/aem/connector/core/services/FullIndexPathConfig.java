@@ -28,7 +28,7 @@ import java.util.Set;
 
 /**
 
- * Path configuration for a full-index run (root, include paths with per-path child flags, exclude).
+ * Path configuration for a full-index run (root paths, include paths with per-path child flags, exclude).
 
  */
 
@@ -36,7 +36,7 @@ public final class FullIndexPathConfig {
 
 
 
-    private final String rootPath;
+    private final String[] rootPaths;
 
     private final String[] includePaths;
 
@@ -48,7 +48,7 @@ public final class FullIndexPathConfig {
 
     public FullIndexPathConfig(
 
-            final String rootPath,
+            final String[] rootPaths,
 
             final String[] includePaths,
 
@@ -56,7 +56,7 @@ public final class FullIndexPathConfig {
 
             final String[] excludePaths) {
 
-        this.rootPath = rootPath == null ? "" : rootPath;
+        this.rootPaths = rootPaths == null ? new String[0] : rootPaths;
 
         this.includePaths = copy(includePaths);
 
@@ -68,9 +68,9 @@ public final class FullIndexPathConfig {
 
 
 
-    public String getRootPath() {
+    public String[] getRootPaths() {
 
-        return rootPath;
+        return copy(rootPaths);
 
     }
 
@@ -102,7 +102,7 @@ public final class FullIndexPathConfig {
 
     public static FullIndexPathConfig fromRequest(final SlingHttpServletRequest request) {
 
-        final String root = trimToEmpty(request.getParameter("rootPath"));
+        final String[] rootPaths = readPathArray(request, "rootPaths");
 
         final String[] includes = readPathArray(request, "includePaths");
 
@@ -110,7 +110,7 @@ public final class FullIndexPathConfig {
 
         final boolean[] includeChildPaths = readBooleanArray(request, "includeChildPaths", includes.length);
 
-        return new FullIndexPathConfig(root, includes, includeChildPaths, excludes);
+        return new FullIndexPathConfig(rootPaths, includes, includeChildPaths, excludes);
 
     }
 
@@ -120,7 +120,7 @@ public final class FullIndexPathConfig {
 
         if (job == null) {
 
-            return new FullIndexPathConfig("", new String[0], new boolean[0], new String[0]);
+            return new FullIndexPathConfig(new String[0], new String[0], new boolean[0], new String[0]);
 
         }
 
@@ -142,11 +142,11 @@ public final class FullIndexPathConfig {
 
         if (props == null || props.isEmpty()) {
 
-            return new FullIndexPathConfig("", new String[0], new boolean[0], new String[0]);
+            return new FullIndexPathConfig(new String[0], new String[0], new boolean[0], new String[0]);
 
         }
 
-        final String root = stringProperty(props, SearchStaxFullIndexDefaults.JOB_PROP_ROOT_PATH);
+        final String[] root = stringArrayProperty(props, SearchStaxFullIndexDefaults.JOB_PROP_ROOT_PATHS);
 
         final String[] includes = stringArrayProperty(props, SearchStaxFullIndexDefaults.JOB_PROP_INCLUDE_PATHS);
 
@@ -166,7 +166,7 @@ public final class FullIndexPathConfig {
 
         final Map<String, Object> props = new java.util.LinkedHashMap<>();
 
-        props.put(SearchStaxFullIndexDefaults.JOB_PROP_ROOT_PATH, rootPath);
+        props.put(SearchStaxFullIndexDefaults.JOB_PROP_ROOT_PATHS, rootPaths);
 
         props.put(SearchStaxFullIndexDefaults.JOB_PROP_INCLUDE_PATHS, includePaths);
 

@@ -28,7 +28,7 @@ class SearchStaxFullIndexRunServiceImplTest {
 
         FullIndexPathConfig config =
                 new FullIndexPathConfig(
-                        "/content",
+                        new String[]{"/content"},
                         new String[]{"/content/site"},
                         new boolean[]{true},
                         new String[]{"/content/site/excluded"});

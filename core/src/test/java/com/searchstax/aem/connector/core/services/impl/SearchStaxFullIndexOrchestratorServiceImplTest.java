@@ -82,7 +82,7 @@ class SearchStaxFullIndexOrchestratorServiceImplTest {
     private FullIndexPathConfig createConfig() {
 
         return new FullIndexPathConfig(
-                "/content",
+                new String[]{"/content"},
                 new String[]{"/content/site"},
                 new boolean[]{true},
                 new String[0]);
@@ -200,7 +200,7 @@ class SearchStaxFullIndexOrchestratorServiceImplTest {
 
         FullIndexPathConfig config =
                 new FullIndexPathConfig(
-                        "",
+                        new String[]{},
                         new String[]{"/content/site"},
                         new boolean[]{true},
                         new String[0]);
@@ -216,7 +216,7 @@ class SearchStaxFullIndexOrchestratorServiceImplTest {
         assertFalse(result.isAccepted());
         assertEquals(400, result.getHttpStatus());
         assertEquals(
-                "Root Path is required to start full indexing.",
+                "Root Paths is required to start full indexing.",
                 result.getMessage());
     }
 
@@ -239,7 +239,7 @@ class SearchStaxFullIndexOrchestratorServiceImplTest {
 
         assertFalse(result.isAccepted());
         assertEquals(400, result.getHttpStatus());
-        assertTrue(result.getMessage().contains("Root path does not exist"));
+        assertTrue(result.getMessage().contains("Root paths does not exist"));
     }
 
     @Test
@@ -247,7 +247,7 @@ class SearchStaxFullIndexOrchestratorServiceImplTest {
 
         FullIndexPathConfig config =
                 new FullIndexPathConfig(
-                        "/content",
+                        new String[]{"/content"},
                         new String[]{"/etc"},
                         new boolean[]{true},
                         new String[0]);
@@ -269,7 +269,7 @@ class SearchStaxFullIndexOrchestratorServiceImplTest {
         assertFalse(result.isAccepted());
         assertEquals(400, result.getHttpStatus());
         assertEquals(
-                "All include paths must be under root path.",
+                "All include paths must be under root paths.",
                 result.getMessage());
     }
 
@@ -303,7 +303,7 @@ class SearchStaxFullIndexOrchestratorServiceImplTest {
 
         FullIndexPathConfig config =
                 new FullIndexPathConfig(
-                        "/content",
+                        new String[]{"/content"},
                         new String[]{"/content/site"},
                         new boolean[]{true},
                         new String[]{"/etc"});
@@ -345,7 +345,7 @@ class SearchStaxFullIndexOrchestratorServiceImplTest {
         assertFalse(result.isAccepted());
         assertEquals(400, result.getHttpStatus());
         assertEquals(
-                "No valid include paths under the configured root path.",
+                "No valid include paths under the configured root paths.",
                 result.getMessage());
     }
 
@@ -416,7 +416,7 @@ class SearchStaxFullIndexOrchestratorServiceImplTest {
 
         assertFalse(result.isAccepted());
         assertEquals(400, result.getHttpStatus());
-        assertTrue(result.getMessage().contains("Root path does not exist"));
+        assertTrue(result.getMessage().contains("Root paths does not exist"));
     }
 
     @Test
@@ -451,7 +451,7 @@ class SearchStaxFullIndexOrchestratorServiceImplTest {
 
         FullIndexPathConfig config =
                 new FullIndexPathConfig(
-                        "/content",
+                        new String[]{"/content"},
                         new String[]{"/content/site"},
                         new boolean[]{true},
                         new String[]{"/content/site/excluded"});
@@ -479,7 +479,7 @@ class SearchStaxFullIndexOrchestratorServiceImplTest {
 
         FullIndexPathConfig config =
                 new FullIndexPathConfig(
-                        "/content",
+                        new String[]{"/content"},
                         new String[]{" "},
                         new boolean[]{true},
                         new String[0]);
