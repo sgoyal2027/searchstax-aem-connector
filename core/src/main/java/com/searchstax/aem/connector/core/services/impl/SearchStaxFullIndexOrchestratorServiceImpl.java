@@ -92,31 +92,21 @@ public class SearchStaxFullIndexOrchestratorServiceImpl
          * INPUTS (declare ONCE)
          * ==============================
          */
-        final String[] rootPaths = config.getRootPaths();
-        final String[] includes = config.getIncludePaths();
-        final String[] excludes = config.getExcludePaths();
-        if (rootPaths == null || rootPaths.length == 0) {
+        final String[] rootPaths = SearchStaxFullIndexPathConfigurationServiceImpl.normalizeAndDedupe(config.getRootPaths(), true);
+        final String[] includes = SearchStaxFullIndexPathConfigurationServiceImpl.normalizeAndDedupe(config.getIncludePaths(), false);
+        final String[] excludes = SearchStaxFullIndexPathConfigurationServiceImpl.normalizeAndDedupe(config.getExcludePaths(), false);
+        if (rootPaths.length == 0) {
             LOG.warn("Root paths are missing");
             return new FullIndexTriggerResult(
                     false, "", "Root Paths is required to start full indexing.", HTTP_BAD_REQUEST);
         }
 
-        boolean hasNonEmptyRoot = false;
         for (String root : rootPaths) {
-            if (root != null && !root.trim().isEmpty()) {
-                hasNonEmptyRoot = true;
-                if (!pathExists(root)) {
-                    LOG.warn("Root paths does not exist in JCR: {}", root);
-                    return new FullIndexTriggerResult(
-                            false, "", "Root paths does not exist: " + root, HTTP_BAD_REQUEST);
-                }
+            if (!pathExists(root)) {
+                LOG.warn("Root paths does not exist in JCR: {}", root);
+                return new FullIndexTriggerResult(
+                        false, "", "Root paths does not exist: " + root, HTTP_BAD_REQUEST);
             }
-        }
-
-        if (!hasNonEmptyRoot) {
-            LOG.warn("All root paths are empty");
-            return new FullIndexTriggerResult(
-                    false, "", "Root Paths is required to start full indexing.", HTTP_BAD_REQUEST);
         }
 
         /*
@@ -124,14 +114,11 @@ public class SearchStaxFullIndexOrchestratorServiceImpl
          * INCLUDE VALIDATION (STRICT)
          * ==============================
          */
-        if (includes != null && includes.length > 0) {
+        if (includes.length > 0) {
             for (String include : includes) {
-                if (include == null || include.trim().isEmpty()) {
-                    continue;
-                }
                 boolean underRoot = false;
                 for (String root : rootPaths) {
-                    if (root != null && !root.trim().isEmpty() && (include.equals(root) || include.startsWith(root + "/"))) {
+                    if (SearchStaxFullIndexPathConfigurationServiceImpl.isPathUnder(include, root)) {
                         underRoot = true;
                         break;
                     }
@@ -154,17 +141,13 @@ public class SearchStaxFullIndexOrchestratorServiceImpl
          * EXCLUDE VALIDATION (SAFE)
          * ==============================
          */
-        if (excludes != null && excludes.length > 0) {
+        if (excludes.length > 0) {
 
             for (String exclude : excludes) {
 
-                if (exclude == null || exclude.trim().isEmpty()) {
-                    continue;
-                }
-
                 boolean underRoot = false;
                 for (String root : rootPaths) {
-                    if (root != null && !root.trim().isEmpty() && (exclude.equals(root) || exclude.startsWith(root + "/"))) {
+                    if (SearchStaxFullIndexPathConfigurationServiceImpl.isPathUnder(exclude, root)) {
                         underRoot = true;
                         break;
                     }
@@ -172,15 +155,10 @@ public class SearchStaxFullIndexOrchestratorServiceImpl
 
                 boolean underInclude = false;
 
-                if (includes != null) {
-                    for (String include : includes) {
-                        if (include != null
-                                && !include.trim().isEmpty()
-                                && (exclude.equals(include)
-                                || exclude.startsWith(include + "/"))) {
-                            underInclude = true;
-                            break;
-                        }
+                for (String include : includes) {
+                    if (SearchStaxFullIndexPathConfigurationServiceImpl.isPathUnder(exclude, include)) {
+                        underInclude = true;
+                        break;
                     }
                 }
 

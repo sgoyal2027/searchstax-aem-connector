@@ -120,14 +120,10 @@ public class PublishListener implements EventHandler {
         boolean matchesRootPath = false;
 
         for (String rootPath : rootPaths) {
-
-                if (rootPath != null
-                        && !rootPath.isBlank()
-                        && path.startsWith(rootPath)) {
-                
+            if (isPathUnder(path, rootPath)) {
                 matchesRootPath = true;
                 break;
-                }
+            }
         }
 
         if (rootPaths != null
@@ -145,53 +141,38 @@ public class PublishListener implements EventHandler {
         if (config.getIncludePaths() != null
                 && !config.getIncludePaths().isEmpty()) {
 
-        boolean matchesIncludePath = false;
+            boolean matchesIncludePath = false;
 
-        for (FullIndexIncludePathConfig includePath
-                : config.getIncludePaths()) {
-
-                if (includePath == null
-                        || includePath.getPath() == null
-                        || includePath.getPath().isBlank()) {
-                continue;
+            for (FullIndexIncludePathConfig includePath : config.getIncludePaths()) {
+                if (includePath != null && isPathUnder(path, includePath.getPath())) {
+                    matchesIncludePath = true;
+                    break;
                 }
+            }
 
-                if (path.startsWith(includePath.getPath())) {
-
-                matchesIncludePath = true;
-                break;
-                }
-        }
-
-        if (!matchesIncludePath) {
+            if (!matchesIncludePath) {
 
                 LOG.debug(
                         "Skipping path {} because it is outside configured include paths",
                         path);
 
                 return;
-                }
+            }
         }
 
         // Exclude Path Validation
         String[] excludePaths = config.getExcludePaths();
 
         if (excludePaths != null) {
-
-        for (String excludePath : excludePaths) {
-
-                if (excludePath != null
-                && !excludePath.isBlank()
-                && path.startsWith(excludePath)) {
-
-                LOG.debug(
-                        "Skipping path {} because it matches excluded path {}",
-                        path,
-                        excludePath);
-
-                return;
+            for (String excludePath : excludePaths) {
+                if (isPathUnder(path, excludePath)) {
+                    LOG.debug(
+                            "Skipping path {} because it matches excluded path {}",
+                            path,
+                            excludePath);
+                    return;
                 }
-        }
+            }
         }
 
         Map<String, Object> jobProperties =
@@ -224,5 +205,16 @@ public class PublishListener implements EventHandler {
                     path,
                     actionType);
         }
+    }
+
+    private static boolean isPathUnder(final String path, final String ancestor) {
+        if (path == null || ancestor == null || path.isBlank() || ancestor.isBlank()) {
+            return false;
+        }
+        if (path.equals(ancestor)) {
+            return true;
+        }
+        final String prefix = ancestor.endsWith("/") ? ancestor : ancestor + "/";
+        return path.startsWith(prefix);
     }
 }

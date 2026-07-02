@@ -130,4 +130,16 @@ class SearchStaxFullIndexPathConfigurationServiceImplTest {
         assertArrayEquals(new String[] {"/content/site"}, normalized);
     }
 
+    @Test
+    void isPathUnder_handlesTrailingSlashesAndRoot() {
+        assertTrue(SearchStaxFullIndexPathConfigurationServiceImpl.isPathUnder(
+                "/content/site/en", "/content/site/"));
+        assertTrue(SearchStaxFullIndexPathConfigurationServiceImpl.isPathUnder(
+                "/content", "/"));
+        assertFalse(SearchStaxFullIndexPathConfigurationServiceImpl.isPathUnder(
+                "/content-other", "/content"));
+        assertFalse(SearchStaxFullIndexPathConfigurationServiceImpl.isPathUnder(
+                "/content-other", "/content/"));
+    }
+
 }

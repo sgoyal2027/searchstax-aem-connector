@@ -269,6 +269,10 @@
             "input[name*='" + nameFragment + "'], coral-pathfield[name*='" + nameFragment + "']");
         var seen = {};
         for (var i = 0; i < nodes.length; i++) {
+            var name = nodes[i].name || nodes[i].getAttribute("name") || "";
+            if (name.indexOf("@TypeHint") !== -1 || name.indexOf("@Delete") !== -1) {
+                continue;
+            }
             var val = getFieldValue(nodes[i]);
             if (val && !seen[val]) {
                 seen[val] = true;
@@ -363,10 +367,6 @@
     function buildRunRequestBody(form) {
         var params = new URLSearchParams();
         collectMultifieldPaths(form, "rootPaths", "rootPaths", params);
-        var rootPath = getFieldValue(findFieldInForm(form, "./rootPath"));
-        if (rootPath) {
-            params.append("rootPath", rootPath);
-        }
         collectIncludePathsWithChildFlags(form, params);
         collectMultifieldPaths(form, "excludePaths", "excludePaths", params);
         return params.toString();

@@ -132,10 +132,10 @@ public class FullIndexConfigSaveServlet
                 boolean valid = false;
 
                 for (String rootPath : rootPaths) {
-                        if (includePath.getPath().startsWith(rootPath)) {
+                    if (isPathUnder(includePath.getPath(), rootPath)) {
                         valid = true;
                         break;
-                        }
+                    }
                 }
 
                 if (!valid) {
@@ -160,10 +160,10 @@ public class FullIndexConfigSaveServlet
 
                 for (String rootPath : rootPaths) {
 
-                        if (excludePath.startsWith(rootPath)) {
+                    if (isPathUnder(excludePath, rootPath)) {
                         valid = true;
                         break;
-                        }
+                    }
                 }
 
                 if (!valid) {
@@ -172,7 +172,7 @@ public class FullIndexConfigSaveServlet
                                 "Exclude paths must be under root paths.");
                         return;
                 }
-                }
+        }
 
         try (ResourceResolver resolver =
                      resolverUtil.getServiceResolver()) {
@@ -369,5 +369,16 @@ public class FullIndexConfigSaveServlet
                 "{\"message\":\""
                         + message
                         + "\"}");
+    }
+
+    private static boolean isPathUnder(final String path, final String ancestor) {
+        if (path == null || ancestor == null || path.isBlank() || ancestor.isBlank()) {
+            return false;
+        }
+        if (path.equals(ancestor)) {
+            return true;
+        }
+        final String prefix = ancestor.endsWith("/") ? ancestor : ancestor + "/";
+        return path.startsWith(prefix);
     }
 }

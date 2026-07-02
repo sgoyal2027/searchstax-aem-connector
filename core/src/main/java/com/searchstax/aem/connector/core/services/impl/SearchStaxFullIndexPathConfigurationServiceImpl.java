@@ -170,7 +170,15 @@ public class SearchStaxFullIndexPathConfigurationServiceImpl implements SearchSt
 
         }
 
-        return path.equals(ancestor) || path.startsWith(ancestor + "/");
+        if (path.equals(ancestor)) {
+
+            return true;
+
+        }
+
+        final String prefix = ancestor.endsWith("/") ? ancestor : ancestor + "/";
+
+        return path.startsWith(prefix);
 
     }
 
